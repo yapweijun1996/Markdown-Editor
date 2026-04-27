@@ -358,6 +358,233 @@ body {
 }
 
 /* =========================================================
+   Share secondary actions (QR + Shorten)
+   ========================================================= */
+.share-modal { max-width: 560px; }
+
+.share-secondary-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.share-secondary-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 0 var(--sp-3);
+  height: 36px;
+  border: 0.5px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--font-footnote);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
+}
+.share-secondary-btn:hover { background: var(--fill-secondary); }
+.share-secondary-btn:active { transform: scale(0.97); }
+.share-secondary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.qr-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  margin-top: var(--sp-3);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.qr-canvas {
+  background: #FFFFFF;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.qr-download-btn {
+  border: none;
+  background: var(--accent);
+  color: var(--accent-on);
+  font-family: inherit;
+  font-size: var(--font-footnote);
+  font-weight: 500;
+  padding: 0 var(--sp-3);
+  height: 32px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.qr-download-btn:hover { background: var(--accent-hover); }
+.qr-download-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.qr-hint {
+  font-size: var(--font-caption1);
+  color: var(--text-secondary);
+}
+
+.qr-error {
+  font-size: var(--font-footnote);
+  color: var(--danger);
+}
+
+/* =========================================================
+   Batch Convert Sheet
+   ========================================================= */
+.batch-modal { max-width: 600px; }
+
+.batch-body {
+  max-height: 75dvh;
+  overflow-y: auto;
+}
+
+.batch-drop {
+  border: 2px dashed var(--separator);
+  border-radius: var(--radius-md);
+  padding: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--bg-secondary);
+  transition: border-color var(--dur-fast), background var(--dur-fast);
+}
+
+.batch-drop:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.batch-drop-text {
+  font-size: var(--font-subhead);
+  color: var(--text-secondary);
+}
+
+.batch-drop-text code {
+  background: var(--fill-secondary);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.batch-select-btn {
+  padding: 0 var(--sp-4);
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-on);
+  font-size: var(--font-subhead);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.batch-select-btn:hover { background: var(--accent-hover); }
+
+.batch-progress { margin-top: var(--sp-3); }
+
+.batch-progress-text {
+  font-size: var(--font-footnote);
+  color: var(--text-secondary);
+  margin-bottom: var(--sp-1);
+}
+
+.batch-errors { color: var(--danger); }
+
+.batch-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--fill-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.batch-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width var(--dur-base) var(--ease-standard);
+}
+
+.batch-file-list {
+  margin-top: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.batch-file {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-footnote);
+}
+
+.batch-file-status {
+  width: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.batch-file-done .batch-file-status { color: var(--success); }
+.batch-file-error .batch-file-status { color: var(--danger); }
+.batch-file-processing .batch-file-status { color: var(--accent); }
+
+.batch-file-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: var(--font-caption1);
+}
+
+.batch-file-error {
+  color: var(--danger);
+  font-size: var(--font-caption1);
+  flex-shrink: 0;
+}
+
+.batch-file-remove {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  font-size: 16px;
+  line-height: 1;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.batch-file-remove:hover {
+  background: var(--fill-secondary);
+  color: var(--text-primary);
+}
+
+.batch-result {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-footnote);
+}
+.batch-result.success { background: var(--success-soft); color: var(--success); }
+.batch-result.error { background: var(--danger-soft); color: var(--danger); }
+
+/* =========================================================
    Document Layout Sheet (template selector + page settings)
    ========================================================= */
 .layout-modal { max-width: 600px; }
@@ -720,6 +947,15 @@ body {
   padding: var(--sp-2) var(--sp-3);
   background: var(--warning-soft);
   color: var(--warning);
+  border-radius: var(--radius-md);
+  font-size: var(--font-footnote);
+}
+
+.modal-info {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--success-soft);
+  color: var(--success);
   border-radius: var(--radius-md);
   font-size: var(--font-footnote);
 }

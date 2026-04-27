@@ -17,6 +17,7 @@ export default defineConfig({
           if (id.includes('/jszip/')) return 'vendor-jszip'
           if (id.includes('/katex/')) return 'vendor-katex'
           if (id.includes('/mermaid/') || id.includes('/dagre') || id.includes('/cytoscape') || id.includes('/d3-')) return 'vendor-mermaid'
+          if (id.includes('/qrcode/') || id.includes('/dijkstrajs/')) return 'vendor-qrcode'
           if (id.includes('/markdown-it/') || id.includes('linkify-it') || id.includes('mdurl') || id.includes('uc.micro') || id.includes('entities')) {
             return 'vendor-markdown-it'
           }

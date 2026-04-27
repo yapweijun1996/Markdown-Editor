@@ -9,6 +9,7 @@ import DraftRestorePrompt from './preferences/DraftRestorePrompt.jsx'
 import MoreMenu from './components/MoreMenu.jsx'
 import DocumentLayoutSheet from './components/DocumentLayoutSheet.jsx'
 import HistoryPanel from './history/HistoryPanel.jsx'
+import BatchConvertSheet from './batch/BatchConvertSheet.jsx'
 import { useTheme } from './theme/useTheme.js'
 import { usePreferences } from './preferences/usePreferences.js'
 import { readDraft, writeDraft, clearDraft } from './preferences/draftStorage.js'
@@ -123,6 +124,14 @@ const Icon = {
       <line x1="9" y1="17" x2="13" y2="17"/>
     </svg>
   ),
+  batch: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7"/>
+      <rect x="14" y="3" width="7" height="7"/>
+      <rect x="3" y="14" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/>
+    </svg>
+  ),
   share: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
@@ -163,6 +172,7 @@ export default function App() {
   const [showMore, setShowMore] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showLayout, setShowLayout] = useState(false)
+  const [showBatch, setShowBatch] = useState(false)
   const [previewOnly, setPreviewOnly] = useState(false)
   const [mobileTab, setMobileTab] = useState('editor')
   const [draft, setDraft] = useState(null)
@@ -339,6 +349,11 @@ export default function App() {
       icon: Icon.pdf,
       onClick: () => downloadPdf(),
       disabled: !hasContent,
+    },
+    {
+      label: 'Batch Convert',
+      icon: Icon.batch,
+      onClick: () => setShowBatch(true),
     },
     { label: 'Insert Image', icon: Icon.image, onClick: openImagePicker },
     { label: 'Upload .md', icon: Icon.upload, onClick: pickFile },
@@ -519,6 +534,10 @@ export default function App() {
 
       {showMore && (
         <MoreMenu items={moreItems} onClose={() => setShowMore(false)} />
+      )}
+
+      {showBatch && (
+        <BatchConvertSheet onClose={() => setShowBatch(false)} />
       )}
 
       {showLayout && history.currentDoc && (

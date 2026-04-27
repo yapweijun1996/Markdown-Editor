@@ -13,20 +13,31 @@ An installable, offline-capable Markdown editor and Microsoft Word `.docx` conve
 
 ## Highlights
 
+### Editor & Output
 - ✏️  **Live Markdown editor + preview** — write & see results instantly
-- 📄  **Export `.docx`** — clean, editable Microsoft Word output (preserves headings, lists, tables, code, blockquotes)
+- 📄  **Export `.docx`** — clean, editable Microsoft Word output (headings, lists, nested lists, tables, code, blockquotes, images, mermaid diagrams)
+- 🖨️  **Export PDF** — one-click via browser print, optimized print stylesheet
+- 📦  **Batch convert** — drop a folder of `.md` files, get back a ZIP of `.docx`
+- 🎨  **4 Word templates** — Default / Business / Technical / Minimal, swap per document
+- 🖼️  **Images** — paste / drag-drop / file picker, embedded in `.docx`
+- 🧮  **Math (KaTeX)** — `$inline$` and `$$block$$` LaTeX math
+- 📊  **Diagrams (Mermaid)** — flowcharts / sequence / class / ER / Gantt rendered in preview and `.docx`
+- 📑  **Long document support** — Table of Contents (`[TOC]`), header / footer / page numbers, cover page generator, A4/Letter/A3 + portrait/landscape
+
+### Experience
 - 📱  **Installable PWA** — works offline, installs to home screen on iOS / Android / desktop
 - 🔄  **Forced update prompt** — users always run the latest version (30s countdown auto-reload)
 - 🍎  **Apple-style design** — light / dark / auto theme, system fonts, blur effects, motion curves
 - 📲  **Mobile responsive** — clean toolbar with iOS-style Action Sheet for secondary actions
-- 🔗  **Share link** — encode entire Markdown into URL hash (no backend, no length limits)
+- 🔗  **Share link + QR** — encode entire Markdown into URL hash (no backend, no length limits) + QR code for mobile sharing
+- ✂️  **Optional URL shortener** — TinyURL integration (opt-in, single click)
 - 👁️  **Preview-only mode** — readers see clean centered view without editor (1200px max width)
 - 💾  **Auto-save draft** — never lose work after browser crash (configurable interval)
 - 📚  **Document history** — IndexedDB stores every doc you ever edit
 - 🕐  **Snapshot timeline** — auto-versioned, restore any past state with one click
-- 📦  **Export ZIP** — bundle entire history into a downloadable archive
+- 📦  **Export history ZIP** — bundle entire history with snapshots into a downloadable archive
 - ⚙️  **Settings panel** — font size, font family, line height, word wrap, auto-save interval
-- ⚡  **Optimized bundle** — first paint ~140 KB gzip, lazy-loaded heavy libs
+- ⚡  **Optimized bundle** — first paint ~120 KB gzip, all heavy libs (docx, mermaid, katex, jszip) lazy-loaded
 
 ---
 
@@ -115,6 +126,9 @@ https://yapweijun1996.github.io/Markdown-Editor/#content=<compressed>&mode=previ
 | Markdown Parsing | `unified` + `remark-parse` + `remark-gfm` |
 | DOCX Generation | `docx` (lazy-loaded) |
 | ZIP Export | `jszip` (lazy-loaded) |
+| Math Rendering | `katex` (lazy-loaded) |
+| Diagram Rendering | `mermaid` (lazy-loaded) |
+| QR Code | `qrcode` (lazy-loaded) |
 | File Download | `file-saver` |
 | URL Compression | `lz-string` |
 | Local Storage | `localStorage` (preferences, draft) |
@@ -363,19 +377,23 @@ but the compiler at the centre is untouched.
 - [x] **V2.4** — Snapshot timeline UI + ZIP export + storage indicator
 - [x] **V2.5** — Bundle splitting + lazy-load docx/jszip (52 % smaller first paint)
 
-### V3 — Future
-- [ ] Image support (paste, upload, base64)
-- [ ] Nested list support
-- [ ] Table of contents in `.docx`
-- [ ] Header / footer / page numbers
-- [ ] Custom Word template upload
-- [ ] Print / Save as PDF
-- [ ] QR code share
-- [ ] URL shortener integration
-- [ ] Template selector (Default / Business / Technical / Minimal)
-- [ ] Cloud sync (cross-device history)
-- [ ] Collaboration (real-time multi-user)
-- [ ] Batch convert multiple `.md` files
+### V3 — Rich Document Output ✅
+- [x] **V3.0** — Images: paste / drag / upload / embedded in `.docx`
+- [x] **V3.1** — 4 Word templates (Default / Business / Technical / Minimal) with selector
+- [x] **V3.2** — Long doc features: nested lists, `[TOC]`, header/footer/page numbers, cover page, A4/Letter/A3, portrait/landscape
+- [x] **V3.3** — PDF export via print stylesheet
+- [x] **V3.4** — Math (KaTeX) + Diagrams (Mermaid), both lazy-loaded
+- [x] **V3.5** — Batch convert (drop folder → ZIP of `.docx`), QR code share, opt-in URL shortener
+
+### V4 — Future
+- [ ] Custom Word template upload (`.docx` style extraction)
+- [ ] Math rendered as image in `.docx` (currently text fallback)
+- [ ] Cloud sync (cross-device history) — needs backend
+- [ ] Real-time collaboration — needs backend + CRDT
+- [ ] API mode — programmatic Markdown → DOCX endpoint
+- [ ] AI-assisted writing — outline expansion, grammar fix
+- [ ] Plugin system — user-defined converters
+- [ ] Native mobile app (Capacitor wrapper)
 
 ---
 
