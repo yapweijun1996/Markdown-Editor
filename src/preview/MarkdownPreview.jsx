@@ -11,7 +11,7 @@ export default function MarkdownPreview({ markdown }) {
   const html = useMemo(() => md.render(markdown || ''), [markdown])
 
   return (
-    <div className="panel preview-panel">
+    <div className="panel preview-panel" data-panel="preview">
       <div className="panel-label">Preview</div>
       <div
         className="preview-content"

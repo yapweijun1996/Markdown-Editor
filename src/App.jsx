@@ -4,6 +4,8 @@ import FileUploader from './editor/FileUploader.jsx'
 import MarkdownPreview from './preview/MarkdownPreview.jsx'
 import ShareModal from './share/ShareModal.jsx'
 import UpdatePrompt from './pwa/UpdatePrompt.jsx'
+import ThemeToggle from './theme/ThemeToggle.jsx'
+import { useTheme } from './theme/useTheme.js'
 import { downloadDocx } from './download/downloadDocx.js'
 import { decodeShareUrl } from './share/shareLink.js'
 
@@ -48,18 +50,35 @@ End of document.
 `
 
 export default function App() {
+  // Initialize theme on first render
+  useTheme()
+
   const [markdown, setMarkdown] = useState('')
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [showShare, setShowShare] = useState(false)
   const [previewOnly, setPreviewOnly] = useState(false)
+  const [mobileTab, setMobileTab] = useState('editor')
 
   useEffect(() => {
     const shared = decodeShareUrl()
     if (shared) {
       setMarkdown(shared.markdown)
       setPreviewOnly(shared.previewOnly)
+      if (!shared.previewOnly) setMobileTab('preview')
     }
+  }, [])
+
+  useEffect(() => {
+    function onHashChange() {
+      const shared = decodeShareUrl()
+      if (shared) {
+        setMarkdown(shared.markdown)
+        setPreviewOnly(shared.previewOnly)
+      }
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
   async function handleExport() {
@@ -96,43 +115,41 @@ export default function App() {
     window.history.replaceState({}, '', baseUrl)
   }
 
-  useEffect(() => {
-    function onHashChange() {
-      const shared = decodeShareUrl()
-      if (shared) {
-        setMarkdown(shared.markdown)
-        setPreviewOnly(shared.previewOnly)
-      }
-    }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
+  const workspaceClass = [
+    'workspace',
+    previewOnly ? 'workspace-preview-only' : '',
+    !previewOnly ? `mobile-tab-${mobileTab}` : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <div className="app">
       <header className="toolbar">
         <span className="toolbar-title">
-          Markdown to Word Converter
-          {previewOnly && <span className="badge-readonly">PREVIEW ONLY</span>}
+          MD→Word
+          {previewOnly && <span className="badge-readonly">PREVIEW</span>}
         </span>
         <div className="toolbar-actions">
           {previewOnly ? (
             <>
-              <button onClick={handleExport}>Export .docx</button>
-              <button onClick={handleEditMode}>Edit Mode</button>
+              <button onClick={handleExport}>Export</button>
+              <button onClick={handleEditMode}>Edit</button>
+              <ThemeToggle />
             </>
           ) : (
             <>
               <FileUploader onLoad={setMarkdown} onError={setError} />
-              <button onClick={handleExport}>Export .docx</button>
+              <button onClick={handleExport}>Export</button>
               <button onClick={() => setPreviewOnly(true)} disabled={!markdown.trim()}>
-                Preview
+                Read
               </button>
               <button onClick={() => setShowShare(true)} disabled={!markdown.trim()}>
                 Share
               </button>
-              <button onClick={handleLoadSample}>Load Sample</button>
+              <button onClick={handleLoadSample}>Sample</button>
               <button onClick={handleClear}>Clear</button>
+              <ThemeToggle />
             </>
           )}
         </div>
@@ -141,7 +158,28 @@ export default function App() {
       {error && <div className="error-bar">{error}</div>}
       {status && <div className="status-bar">{status}</div>}
 
-      <main className={`workspace ${previewOnly ? 'workspace-preview-only' : ''}`}>
+      {!previewOnly && (
+        <div className="mobile-tabs" role="tablist" aria-label="Switch between editor and preview">
+          <button
+            role="tab"
+            aria-selected={mobileTab === 'editor'}
+            className={mobileTab === 'editor' ? 'active' : ''}
+            onClick={() => setMobileTab('editor')}
+          >
+            Editor
+          </button>
+          <button
+            role="tab"
+            aria-selected={mobileTab === 'preview'}
+            className={mobileTab === 'preview' ? 'active' : ''}
+            onClick={() => setMobileTab('preview')}
+          >
+            Preview
+          </button>
+        </div>
+      )}
+
+      <main className={workspaceClass}>
         {!previewOnly && (
           <MarkdownEditor value={markdown} onChange={setMarkdown} />
         )}

@@ -1,0 +1,210 @@
+/* =========================================================
+   Apple-Style Design Tokens
+   Single source of truth for colors, type, spacing, motion.
+   ========================================================= */
+
+:root,
+:root[data-theme='light'] {
+  /* ── Surfaces ────────────────────────────────────── */
+  --bg-primary:     #FFFFFF;
+  --bg-secondary:   #F2F2F7;
+  --bg-tertiary:    #FFFFFF;
+  --bg-elevated:    rgba(255, 255, 255, 0.86);
+  --bg-overlay:     rgba(0, 0, 0, 0.45);
+
+  /* ── Text ────────────────────────────────────────── */
+  --text-primary:   #000000;
+  --text-secondary: rgba(60, 60, 67, 0.6);
+  --text-tertiary:  rgba(60, 60, 67, 0.3);
+  --text-inverse:   #FFFFFF;
+
+  /* ── Separators ──────────────────────────────────── */
+  --separator:      rgba(60, 60, 67, 0.18);
+  --separator-strong: rgba(60, 60, 67, 0.36);
+
+  /* ── Fills ───────────────────────────────────────── */
+  --fill-primary:   rgba(120, 120, 128, 0.20);
+  --fill-secondary: rgba(120, 120, 128, 0.12);
+  --fill-tertiary:  rgba(120, 120, 128, 0.08);
+  --fill-quaternary: rgba(120, 120, 128, 0.04);
+
+  /* ── Brand / Accent ──────────────────────────────── */
+  --accent:           #007AFF;
+  --accent-hover:     #0066D6;
+  --accent-pressed:   #0052B0;
+  --accent-soft:      rgba(0, 122, 255, 0.12);
+  --accent-on:        #FFFFFF;
+
+  /* ── Semantic Colors ─────────────────────────────── */
+  --success:        #34C759;
+  --warning:        #FF9500;
+  --danger:         #FF3B30;
+  --success-soft:   rgba(52, 199, 89, 0.12);
+  --warning-soft:   rgba(255, 149, 0, 0.12);
+  --danger-soft:    rgba(255, 59, 48, 0.12);
+
+  /* ── Toolbar ─────────────────────────────────────── */
+  --toolbar-bg:     rgba(255, 255, 255, 0.78);
+  --toolbar-text:   #000000;
+  --toolbar-border: rgba(60, 60, 67, 0.18);
+
+  /* ── Editor / Preview ────────────────────────────── */
+  --editor-bg:      #FFFFFF;
+  --code-bg:        #F2F2F7;
+  --quote-border:   rgba(60, 60, 67, 0.36);
+
+  /* ── Shadows ─────────────────────────────────────── */
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md:  0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl:  0 16px 48px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme='dark'] {
+  --bg-primary:     #000000;
+  --bg-secondary:   #1C1C1E;
+  --bg-tertiary:    #2C2C2E;
+  --bg-elevated:    rgba(28, 28, 30, 0.86);
+  --bg-overlay:     rgba(0, 0, 0, 0.6);
+
+  --text-primary:   #FFFFFF;
+  --text-secondary: rgba(235, 235, 245, 0.6);
+  --text-tertiary:  rgba(235, 235, 245, 0.3);
+  --text-inverse:   #000000;
+
+  --separator:      rgba(84, 84, 88, 0.6);
+  --separator-strong: rgba(84, 84, 88, 0.85);
+
+  --fill-primary:   rgba(120, 120, 128, 0.36);
+  --fill-secondary: rgba(120, 120, 128, 0.24);
+  --fill-tertiary:  rgba(118, 118, 128, 0.18);
+  --fill-quaternary: rgba(118, 118, 128, 0.12);
+
+  --accent:         #0A84FF;
+  --accent-hover:   #1E90FF;
+  --accent-pressed: #0066D6;
+  --accent-soft:    rgba(10, 132, 255, 0.18);
+  --accent-on:      #FFFFFF;
+
+  --success:        #30D158;
+  --warning:        #FF9F0A;
+  --danger:         #FF453A;
+  --success-soft:   rgba(48, 209, 88, 0.18);
+  --warning-soft:   rgba(255, 159, 10, 0.18);
+  --danger-soft:    rgba(255, 69, 58, 0.18);
+
+  --toolbar-bg:     rgba(22, 22, 24, 0.78);
+  --toolbar-text:   #FFFFFF;
+  --toolbar-border: rgba(84, 84, 88, 0.5);
+
+  --editor-bg:      #1C1C1E;
+  --code-bg:        #2C2C2E;
+  --quote-border:   rgba(235, 235, 245, 0.3);
+
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md:  0 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.55);
+  --shadow-xl:  0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* Auto-detect system theme when not explicitly set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg-primary:     #000000;
+    --bg-secondary:   #1C1C1E;
+    --bg-tertiary:    #2C2C2E;
+    --bg-elevated:    rgba(28, 28, 30, 0.86);
+    --text-primary:   #FFFFFF;
+    --text-secondary: rgba(235, 235, 245, 0.6);
+    --text-tertiary:  rgba(235, 235, 245, 0.3);
+    --separator:      rgba(84, 84, 88, 0.6);
+    --accent:         #0A84FF;
+    --toolbar-bg:     rgba(22, 22, 24, 0.78);
+    --toolbar-text:   #FFFFFF;
+    --toolbar-border: rgba(84, 84, 88, 0.5);
+    --editor-bg:      #1C1C1E;
+    --code-bg:        #2C2C2E;
+    --shadow-md:  0 2px 8px rgba(0, 0, 0, 0.45);
+    --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.55);
+  }
+}
+
+:root {
+  /* ── Type Scale (Apple Dynamic Type) ────────────── */
+  --font-caption2:  11px;
+  --font-caption1:  12px;
+  --font-footnote:  13px;
+  --font-subhead:   15px;
+  --font-callout:   16px;
+  --font-body:      17px;
+  --font-headline:  17px;
+  --font-title3:    20px;
+  --font-title2:    22px;
+  --font-title1:    28px;
+  --font-large:     34px;
+
+  /* ── Line Heights ────────────────────────────────── */
+  --leading-tight:  1.2;
+  --leading-snug:   1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  /* ── Font Stacks ─────────────────────────────────── */
+  --font-system:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+    'Segoe UI', system-ui, Roboto, Helvetica, Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+
+  /* ── Spacing (4 px base) ─────────────────────────── */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* ── Radius ──────────────────────────────────────── */
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-2xl:  20px;
+  --radius-full: 9999px;
+
+  /* ── Motion ──────────────────────────────────────── */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:   cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --dur-fast:    150ms;
+  --dur-base:    200ms;
+  --dur-slow:    350ms;
+
+  /* ── Touch Targets (Apple HIG ≥ 44pt) ────────────── */
+  --tap-min: 44px;
+
+  /* ── Z-index Layers ──────────────────────────────── */
+  --z-toolbar: 100;
+  --z-modal:   1000;
+  --z-toast:   2000;
+
+  /* ── Safe Area ───────────────────────────────────── */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur-base: 1ms;
+    --dur-slow: 1ms;
+  }
+}

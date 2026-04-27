@@ -2,7 +2,7 @@ import React from 'react'
 
 export default function MarkdownEditor({ value, onChange }) {
   return (
-    <div className="panel editor-panel">
+    <div className="panel editor-panel" data-panel="editor">
       <div className="panel-label">Markdown Editor</div>
       <textarea
         className="editor-textarea"
