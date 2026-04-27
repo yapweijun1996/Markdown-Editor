@@ -140,7 +140,7 @@ export default function App() {
       {error && <div className="error-bar">{error}</div>}
       {status && <div className="status-bar">{status}</div>}
 
-      <main className="workspace">
+      <main className={`workspace ${previewOnly ? 'workspace-preview-only' : ''}`}>
         {!previewOnly && (
           <MarkdownEditor value={markdown} onChange={setMarkdown} />
         )}

@@ -136,6 +136,29 @@ body {
   line-height: 1.7;
 }
 
+/* Preview-only mode: center content with max width for readability */
+.workspace-preview-only {
+  background: #f0f2f5;
+}
+
+.workspace-preview-only .panel {
+  border-right: none;
+  background: transparent;
+}
+
+.workspace-preview-only .panel-label {
+  display: none;
+}
+
+.workspace-preview-only .preview-content {
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 40px 56px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e5e5;
+}
+
 .preview-content h1 { font-size: 2em; margin-bottom: 0.5em; }
 .preview-content h2 { font-size: 1.6em; margin-bottom: 0.4em; }
 .preview-content h3 { font-size: 1.3em; margin-bottom: 0.4em; }
