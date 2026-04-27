@@ -1,29 +1,26 @@
-import { Paragraph, TextRun, BorderStyle } from 'docx'
-import { wordStyleConfig } from '../styles/wordStyleConfig.js'
+import { Paragraph, BorderStyle } from 'docx'
+import { defaultTemplate } from '../styles/templates/default.js'
 import { convertInlineNodes } from './convertInline.js'
 
-export function convertBlockquote(node) {
-  const cfg = wordStyleConfig.blockquote
+export function convertBlockquote(node, cfg = defaultTemplate) {
+  const c = cfg.blockquote
   const paragraphs = []
 
-  node.children.forEach((child) => {
+  for (const child of node.children) {
     if (child.type === 'paragraph') {
-      const runs = convertInlineNodes(child.children).map(
-        (run) => new TextRun({ ...run.options, color: cfg.color, italics: cfg.italics })
-      )
-
-      paragraphs.push(
-        new Paragraph({
-          children: convertInlineNodes(child.children),
-          indent: { left: cfg.indentLeft },
-          border: {
-            left: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 8 },
-          },
-          spacing: { after: cfg.spacingAfter },
-        })
-      )
+      const inheritedRun = {
+        color: c.color,
+        italics: c.italics,
+        size: c.fontSize,
+      }
+      paragraphs.push(new Paragraph({
+        children: convertInlineNodes(child.children, inheritedRun, cfg),
+        indent: { left: c.indentLeft },
+        border: { left: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 8 } },
+        spacing: { after: c.spacingAfter },
+      }))
     }
-  })
+  }
 
   return paragraphs
 }

@@ -1,9 +1,9 @@
 import {
-  Document, Packer, Paragraph, TextRun,
+  Document, Packer, Paragraph,
   AlignmentType, LevelFormat, convertInchesToTwip,
 } from 'docx'
 import { parseMarkdown } from '../parser/parseMarkdown.js'
-import { wordStyleConfig } from '../styles/wordStyleConfig.js'
+import { getTemplate } from '../styles/templates/index.js'
 import { convertHeading } from './convertHeading.js'
 import { convertParagraph } from './convertParagraph.js'
 import { convertList } from './convertList.js'
@@ -11,76 +11,89 @@ import { convertTable } from './convertTable.js'
 import { convertCodeBlock } from './convertCodeBlock.js'
 import { convertBlockquote } from './convertBlockquote.js'
 import { convertImage } from './convertImage.js'
+import { isTocPlaceholder, buildTableOfContents } from './convertToc.js'
+import { buildPageHeader, buildPageFooter, buildPageProps } from './pageLayout.js'
+import { buildCoverPage } from './coverPage.js'
 
 const NUMBERING = {
   config: [
     {
       reference: 'bullet-list',
-      levels: [
-        {
-          level: 0,
-          format: LevelFormat.BULLET,
-          text: '•',
-          alignment: AlignmentType.LEFT,
-          style: {
-            paragraph: { indent: { left: convertInchesToTwip(0.5), hanging: convertInchesToTwip(0.25) } },
+      levels: [0, 1, 2, 3, 4, 5].map((lvl) => ({
+        level: lvl,
+        format: LevelFormat.BULLET,
+        text: ['•', '◦', '▪', '·', '∘', '▫'][lvl] || '•',
+        alignment: AlignmentType.LEFT,
+        style: {
+          paragraph: {
+            indent: {
+              left: convertInchesToTwip(0.5 + lvl * 0.4),
+              hanging: convertInchesToTwip(0.25),
+            },
           },
         },
-      ],
+      })),
     },
     {
       reference: 'ordered-list',
-      levels: [
-        {
-          level: 0,
-          format: LevelFormat.DECIMAL,
-          text: '%1.',
-          alignment: AlignmentType.LEFT,
-          style: {
-            paragraph: { indent: { left: convertInchesToTwip(0.5), hanging: convertInchesToTwip(0.25) } },
+      levels: [0, 1, 2, 3, 4, 5].map((lvl) => ({
+        level: lvl,
+        format: LevelFormat.DECIMAL,
+        text: `%${lvl + 1}.`,
+        alignment: AlignmentType.LEFT,
+        style: {
+          paragraph: {
+            indent: {
+              left: convertInchesToTwip(0.5 + lvl * 0.4),
+              hanging: convertInchesToTwip(0.25),
+            },
           },
         },
-      ],
+      })),
     },
   ],
 }
 
 function paragraphIsImageOnly(node) {
   if (node.type !== 'paragraph') return false
-  const meaningfulChildren = (node.children || []).filter(
+  const meaningful = (node.children || []).filter(
     (c) => !(c.type === 'text' && !c.value.trim())
   )
-  return meaningfulChildren.length === 1 && meaningfulChildren[0].type === 'image'
+  return meaningful.length === 1 && meaningful[0].type === 'image'
 }
 
-async function convertNode(node) {
+async function convertNode(node, cfg) {
+  // TOC placeholder takes priority over default paragraph handling
+  if (isTocPlaceholder(node)) {
+    return buildTableOfContents()
+  }
+
   switch (node.type) {
     case 'heading':
-      return [convertHeading(node)]
+      return [convertHeading(node, cfg)]
 
     case 'paragraph': {
-      // Block-level images: paragraph containing only an image
       if (paragraphIsImageOnly(node)) {
         const imageNode = node.children.find((c) => c.type === 'image')
         return [await convertImage(imageNode)]
       }
-      return [convertParagraph(node)]
+      return [convertParagraph(node, cfg)]
     }
 
     case 'image':
       return [await convertImage(node)]
 
     case 'list':
-      return convertList(node)
+      return convertList(node, cfg)
 
     case 'table':
-      return [convertTable(node)]
+      return [convertTable(node, cfg)]
 
     case 'code':
-      return convertCodeBlock(node)
+      return convertCodeBlock(node, cfg)
 
     case 'blockquote':
-      return convertBlockquote(node)
+      return convertBlockquote(node, cfg)
 
     case 'thematicBreak':
       return [new Paragraph({
@@ -93,25 +106,57 @@ async function convertNode(node) {
   }
 }
 
-export async function markdownToDocx(markdownText) {
+export async function markdownToDocx(markdownText, options = {}) {
+  const {
+    templateId = 'default',
+    layout = {},
+    docTitle,
+  } = options
+
+  const cfg = getTemplate(templateId)
   const ast = parseMarkdown(markdownText)
-  const cfg = wordStyleConfig.document
 
   const childrenArrays = await Promise.all(
-    ast.children.map((node) => convertNode(node))
+    ast.children.map((node) => convertNode(node, cfg))
   )
-  const children = childrenArrays.flat()
+  const bodyChildren = childrenArrays.flat()
+
+  const titleForLayout = docTitle || layout?.coverPage?.title || ''
+
+  const sectionChildren = [
+    ...buildCoverPage(layout.coverPage, cfg),
+    ...bodyChildren,
+  ]
+
+  const pageProps = buildPageProps({
+    pageSize: layout.pageSize,
+    orientation: layout.orientation,
+  })
+
+  const header = buildPageHeader({ headerText: layout.header, title: titleForLayout })
+  const footer = buildPageFooter({
+    footerText: layout.footer,
+    showPageNumbers: layout.pageNumbers !== false,
+    title: titleForLayout,
+  })
+
+  const section = {
+    properties: pageProps,
+    children: sectionChildren,
+  }
+  if (header) section.headers = { default: header }
+  if (footer) section.footers = { default: footer }
 
   const doc = new Document({
     numbering: NUMBERING,
     styles: {
       default: {
         document: {
-          run: { font: cfg.font, size: cfg.fontSize },
+          run: { font: cfg.document.font, size: cfg.document.fontSize },
         },
       },
     },
-    sections: [{ children }],
+    sections: [section],
   })
 
   return Packer.toBlob(doc)

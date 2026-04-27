@@ -1,13 +1,22 @@
-import { Paragraph } from 'docx'
-import { wordStyleConfig } from '../styles/wordStyleConfig.js'
+import { Paragraph, AlignmentType } from 'docx'
+import { defaultTemplate } from '../styles/templates/default.js'
 import { convertInlineNodes } from './convertInline.js'
 
-export function convertParagraph(node) {
-  const cfg = wordStyleConfig.paragraph
-  const runs = convertInlineNodes(node.children)
+const ALIGN_MAP = {
+  left: AlignmentType.LEFT,
+  center: AlignmentType.CENTER,
+  right: AlignmentType.RIGHT,
+  justified: AlignmentType.JUSTIFIED,
+  justify: AlignmentType.JUSTIFIED,
+}
+
+export function convertParagraph(node, cfg = defaultTemplate) {
+  const c = cfg.paragraph
+  const runs = convertInlineNodes(node.children, {}, cfg)
 
   return new Paragraph({
     children: runs,
-    spacing: { after: cfg.spacingAfter, line: cfg.lineSpacing },
+    spacing: { after: c.spacingAfter, line: c.lineSpacing },
+    alignment: c.alignment ? (ALIGN_MAP[c.alignment] || undefined) : undefined,
   })
 }

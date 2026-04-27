@@ -1,5 +1,5 @@
 import { Paragraph, HeadingLevel } from 'docx'
-import { wordStyleConfig } from '../styles/wordStyleConfig.js'
+import { defaultTemplate } from '../styles/templates/default.js'
 import { convertInlineNodes } from './convertInline.js'
 
 const HEADING_MAP = {
@@ -11,14 +11,18 @@ const HEADING_MAP = {
   6: HeadingLevel.HEADING_6,
 }
 
-export function convertHeading(node) {
+export function convertHeading(node, cfg = defaultTemplate) {
   const depth = node.depth
-  const cfg = wordStyleConfig[`heading${depth}`] || wordStyleConfig.heading1
-  const runs = convertInlineNodes(node.children)
+  const headingCfg = cfg[`heading${depth}`] || cfg.heading1
+  const runs = convertInlineNodes(node.children, {
+    bold: headingCfg.bold,
+    color: headingCfg.color,
+    size: headingCfg.fontSize,
+  }, cfg)
 
   return new Paragraph({
     heading: HEADING_MAP[depth] || HeadingLevel.HEADING_1,
     children: runs,
-    spacing: { after: cfg.spacingAfter },
+    spacing: { after: headingCfg.spacingAfter },
   })
 }

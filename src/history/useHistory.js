@@ -2,11 +2,13 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import {
   createDocument,
   updateDocument,
+  updateDocumentLayout,
   getDocument,
   listDocuments,
   deleteDocument as repoDelete,
   togglePin as repoTogglePin,
   renameDocument as repoRename,
+  DEFAULT_LAYOUT,
 } from './documentRepo.js'
 import { maybeCreateSnapshot } from './snapshotRepo.js'
 
@@ -34,6 +36,10 @@ export function useHistory({ markdown, setMarkdown, paused }) {
   const [docs, setDocs] = useState([])
   const [supported, setSupported] = useState(true)
   const lastSavedRef = useRef('')
+
+  // Currently selected document (with layout/template defaults applied)
+  const currentDoc =
+    currentDocId ? docs.find((d) => d.id === currentDocId) || null : null
 
   // Mirror current id to storage
   useEffect(() => {
@@ -133,6 +139,13 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     refresh()
   }, [refresh])
 
+  const updateLayout = useCallback(async (patch) => {
+    if (!currentDocId) return null
+    const updated = await updateDocumentLayout(currentDocId, patch)
+    refresh()
+    return updated
+  }, [currentDocId, refresh])
+
   const restoreSnapshot = useCallback(async (snapshotContent) => {
     if (!currentDocId) return
     // Save current content as a snapshot before overwriting
@@ -148,6 +161,7 @@ export function useHistory({ markdown, setMarkdown, paused }) {
   return {
     supported,
     currentDocId,
+    currentDoc,
     docs,
     refresh,
     openDoc,
@@ -155,6 +169,8 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     deleteDoc,
     togglePin,
     rename,
+    updateLayout,
     restoreSnapshot,
+    DEFAULT_LAYOUT,
   }
 }

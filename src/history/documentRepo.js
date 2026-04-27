@@ -1,6 +1,37 @@
 import { nanoid } from 'nanoid'
 import { getDB, STORE_DOCUMENTS, STORE_SNAPSHOTS, STORE_IMAGES, deriveTitle, countWords } from './db.js'
 
+export const DEFAULT_LAYOUT = {
+  pageSize: 'a4',
+  orientation: 'portrait',
+  header: '',
+  footer: '',
+  pageNumbers: true,
+  coverPage: {
+    enabled: false,
+    title: '',
+    subtitle: '',
+    author: '',
+    date: '',
+  },
+}
+
+function withDefaults(doc) {
+  if (!doc) return doc
+  return {
+    ...doc,
+    templateId: doc.templateId || 'default',
+    layout: {
+      ...DEFAULT_LAYOUT,
+      ...(doc.layout || {}),
+      coverPage: {
+        ...DEFAULT_LAYOUT.coverPage,
+        ...((doc.layout && doc.layout.coverPage) || {}),
+      },
+    },
+  }
+}
+
 export async function createDocument(content) {
   const db = await getDB()
   const now = Date.now()
@@ -13,9 +44,11 @@ export async function createDocument(content) {
     wordCount: countWords(content),
     sizeBytes: new Blob([content]).size,
     pinned: 0,
+    templateId: 'default',
+    layout: { ...DEFAULT_LAYOUT, coverPage: { ...DEFAULT_LAYOUT.coverPage } },
   }
   await db.put(STORE_DOCUMENTS, doc)
-  return doc
+  return withDefaults(doc)
 }
 
 export async function updateDocument(id, content) {
@@ -32,21 +65,46 @@ export async function updateDocument(id, content) {
     sizeBytes: new Blob([content]).size,
   }
   await db.put(STORE_DOCUMENTS, updated)
-  return updated
+  return withDefaults(updated)
+}
+
+export async function updateDocumentLayout(id, patch) {
+  const db = await getDB()
+  const existing = await db.get(STORE_DOCUMENTS, id)
+  if (!existing) return null
+  const merged = withDefaults(existing)
+  const next = {
+    ...existing,
+    templateId: patch.templateId !== undefined ? patch.templateId : merged.templateId,
+    layout: {
+      ...merged.layout,
+      ...(patch.layout || {}),
+      coverPage: {
+        ...merged.layout.coverPage,
+        ...((patch.layout && patch.layout.coverPage) || {}),
+      },
+    },
+    updatedAt: Date.now(),
+  }
+  await db.put(STORE_DOCUMENTS, next)
+  return withDefaults(next)
 }
 
 export async function getDocument(id) {
   const db = await getDB()
-  return (await db.get(STORE_DOCUMENTS, id)) || null
+  const doc = (await db.get(STORE_DOCUMENTS, id)) || null
+  return doc ? withDefaults(doc) : null
 }
 
 export async function listDocuments() {
   const db = await getDB()
   const all = await db.getAll(STORE_DOCUMENTS)
-  return all.sort((a, b) => {
-    if (a.pinned !== b.pinned) return b.pinned - a.pinned
-    return b.updatedAt - a.updatedAt
-  })
+  return all
+    .map(withDefaults)
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return b.pinned - a.pinned
+      return b.updatedAt - a.updatedAt
+    })
 }
 
 export async function deleteDocument(id) {

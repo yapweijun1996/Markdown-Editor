@@ -310,6 +310,106 @@ body {
   pointer-events: none;
 }
 
+/* =========================================================
+   Document Layout Sheet (template selector + page settings)
+   ========================================================= */
+.layout-modal { max-width: 600px; }
+
+.layout-input {
+  width: 100%;
+  border: 0.5px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--font-subhead);
+  padding: 6px var(--sp-3);
+  height: 32px;
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+.layout-input:focus { border-color: var(--accent); }
+
+.layout-template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-2);
+}
+
+.layout-template-card {
+  background: var(--bg-primary);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: all var(--dur-fast) var(--ease-standard);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.layout-template-card:hover {
+  border-color: var(--separator-strong);
+  background: var(--fill-quaternary);
+}
+
+.layout-template-card.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.layout-template-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--fill-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--sp-1);
+}
+
+.layout-template-card.active .layout-template-swatch {
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+.layout-template-name {
+  font-size: var(--font-subhead);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.layout-template-desc {
+  font-size: var(--font-caption1);
+  color: var(--text-secondary);
+}
+
+.layout-hint {
+  font-size: var(--font-footnote);
+  color: var(--text-secondary);
+  line-height: var(--leading-snug);
+}
+
+.layout-hint code {
+  background: var(--fill-secondary);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+@media (max-width: 767px) {
+  .layout-template-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .preview-content pre {
   max-width: 100%;
   overflow-x: auto;

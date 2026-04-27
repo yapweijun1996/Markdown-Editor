@@ -1,30 +1,35 @@
-import { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, BorderStyle } from 'docx'
-import { wordStyleConfig } from '../styles/wordStyleConfig.js'
+import { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, BorderStyle, ShadingType } from 'docx'
+import { defaultTemplate } from '../styles/templates/default.js'
 import { convertInlineNodes } from './convertInline.js'
 
-export function convertTable(node) {
-  const cfg = wordStyleConfig.table
+export function convertTable(node, cfg = defaultTemplate) {
+  const c = cfg.table
   const border = {
-    top:    { style: BorderStyle.SINGLE, size: 1, color: cfg.borderColor },
-    bottom: { style: BorderStyle.SINGLE, size: 1, color: cfg.borderColor },
-    left:   { style: BorderStyle.SINGLE, size: 1, color: cfg.borderColor },
-    right:  { style: BorderStyle.SINGLE, size: 1, color: cfg.borderColor },
+    top:    { style: BorderStyle.SINGLE, size: 1, color: c.borderColor },
+    bottom: { style: BorderStyle.SINGLE, size: 1, color: c.borderColor },
+    left:   { style: BorderStyle.SINGLE, size: 1, color: c.borderColor },
+    right:  { style: BorderStyle.SINGLE, size: 1, color: c.borderColor },
   }
 
   const rows = node.children.map((rowNode, rowIndex) => {
-    const isHeader = rowNode.type === 'tableRow' && rowIndex === 0
+    const isHeader = rowIndex === 0
 
     const cells = rowNode.children.map((cellNode) => {
-      const runs = convertInlineNodes(cellNode.children)
-      if (isHeader && cfg.headerBold) {
+      const headerExtra = isHeader && c.headerColor ? { color: c.headerColor } : {}
+      const runs = convertInlineNodes(cellNode.children, headerExtra, cfg)
+      if (isHeader && c.headerBold) {
         runs.forEach((run) => { if (run.options) run.options.bold = true })
       }
 
-      return new TableCell({
+      const cellOpts = {
         children: [new Paragraph({ children: runs })],
         borders: border,
-        margins: { top: cfg.cellMargin, bottom: cfg.cellMargin, left: cfg.cellMargin, right: cfg.cellMargin },
-      })
+        margins: { top: c.cellMargin, bottom: c.cellMargin, left: c.cellMargin, right: c.cellMargin },
+      }
+      if (isHeader && c.headerShading) {
+        cellOpts.shading = { type: ShadingType.SOLID, color: c.headerShading, fill: c.headerShading }
+      }
+      return new TableCell(cellOpts)
     })
 
     return new TableRow({ children: cells })
