@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import MarkdownEditor from './editor/MarkdownEditor.jsx'
 import MarkdownPreview from './preview/MarkdownPreview.jsx'
 import ShareModal from './share/ShareModal.jsx'
@@ -13,6 +13,7 @@ import { usePreferences } from './preferences/usePreferences.js'
 import { readDraft, writeDraft, clearDraft } from './preferences/draftStorage.js'
 import { useFileUpload } from './editor/useFileUpload.jsx'
 import { useHistory } from './history/useHistory.js'
+import { useImages } from './images/useImages.js'
 import { downloadDocx } from './download/downloadDocx.js'
 import { decodeShareUrl } from './share/shareLink.js'
 
@@ -90,6 +91,13 @@ const Icon = {
       <polyline points="12 7 12 12 15 14"/>
     </svg>
   ),
+  image: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21 15 16 10 5 21"/>
+    </svg>
+  ),
   newDoc: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -152,6 +160,38 @@ export default function App() {
     setMarkdown,
     paused: previewOnly || sharedLinkOpenedRef.current,
   })
+
+  const images = useImages({
+    markdown,
+    documentId: history.currentDocId,
+  })
+
+  const editorRef = useRef(null)
+
+  const handleInsertImageBlob = useCallback(async (blob, filename) => {
+    try {
+      return await images.insertBlob(blob, filename)
+    } catch (err) {
+      setError('Failed to insert image. Please try again.')
+      return null
+    }
+  }, [images])
+
+  // Image file picker (used by toolbar/More menu)
+  const imagePickerRef = useRef(null)
+  function openImagePicker() {
+    imagePickerRef.current?.click()
+  }
+  async function handleImagePickerChange(e) {
+    const files = [...(e.target.files || [])]
+    e.target.value = ''
+    for (const file of files) {
+      const uri = await handleInsertImageBlob(file, file.name)
+      if (uri && editorRef.current) {
+        editorRef.current.insertText(`![${file.name.replace(/\.[^.]+$/, '')}](${uri})`)
+      }
+    }
+  }
 
   // First load: detect shared link or pending draft
   useEffect(() => {
@@ -262,6 +302,7 @@ export default function App() {
   const moreItems = [
     { label: 'New Document', icon: Icon.newDoc, onClick: handleNewDocument },
     { label: 'History', icon: Icon.history, onClick: () => setShowHistory(true) },
+    { label: 'Insert Image', icon: Icon.image, onClick: openImagePicker },
     { label: 'Upload .md', icon: Icon.upload, onClick: pickFile },
     { label: 'Load Sample', icon: Icon.sample, onClick: handleLoadSample },
     {
@@ -303,6 +344,15 @@ export default function App() {
       data-editor-wordwrap={prefs.editor.wordWrap ? 'on' : 'off'}
     >
       {fileInput}
+      <input
+        ref={imagePickerRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: 'none' }}
+        onChange={handleImagePickerChange}
+        aria-hidden="true"
+      />
 
       <header className="toolbar">
         <span className="toolbar-title">
@@ -398,7 +448,12 @@ export default function App() {
 
       <main className={workspaceClass}>
         {!previewOnly && (
-          <MarkdownEditor value={markdown} onChange={setMarkdown} />
+          <MarkdownEditor
+            ref={editorRef}
+            value={markdown}
+            onChange={setMarkdown}
+            onInsertImageBlob={handleInsertImageBlob}
+          />
         )}
         <MarkdownPreview markdown={markdown} />
       </main>

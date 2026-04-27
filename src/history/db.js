@@ -1,10 +1,11 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'markdown-editor-db'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 export const STORE_DOCUMENTS = 'documents'
 export const STORE_SNAPSHOTS = 'snapshots'
+export const STORE_IMAGES = 'images'
 
 let dbPromise = null
 
@@ -21,6 +22,11 @@ export function getDB() {
           const snaps = db.createObjectStore(STORE_SNAPSHOTS, { keyPath: 'id' })
           snaps.createIndex('documentId', 'documentId')
           snaps.createIndex('createdAt', 'createdAt')
+        }
+        if (!db.objectStoreNames.contains(STORE_IMAGES)) {
+          const images = db.createObjectStore(STORE_IMAGES, { keyPath: 'id' })
+          images.createIndex('documentId', 'documentId')
+          images.createIndex('createdAt', 'createdAt')
         }
       },
       blocked() {

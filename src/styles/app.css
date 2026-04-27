@@ -259,6 +259,55 @@ body {
 .preview-content img {
   max-width: 100%;
   height: auto;
+  border-radius: var(--radius-sm);
+  display: block;
+  margin: 0.6em auto;
+}
+
+.preview-content .image-loading {
+  display: inline-block;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--fill-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-footnote);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ── Editor drop overlay (for image drag-drop) ────── */
+.editor-panel { position: relative; }
+
+.editor-drop-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--accent-soft);
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  animation: dropFadeIn var(--dur-fast) var(--ease-standard);
+}
+
+@keyframes dropFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.editor-drop-message {
+  font-size: var(--font-callout);
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--bg-primary);
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.editor-dragging .editor-textarea {
+  pointer-events: none;
 }
 
 .preview-content pre {

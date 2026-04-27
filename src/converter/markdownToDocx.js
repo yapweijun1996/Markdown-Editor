@@ -10,6 +10,7 @@ import { convertList } from './convertList.js'
 import { convertTable } from './convertTable.js'
 import { convertCodeBlock } from './convertCodeBlock.js'
 import { convertBlockquote } from './convertBlockquote.js'
+import { convertImage } from './convertImage.js'
 
 const NUMBERING = {
   config: [
@@ -44,13 +45,30 @@ const NUMBERING = {
   ],
 }
 
-function convertNode(node) {
+function paragraphIsImageOnly(node) {
+  if (node.type !== 'paragraph') return false
+  const meaningfulChildren = (node.children || []).filter(
+    (c) => !(c.type === 'text' && !c.value.trim())
+  )
+  return meaningfulChildren.length === 1 && meaningfulChildren[0].type === 'image'
+}
+
+async function convertNode(node) {
   switch (node.type) {
     case 'heading':
       return [convertHeading(node)]
 
-    case 'paragraph':
+    case 'paragraph': {
+      // Block-level images: paragraph containing only an image
+      if (paragraphIsImageOnly(node)) {
+        const imageNode = node.children.find((c) => c.type === 'image')
+        return [await convertImage(imageNode)]
+      }
       return [convertParagraph(node)]
+    }
+
+    case 'image':
+      return [await convertImage(node)]
 
     case 'list':
       return convertList(node)
@@ -65,7 +83,10 @@ function convertNode(node) {
       return convertBlockquote(node)
 
     case 'thematicBreak':
-      return [new Paragraph({ border: { bottom: { style: 'single', size: 1, color: 'CCCCCC', space: 1 } }, spacing: { before: 120, after: 120 } })]
+      return [new Paragraph({
+        border: { bottom: { style: 'single', size: 1, color: 'CCCCCC', space: 1 } },
+        spacing: { before: 120, after: 120 },
+      })]
 
     default:
       return []
@@ -76,7 +97,10 @@ export async function markdownToDocx(markdownText) {
   const ast = parseMarkdown(markdownText)
   const cfg = wordStyleConfig.document
 
-  const children = ast.children.flatMap(convertNode)
+  const childrenArrays = await Promise.all(
+    ast.children.map((node) => convertNode(node))
+  )
+  const children = childrenArrays.flat()
 
   const doc = new Document({
     numbering: NUMBERING,

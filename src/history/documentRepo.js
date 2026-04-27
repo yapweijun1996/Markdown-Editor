@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { getDB, STORE_DOCUMENTS, STORE_SNAPSHOTS, deriveTitle, countWords } from './db.js'
+import { getDB, STORE_DOCUMENTS, STORE_SNAPSHOTS, STORE_IMAGES, deriveTitle, countWords } from './db.js'
 
 export async function createDocument(content) {
   const db = await getDB()
@@ -51,17 +51,28 @@ export async function listDocuments() {
 
 export async function deleteDocument(id) {
   const db = await getDB()
-  const tx = db.transaction([STORE_DOCUMENTS, STORE_SNAPSHOTS], 'readwrite')
+  const tx = db.transaction(
+    [STORE_DOCUMENTS, STORE_SNAPSHOTS, STORE_IMAGES],
+    'readwrite'
+  )
   await tx.objectStore(STORE_DOCUMENTS).delete(id)
 
   // Cascade-delete snapshots
   const snapStore = tx.objectStore(STORE_SNAPSHOTS)
-  const index = snapStore.index('documentId')
-  let cursor = await index.openCursor(IDBKeyRange.only(id))
+  let cursor = await snapStore.index('documentId').openCursor(IDBKeyRange.only(id))
   while (cursor) {
     await cursor.delete()
     cursor = await cursor.continue()
   }
+
+  // Cascade-delete images
+  const imgStore = tx.objectStore(STORE_IMAGES)
+  let imgCursor = await imgStore.index('documentId').openCursor(IDBKeyRange.only(id))
+  while (imgCursor) {
+    await imgCursor.delete()
+    imgCursor = await imgCursor.continue()
+  }
+
   await tx.done
 }
 

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import MarkdownIt from 'markdown-it'
+import { isInternalImageUri, getObjectUrl, ensureLoaded, imageIdFromUri } from '../images/imageCache.js'
 
 const md = new MarkdownIt({
   html: false,
@@ -9,7 +10,6 @@ const md = new MarkdownIt({
 })
 
 // Wrap every table in a horizontally scrollable container
-// so wide tables can scroll independently on mobile.
 const passThrough = (tokens, idx, options, env, self) =>
   self.renderToken(tokens, idx, options)
 
@@ -32,6 +32,28 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
     token.attrSet('rel', 'noopener noreferrer')
   }
   return baseLinkOpen(tokens, idx, options, env, self)
+}
+
+// Resolve mdimg:// URIs in image src to runtime blob URLs
+md.renderer.rules.image = (tokens, idx, options, env, self) => {
+  const token = tokens[idx]
+  const src = token.attrGet('src')
+  if (isInternalImageUri(src)) {
+    const id = imageIdFromUri(src)
+    const objectUrl = getObjectUrl(id)
+    if (objectUrl) {
+      token.attrSet('src', objectUrl)
+    } else {
+      // Trigger async load — preview will refresh when cache updates
+      ensureLoaded(id).catch(() => {})
+      token.attrSet('src', '')
+      token.attrSet('data-pending', '1')
+      const alt = token.content || ''
+      return `<span class="image-loading" aria-label="Loading image">${alt || 'Loading image…'}</span>`
+    }
+  }
+  // Default rendering
+  return self.renderToken(tokens, idx, options)
 }
 
 export default function MarkdownPreview({ markdown }) {
