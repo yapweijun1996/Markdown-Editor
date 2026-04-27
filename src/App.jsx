@@ -3,6 +3,7 @@ import MarkdownEditor from './editor/MarkdownEditor.jsx'
 import FileUploader from './editor/FileUploader.jsx'
 import MarkdownPreview from './preview/MarkdownPreview.jsx'
 import ShareModal from './share/ShareModal.jsx'
+import UpdatePrompt from './pwa/UpdatePrompt.jsx'
 import { downloadDocx } from './download/downloadDocx.js'
 import { decodeShareUrl } from './share/shareLink.js'
 
@@ -150,6 +151,8 @@ export default function App() {
       {showShare && (
         <ShareModal markdown={markdown} onClose={() => setShowShare(false)} />
       )}
+
+      <UpdatePrompt />
     </div>
   )
 }
