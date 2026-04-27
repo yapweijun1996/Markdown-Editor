@@ -124,6 +124,9 @@ export default function App() {
             <>
               <FileUploader onLoad={setMarkdown} onError={setError} />
               <button onClick={handleExport}>Export .docx</button>
+              <button onClick={() => setPreviewOnly(true)} disabled={!markdown.trim()}>
+                Preview
+              </button>
               <button onClick={() => setShowShare(true)} disabled={!markdown.trim()}>
                 Share
               </button>
