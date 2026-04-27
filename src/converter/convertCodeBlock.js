@@ -16,3 +16,9 @@ export function convertCodeBlock(node, cfg = defaultTemplate) {
     return new Paragraph(props)
   })
 }
+
+export function isMermaidCodeBlock(node) {
+  if (node.type !== 'code') return false
+  const lang = (node.lang || '').trim().toLowerCase()
+  return lang === 'mermaid'
+}

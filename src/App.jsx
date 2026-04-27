@@ -16,6 +16,7 @@ import { useFileUpload } from './editor/useFileUpload.jsx'
 import { useHistory } from './history/useHistory.js'
 import { useImages } from './images/useImages.js'
 import { downloadDocx } from './download/downloadDocx.js'
+import { downloadPdf } from './download/downloadPdf.js'
 import { decodeShareUrl } from './share/shareLink.js'
 
 const SAMPLE_MARKDOWN = `# Sample Document
@@ -112,6 +113,14 @@ const Icon = {
       <rect x="3" y="3" width="18" height="18" rx="2"/>
       <line x1="3" y1="9" x2="21" y2="9"/>
       <line x1="3" y1="15" x2="21" y2="15"/>
+    </svg>
+  ),
+  pdf: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="9" y1="13" x2="15" y2="13"/>
+      <line x1="9" y1="17" x2="13" y2="17"/>
     </svg>
   ),
   share: (
@@ -325,6 +334,12 @@ export default function App() {
       onClick: () => setShowLayout(true),
       disabled: !history.currentDoc,
     },
+    {
+      label: 'Export PDF',
+      icon: Icon.pdf,
+      onClick: () => downloadPdf(),
+      disabled: !hasContent,
+    },
     { label: 'Insert Image', icon: Icon.image, onClick: openImagePicker },
     { label: 'Upload .md', icon: Icon.upload, onClick: pickFile },
     { label: 'Load Sample', icon: Icon.sample, onClick: handleLoadSample },
@@ -397,6 +412,14 @@ export default function App() {
               <button className="hide-on-mobile" onClick={() => setShowHistory(true)}>History</button>
               <button className="hide-on-mobile" onClick={pickFile}>Upload</button>
               <button onClick={handleExport}>Export</button>
+              <button
+                className="hide-on-mobile"
+                onClick={() => downloadPdf()}
+                disabled={!hasContent}
+                title="Print or save as PDF"
+              >
+                PDF
+              </button>
               <button
                 className="hide-on-mobile"
                 onClick={() => setPreviewOnly(true)}

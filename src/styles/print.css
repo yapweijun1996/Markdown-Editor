@@ -1,0 +1,110 @@
+/* =========================================================
+   Print stylesheet — used by Export PDF (window.print)
+   Hides app chrome, shows only preview content full-width.
+   ========================================================= */
+
+@media print {
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+  }
+
+  html, body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
+    overscroll-behavior: auto !important;
+  }
+
+  #root, .app {
+    height: auto !important;
+    background: #FFFFFF !important;
+    display: block !important;
+  }
+
+  /* Hide app chrome */
+  .toolbar,
+  .mobile-tabs,
+  .editor-panel,
+  .modal-backdrop,
+  .pwa-toast,
+  .draft-prompt,
+  .error-bar,
+  .status-bar,
+  .panel-label {
+    display: none !important;
+  }
+
+  /* Expand workspace + preview to full page */
+  .workspace,
+  .panel.preview-panel {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: none !important;
+    background: #FFFFFF !important;
+  }
+
+  .workspace-preview-only .preview-content,
+  .preview-content {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    line-height: 1.55 !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 1.8cm 2cm;
+  }
+
+  /* Page break hints */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  pre, table, blockquote, .table-wrap, figure {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Make hyperlinks legible on paper */
+  .preview-content a {
+    color: #000000 !important;
+    text-decoration: underline !important;
+  }
+  .preview-content a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #555555;
+  }
+
+  /* Code blocks use lighter shading on paper */
+  .preview-content pre,
+  .preview-content code {
+    background: #F5F5F5 !important;
+    color: #000000 !important;
+    border: 0.5px solid #DDDDDD !important;
+  }
+  .preview-content pre code { border: none !important; }
+
+  /* KaTeX math: keep clear */
+  .katex { color: #000000 !important; }
+}

@@ -15,6 +15,8 @@ export default defineConfig({
           }
           if (id.includes('/docx/')) return 'vendor-docx'
           if (id.includes('/jszip/')) return 'vendor-jszip'
+          if (id.includes('/katex/')) return 'vendor-katex'
+          if (id.includes('/mermaid/') || id.includes('/dagre') || id.includes('/cytoscape') || id.includes('/d3-')) return 'vendor-mermaid'
           if (id.includes('/markdown-it/') || id.includes('linkify-it') || id.includes('mdurl') || id.includes('uc.micro') || id.includes('entities')) {
             return 'vendor-markdown-it'
           }
@@ -76,6 +78,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {

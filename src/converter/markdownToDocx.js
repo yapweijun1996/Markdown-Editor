@@ -8,9 +8,10 @@ import { convertHeading } from './convertHeading.js'
 import { convertParagraph } from './convertParagraph.js'
 import { convertList } from './convertList.js'
 import { convertTable } from './convertTable.js'
-import { convertCodeBlock } from './convertCodeBlock.js'
+import { convertCodeBlock, isMermaidCodeBlock } from './convertCodeBlock.js'
 import { convertBlockquote } from './convertBlockquote.js'
 import { convertImage } from './convertImage.js'
+import { convertMermaid } from './convertMermaid.js'
 import { isTocPlaceholder, buildTableOfContents } from './convertToc.js'
 import { buildPageHeader, buildPageFooter, buildPageProps } from './pageLayout.js'
 import { buildCoverPage } from './coverPage.js'
@@ -90,6 +91,9 @@ async function convertNode(node, cfg) {
       return [convertTable(node, cfg)]
 
     case 'code':
+      if (isMermaidCodeBlock(node)) {
+        return [await convertMermaid(node)]
+      }
       return convertCodeBlock(node, cfg)
 
     case 'blockquote':

@@ -264,6 +264,53 @@ body {
   margin: 0.6em auto;
 }
 
+/* ── Math (KaTeX) blocks ─────────────────────────── */
+.preview-content .math-block {
+  display: block;
+  text-align: center;
+  margin: var(--sp-3) 0;
+  overflow-x: auto;
+  padding: var(--sp-2) 0;
+}
+
+.preview-content .math-error {
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--danger-soft);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+}
+
+.preview-content .katex { font-size: 1.05em; }
+
+/* ── Mermaid diagrams ────────────────────────────── */
+.preview-content .mermaid-block {
+  display: flex;
+  justify-content: center;
+  margin: var(--sp-3) 0;
+  padding: var(--sp-3);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--separator);
+  overflow-x: auto;
+}
+
+.preview-content .mermaid-block svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.preview-content .mermaid-error {
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: var(--font-footnote);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--danger-soft);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+}
+
 .preview-content .image-loading {
   display: inline-block;
   padding: var(--sp-2) var(--sp-3);
