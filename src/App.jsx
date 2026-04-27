@@ -430,6 +430,7 @@ export default function App() {
           onDelete={history.deleteDoc}
           onPin={history.togglePin}
           onRename={history.rename}
+          onRestoreSnapshot={history.restoreSnapshot}
           onClose={() => setShowHistory(false)}
         />
       )}

@@ -133,6 +133,18 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     refresh()
   }, [refresh])
 
+  const restoreSnapshot = useCallback(async (snapshotContent) => {
+    if (!currentDocId) return
+    // Save current content as a snapshot before overwriting
+    if (markdown && markdown !== snapshotContent) {
+      await maybeCreateSnapshot(currentDocId, markdown).catch(() => {})
+    }
+    setMarkdown(snapshotContent)
+    lastSavedRef.current = snapshotContent
+    await updateDocument(currentDocId, snapshotContent)
+    refresh()
+  }, [currentDocId, markdown, refresh, setMarkdown])
+
   return {
     supported,
     currentDocId,
@@ -143,5 +155,6 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     deleteDoc,
     togglePin,
     rename,
+    restoreSnapshot,
   }
 }

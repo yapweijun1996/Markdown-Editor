@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { formatRelativeTime } from '../preferences/draftStorage.js'
+import VersionsView from './VersionsView.jsx'
+import { exportAllAsZip } from './exportHistory.js'
 
 const PinIcon = ({ filled }) => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -22,6 +24,13 @@ const PencilIcon = () => (
   </svg>
 )
 
+const ClockIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9"/>
+    <polyline points="12 7 12 12 15 14"/>
+  </svg>
+)
+
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="5" x2="12" y2="19"/>
@@ -29,14 +38,29 @@ const PlusIcon = () => (
   </svg>
 )
 
+const ZipIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+)
+
 function previewSnippet(content) {
   if (!content) return ''
-  const cleaned = content
+  return content
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/[*_`]/g, '')
     .replace(/\n+/g, ' ')
     .trim()
-  return cleaned.slice(0, 140)
+    .slice(0, 140)
+}
+
+function formatBytes(b) {
+  if (!b) return '0 B'
+  if (b < 1024) return `${b} B`
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`
+  return `${(b / 1024 / 1024).toFixed(1)} MB`
 }
 
 export default function HistoryPanel({
@@ -48,11 +72,26 @@ export default function HistoryPanel({
   onDelete,
   onPin,
   onRename,
+  onRestoreSnapshot,
   onClose,
 }) {
   const [query, setQuery] = useState('')
   const [renameTarget, setRenameTarget] = useState(null)
   const [renameValue, setRenameValue] = useState('')
+  const [versionsDoc, setVersionsDoc] = useState(null)
+  const [exporting, setExporting] = useState(false)
+  const [storage, setStorage] = useState(null)
+
+  useEffect(() => {
+    if (navigator.storage?.estimate) {
+      navigator.storage.estimate().then((est) => {
+        setStorage({
+          usage: est.usage || 0,
+          quota: est.quota || 0,
+        })
+      }).catch(() => {})
+    }
+  }, [docs])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -64,6 +103,10 @@ export default function HistoryPanel({
     )
   }, [docs, query])
 
+  const totalSize = useMemo(() => {
+    return docs.reduce((sum, d) => sum + (d.sizeBytes || 0), 0)
+  }, [docs])
+
   function startRename(doc) {
     setRenameTarget(doc.id)
     setRenameValue(doc.title)
@@ -73,11 +116,29 @@ export default function HistoryPanel({
     setRenameTarget(null)
   }
 
+  async function handleExport() {
+    setExporting(true)
+    try {
+      await exportAllAsZip()
+    } catch (err) {
+      alert(err.message || 'Export failed')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal history-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <span>History</span>
+          <span>
+            History
+            {docs.length > 0 && (
+              <span className="history-header-count">
+                {docs.length} doc{docs.length === 1 ? '' : 's'} · {formatBytes(totalSize)}
+              </span>
+            )}
+          </span>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
@@ -159,6 +220,14 @@ export default function HistoryPanel({
                 <div className="history-item-actions" onClick={(e) => e.stopPropagation()}>
                   <button
                     className="icon-btn-mini"
+                    onClick={() => setVersionsDoc(doc)}
+                    aria-label="View versions"
+                    title="View versions"
+                  >
+                    <ClockIcon />
+                  </button>
+                  <button
+                    className="icon-btn-mini"
                     onClick={() => onPin(doc.id)}
                     aria-label={doc.pinned ? 'Unpin' : 'Pin'}
                     title={doc.pinned ? 'Unpin' : 'Pin'}
@@ -187,6 +256,40 @@ export default function HistoryPanel({
               </div>
             ))}
           </div>
+        )}
+
+        {supported && docs.length > 0 && (
+          <div className="history-footer">
+            {storage && (
+              <span className="history-storage-info">
+                Storage: {formatBytes(storage.usage)}
+                {storage.quota > 0 && (
+                  <> / {formatBytes(storage.quota)}</>
+                )}
+              </span>
+            )}
+            <button
+              className="history-export-btn"
+              onClick={handleExport}
+              disabled={exporting}
+            >
+              <ZipIcon /> {exporting ? 'Exporting…' : 'Export All as ZIP'}
+            </button>
+          </div>
+        )}
+
+        {versionsDoc && (
+          <VersionsView
+            doc={versionsDoc}
+            onRestore={(content) => {
+              if (versionsDoc.id === currentDocId) {
+                onRestoreSnapshot(content)
+              } else {
+                onOpen(versionsDoc.id).then(() => onRestoreSnapshot(content))
+              }
+            }}
+            onClose={() => setVersionsDoc(null)}
+          />
         )}
       </div>
     </div>

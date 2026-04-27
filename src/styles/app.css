@@ -1060,6 +1060,197 @@ body {
 .history-empty p { font-size: var(--font-subhead); }
 .history-empty-hint { color: var(--text-tertiary); font-size: var(--font-footnote); }
 
+.history-header-count {
+  display: block;
+  font-size: var(--font-caption1);
+  font-weight: 400;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── History Footer ──────────────────────────────── */
+.history-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-secondary);
+  border-top: 0.5px solid var(--separator);
+  flex-shrink: 0;
+}
+
+.history-storage-info {
+  font-size: var(--font-caption1);
+  color: var(--text-tertiary);
+}
+
+.history-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 36px;
+  padding: 0 var(--sp-3);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-footnote);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
+}
+
+.history-export-btn:hover { background: var(--fill-secondary); }
+.history-export-btn:active { transform: scale(0.97); }
+.history-export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* =========================================================
+   Versions Timeline
+   ========================================================= */
+.versions-modal {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  max-height: 80dvh;
+}
+
+.versions-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-4);
+}
+
+.versions-current {
+  background: var(--accent-soft);
+  border: 0.5px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.versions-current-label {
+  font-size: var(--font-subhead);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.versions-current-meta {
+  font-size: var(--font-caption1);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.versions-timeline {
+  list-style: none;
+  position: relative;
+  margin: 0;
+  padding: 0 0 0 var(--sp-5);
+}
+
+.versions-timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--separator);
+}
+
+.versions-item {
+  position: relative;
+  padding-bottom: var(--sp-4);
+}
+
+.versions-item:last-child { padding-bottom: 0; }
+
+.versions-dot {
+  position: absolute;
+  left: calc(var(--sp-5) * -1 + 4px);
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 0 0 1px var(--separator);
+}
+
+.versions-content {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3);
+}
+
+.versions-row1 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+.versions-time {
+  font-size: var(--font-subhead);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.versions-date {
+  font-size: var(--font-caption1);
+  color: var(--text-tertiary);
+}
+
+.versions-snippet {
+  font-size: var(--font-footnote);
+  color: var(--text-secondary);
+  line-height: var(--leading-snug);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  margin-bottom: var(--sp-2);
+}
+
+.versions-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.versions-restore,
+.versions-delete {
+  border: none;
+  font-family: inherit;
+  font-size: var(--font-footnote);
+  font-weight: 500;
+  padding: 0 var(--sp-3);
+  height: 32px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
+}
+
+.versions-restore {
+  background: var(--accent);
+  color: var(--accent-on);
+}
+.versions-restore:hover { background: var(--accent-hover); }
+.versions-restore:active { transform: scale(0.97); }
+
+.versions-delete {
+  background: transparent;
+  color: var(--danger);
+}
+.versions-delete:hover { background: var(--danger-soft); }
+.versions-delete:active { transform: scale(0.97); }
+
 /* =========================================================
    Action Sheet (mobile More menu)
    ========================================================= */
