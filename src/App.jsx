@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import MarkdownEditor from './editor/MarkdownEditor.jsx'
 import FileUploader from './editor/FileUploader.jsx'
 import MarkdownPreview from './preview/MarkdownPreview.jsx'
+import ShareModal from './share/ShareModal.jsx'
 import { downloadDocx } from './download/downloadDocx.js'
+import { decodeShareUrl } from './share/shareLink.js'
 
 const SAMPLE_MARKDOWN = `# Sample Document
 
@@ -48,6 +50,16 @@ export default function App() {
   const [markdown, setMarkdown] = useState('')
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
+  const [showShare, setShowShare] = useState(false)
+  const [previewOnly, setPreviewOnly] = useState(false)
+
+  useEffect(() => {
+    const shared = decodeShareUrl()
+    if (shared) {
+      setMarkdown(shared.markdown)
+      setPreviewOnly(shared.previewOnly)
+    }
+  }, [])
 
   async function handleExport() {
     if (!markdown.trim()) {
@@ -77,15 +89,36 @@ export default function App() {
     setError('')
   }
 
+  function handleEditMode() {
+    setPreviewOnly(false)
+    const baseUrl = `${window.location.origin}${window.location.pathname}`
+    window.history.replaceState({}, '', baseUrl)
+  }
+
   return (
     <div className="app">
       <header className="toolbar">
-        <span className="toolbar-title">Markdown to Word Converter</span>
+        <span className="toolbar-title">
+          Markdown to Word Converter
+          {previewOnly && <span className="badge-readonly">PREVIEW ONLY</span>}
+        </span>
         <div className="toolbar-actions">
-          <FileUploader onLoad={setMarkdown} onError={setError} />
-          <button onClick={handleExport}>Export .docx</button>
-          <button onClick={handleLoadSample}>Load Sample</button>
-          <button onClick={handleClear}>Clear</button>
+          {previewOnly ? (
+            <>
+              <button onClick={handleExport}>Export .docx</button>
+              <button onClick={handleEditMode}>Edit Mode</button>
+            </>
+          ) : (
+            <>
+              <FileUploader onLoad={setMarkdown} onError={setError} />
+              <button onClick={handleExport}>Export .docx</button>
+              <button onClick={() => setShowShare(true)} disabled={!markdown.trim()}>
+                Share
+              </button>
+              <button onClick={handleLoadSample}>Load Sample</button>
+              <button onClick={handleClear}>Clear</button>
+            </>
+          )}
         </div>
       </header>
 
@@ -93,9 +126,15 @@ export default function App() {
       {status && <div className="status-bar">{status}</div>}
 
       <main className="workspace">
-        <MarkdownEditor value={markdown} onChange={setMarkdown} />
+        {!previewOnly && (
+          <MarkdownEditor value={markdown} onChange={setMarkdown} />
+        )}
         <MarkdownPreview markdown={markdown} />
       </main>
+
+      {showShare && (
+        <ShareModal markdown={markdown} onClose={() => setShowShare(false)} />
+      )}
     </div>
   )
 }
