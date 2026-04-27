@@ -1,10 +1,28 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { encodeShareUrl, copyToClipboard } from './shareLink.js'
 
+const STORAGE_KEY = 'share.previewOnly'
+
+function readPreviewOnlyPref() {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY)
+    if (v === null) return true
+    return v === 'true'
+  } catch {
+    return true
+  }
+}
+
 export default function ShareModal({ markdown, onClose }) {
-  const [previewOnly, setPreviewOnly] = useState(false)
+  const [previewOnly, setPreviewOnly] = useState(readPreviewOnlyPref)
   const [copied, setCopied] = useState(false)
   const inputRef = useRef(null)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(previewOnly))
+    } catch {}
+  }, [previewOnly])
 
   const url = useMemo(
     () => encodeShareUrl(markdown, previewOnly),
