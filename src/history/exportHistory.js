@@ -1,5 +1,3 @@
-import JSZip from 'jszip'
-import { saveAs } from 'file-saver'
 import { listDocuments } from './documentRepo.js'
 import { listSnapshots } from './snapshotRepo.js'
 
@@ -38,6 +36,11 @@ export async function exportAllAsZip({ includeSnapshots = true } = {}) {
   if (docs.length === 0) {
     throw new Error('No documents to export.')
   }
+
+  const [{ default: JSZip }, { saveAs }] = await Promise.all([
+    import('jszip'),
+    import('file-saver'),
+  ])
 
   const zip = new JSZip()
 

@@ -4,6 +4,31 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   base: '/Markdown-Editor/',
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler')) {
+            return 'vendor-react'
+          }
+          if (id.includes('/docx/')) return 'vendor-docx'
+          if (id.includes('/jszip/')) return 'vendor-jszip'
+          if (id.includes('/markdown-it/') || id.includes('linkify-it') || id.includes('mdurl') || id.includes('uc.micro') || id.includes('entities')) {
+            return 'vendor-markdown-it'
+          }
+          if (id.includes('/unified/') || id.includes('remark') || id.includes('mdast') || id.includes('micromark') || id.includes('vfile') || id.includes('unist')) {
+            return 'vendor-remark'
+          }
+          if (id.includes('/idb/') || id.includes('nanoid') || id.includes('lz-string') || id.includes('file-saver')) {
+            return 'vendor-utils'
+          }
+          if (id.includes('workbox')) return 'vendor-workbox'
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
