@@ -11,13 +11,26 @@ export function encodeShareUrl(markdown, previewOnly = false) {
   if (previewOnly) params.set(PARAM_MODE, MODE_PREVIEW)
 
   const baseUrl = `${window.location.origin}${window.location.pathname}`
-  return `${baseUrl}?${params.toString()}`
+  return `${baseUrl}#${params.toString()}`
+}
+
+function readHashParams() {
+  const hash = window.location.hash.startsWith('#')
+    ? window.location.hash.slice(1)
+    : window.location.hash
+  return new URLSearchParams(hash)
 }
 
 export function decodeShareUrl() {
-  const params = new URLSearchParams(window.location.search)
-  const content = params.get(PARAM_CONTENT)
-  const mode = params.get(PARAM_MODE)
+  let params = readHashParams()
+  let content = params.get(PARAM_CONTENT)
+  let mode = params.get(PARAM_MODE)
+
+  if (!content) {
+    const search = new URLSearchParams(window.location.search)
+    content = search.get(PARAM_CONTENT)
+    mode = mode || search.get(PARAM_MODE)
+  }
 
   if (!content) return null
 

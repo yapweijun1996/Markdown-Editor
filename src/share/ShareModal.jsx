@@ -11,7 +11,7 @@ export default function ShareModal({ markdown, onClose }) {
     [markdown, previewOnly]
   )
 
-  const tooLong = url.length > 8000
+  const tooLong = url.length > 50000
 
   async function handleCopy() {
     const ok = await copyToClipboard(url)
@@ -55,8 +55,8 @@ export default function ShareModal({ markdown, onClose }) {
 
           {tooLong && (
             <div className="modal-warn">
-              ⚠ URL is very long ({url.length} chars). Some browsers/messaging
-              apps may truncate it. Consider shortening your Markdown.
+              ⚠ URL is very long ({url.length} chars). Some messaging apps may
+              truncate it when pasted. Consider shortening your Markdown.
             </div>
           )}
 

@@ -95,6 +95,18 @@ export default function App() {
     window.history.replaceState({}, '', baseUrl)
   }
 
+  useEffect(() => {
+    function onHashChange() {
+      const shared = decodeShareUrl()
+      if (shared) {
+        setMarkdown(shared.markdown)
+        setPreviewOnly(shared.previewOnly)
+      }
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
   return (
     <div className="app">
       <header className="toolbar">
