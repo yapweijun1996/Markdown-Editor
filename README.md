@@ -1,5 +1,9 @@
 # Markdown to Word Converter
 
+[![Deploy](https://github.com/yapweijun1996/Markdown-Editor/actions/workflows/deploy.yml/badge.svg)](https://github.com/yapweijun1996/Markdown-Editor/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Pages](https://img.shields.io/badge/demo-live-brightgreen)](https://yapweijun1996.github.io/Markdown-Editor/)
+
 A web-based tool to write, preview, and export Markdown as a Microsoft Word `.docx` file.
 
 🔗 **Live Demo:** [https://yapweijun1996.github.io/Markdown-Editor/](https://yapweijun1996.github.io/Markdown-Editor/)
