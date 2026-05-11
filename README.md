@@ -31,7 +31,7 @@ An installable, offline-capable Markdown editor and Microsoft Word `.docx` conve
 - 📲  **Mobile responsive** — clean toolbar with iOS-style Action Sheet for secondary actions
 - 🔗  **Share link + QR** — encode entire Markdown into URL hash (no backend, no length limits) + QR code for mobile sharing
 - ✂️  **Optional URL shortener** — TinyURL integration (opt-in, single click)
-- 👁️  **Preview-only mode** — readers see clean centered view without editor (1200px max width)
+- 👁️  **Read mode (fullscreen)** — distraction-free article view (820 px reading column by default); zoom 70–300% with an optional paper-width lock toggle; toolbar auto-hides on scroll-down and returns on scroll-up. Preferences persist in localStorage.
 - 💾  **Auto-save draft** — never lose work after browser crash (configurable interval)
 - 📚  **Document history** — IndexedDB stores every doc you ever edit
 - 🕐  **Snapshot timeline** — auto-versioned, restore any past state with one click
@@ -46,8 +46,8 @@ An installable, offline-capable Markdown editor and Microsoft Word `.docx` conve
 | Mode | UI | Use Case |
 |---|---|---|
 | **Edit Mode** (default) | Editor + Preview side-by-side | Writing & editing Markdown |
-| **Preview Mode** | Centered preview only (1200px max) | Reading / presentation view |
-| **Preview-Only (shared)** | Preview only, marked `PREVIEW ONLY` | Recipient of a shared link |
+| **Read Mode** | Fullscreen article view (820 px column default), zoom + width-lock controls, auto-hiding toolbar | Reading / presentation |
+| **Preview-Only (shared)** | Read-mode view marked `PREVIEW` | Recipient of a shared link |
 | **Standalone (PWA)** | No browser UI | Installed home-screen app |
 
 Switch modes via toolbar buttons. Mobile uses tab switcher between Editor / Preview.
