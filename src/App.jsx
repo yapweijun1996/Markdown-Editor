@@ -284,15 +284,16 @@ const Icon = {
       <line x1="12" y1="15" x2="12" y2="3"/>
     </svg>
   ),
-  zoomOut: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-      <line x1="5" y1="12" x2="19" y2="12"/>
+  lock: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="11" width="16" height="10" rx="2"/>
+      <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
     </svg>
   ),
-  zoomIn: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-      <line x1="12" y1="5" x2="12" y2="19"/>
-      <line x1="5" y1="12" x2="19" y2="12"/>
+  unlock: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="11" width="16" height="10" rx="2"/>
+      <path d="M8 11V8a4 4 0 0 1 8 0"/>
     </svg>
   ),
 }
@@ -554,10 +555,18 @@ export default function App() {
     .filter(Boolean)
     .join(' ')
 
+  const PREVIEW_BASE_WIDTH = 820 // px — comfortable reading column
+  const previewMaxWidthPx = Math.round(
+    PREVIEW_BASE_WIDTH * (previewControls.lockWidth ? 1 : previewControls.zoom)
+  )
+
   return (
     <div
       className={appClass}
-      style={{ '--preview-scale': previewControls.zoom }}
+      style={{
+        '--preview-scale': previewControls.zoom,
+        '--preview-max-w': `${previewMaxWidthPx}px`,
+      }}
       data-editor-fontsize={prefs.editor.fontSize}
       data-editor-fontfamily={prefs.editor.fontFamily}
       data-editor-lineheight={prefs.editor.lineHeight}
@@ -589,12 +598,12 @@ export default function App() {
               <div className="zoom-controls" role="group" aria-label="Zoom">
                 <button
                   type="button"
-                  className="icon-btn zoom-btn"
+                  className="zoom-btn"
                   onClick={previewControls.zoomOut}
                   aria-label="Zoom out"
                   title="Zoom out"
                 >
-                  {Icon.zoomOut}
+                  <span aria-hidden="true" className="zoom-glyph">−</span>
                 </button>
                 <button
                   type="button"
@@ -607,12 +616,22 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  className="icon-btn zoom-btn"
+                  className="zoom-btn"
                   onClick={previewControls.zoomIn}
                   aria-label="Zoom in"
                   title="Zoom in"
                 >
-                  {Icon.zoomIn}
+                  <span aria-hidden="true" className="zoom-glyph">+</span>
+                </button>
+                <button
+                  type="button"
+                  className={`zoom-btn zoom-lock${previewControls.lockWidth ? ' is-locked' : ''}`}
+                  onClick={previewControls.toggleLockWidth}
+                  aria-label={previewControls.lockWidth ? 'Page width locked — click to scale with zoom' : 'Page width scales with zoom — click to lock'}
+                  title={previewControls.lockWidth ? 'Page width locked (font scales only)' : 'Page width scales with zoom'}
+                  aria-pressed={previewControls.lockWidth}
+                >
+                  {previewControls.lockWidth ? Icon.lock : Icon.unlock}
                 </button>
               </div>
               <button onClick={handleExport}>Export</button>

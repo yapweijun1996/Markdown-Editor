@@ -3,6 +3,14 @@
    All values reference tokens from theme.css
    ========================================================= */
 
+/* Register zoom-scale custom properties as <number> so browsers correctly
+   invalidate styles that consume them via calc() when the value changes. */
+@property --preview-scale {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -834,7 +842,11 @@ body {
 .workspace-preview-only .panel-label { display: none; }
 
 .workspace-preview-only .preview-content {
-  max-width: 820px;
+  /* Paper width is supplied as a fully-resolved length from React
+     (--preview-max-w). When locked it stays 820px; when unlocked it
+     equals 820 * zoom. Using a plain var() (no calc) so the browser
+     invalidates reliably when the value changes. */
+  max-width: var(--preview-max-w, 820px);
   margin: 0 auto;
   padding: var(--sp-6) calc(var(--sp-5) + var(--safe-right))
     calc(var(--sp-12) + var(--safe-bottom))
@@ -844,6 +856,7 @@ body {
   border-radius: 0;
   box-shadow: none;
   overflow: visible;
+  transition: max-width var(--dur-base) var(--ease-standard);
 }
 
 /* ── Zoom scaling (driven by --preview-scale on .app) ─── */
@@ -882,17 +895,43 @@ body {
   border-radius: var(--radius-md);
 }
 
-.zoom-controls .icon-btn.zoom-btn {
+/* Zoom +/- buttons use text glyphs so they always render and read clearly */
+.zoom-controls .zoom-btn {
   width: 30px;
   height: 30px;
   min-width: 30px;
   min-height: 30px;
+  padding: 0;
+  border: none;
   background: transparent;
+  color: var(--toolbar-text);
+  cursor: pointer;
   border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
 }
 
-.zoom-controls .icon-btn.zoom-btn:hover {
+.zoom-controls .zoom-btn:hover {
   background: var(--fill-secondary);
+}
+
+.zoom-controls .zoom-btn:active {
+  transform: scale(0.94);
+}
+
+.zoom-controls .zoom-glyph {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  pointer-events: none;
+  /* nudge the minus/plus optically centred */
+  transform: translateY(-1px);
 }
 
 .zoom-controls .zoom-label {
@@ -918,6 +957,22 @@ body {
 
 .zoom-controls .zoom-label:active {
   transform: scale(0.97);
+}
+
+/* Lock toggle — visually separated, shows current width-mode */
+.zoom-controls .zoom-lock {
+  margin-left: 2px;
+  border-left: 0.5px solid var(--separator);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+.zoom-controls .zoom-lock.is-locked {
+  color: var(--accent);
+}
+
+.zoom-controls .zoom-lock:hover {
+  background: var(--fill-secondary);
 }
 
 /* ── Preview Only Badge ──────────────────────────── */

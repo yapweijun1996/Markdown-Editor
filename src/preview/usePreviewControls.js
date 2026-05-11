@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const ZOOM_KEY = 'md.previewZoom'
+const LOCK_WIDTH_KEY = 'md.previewLockWidth'
 const ZOOM_MIN = 0.7
 const ZOOM_MAX = 3.0
 const ZOOM_STEP = 0.1
@@ -18,8 +19,18 @@ function readStoredZoom() {
   return 1
 }
 
+function readStoredLockWidth() {
+  try {
+    const raw = localStorage.getItem(LOCK_WIDTH_KEY)
+    if (raw === 'false') return false
+    if (raw === 'true') return true
+  } catch {}
+  return true // default: paper width locked
+}
+
 export function usePreviewControls(enabled) {
   const [zoom, setZoom] = useState(readStoredZoom)
+  const [lockWidth, setLockWidth] = useState(readStoredLockWidth)
   const [toolbarHidden, setToolbarHidden] = useState(false)
   const scrollRef = useRef(null)
   const lastYRef = useRef(0)
@@ -27,6 +38,10 @@ export function usePreviewControls(enabled) {
   useEffect(() => {
     try { localStorage.setItem(ZOOM_KEY, String(zoom)) } catch {}
   }, [zoom])
+
+  useEffect(() => {
+    try { localStorage.setItem(LOCK_WIDTH_KEY, String(lockWidth)) } catch {}
+  }, [lockWidth])
 
   useEffect(() => {
     if (!enabled) {
@@ -60,12 +75,17 @@ export function usePreviewControls(enabled) {
   const zoomReset = useCallback(() => setZoom(1), [])
   const showToolbar = useCallback(() => setToolbarHidden(false), [])
 
+  const toggleLockWidth = useCallback(() => setLockWidth((v) => !v), [])
+
   return {
     zoom,
     setZoom: (v) => setZoom(clampZoom(v)),
     zoomIn,
     zoomOut,
     zoomReset,
+    lockWidth,
+    setLockWidth,
+    toggleLockWidth,
     toolbarHidden,
     showToolbar,
     scrollRef,
