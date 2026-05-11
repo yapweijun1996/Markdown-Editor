@@ -12,6 +12,7 @@ import HistoryPanel from './history/HistoryPanel.jsx'
 import BatchConvertSheet from './batch/BatchConvertSheet.jsx'
 import { useTheme } from './theme/useTheme.js'
 import { usePreferences } from './preferences/usePreferences.js'
+import { usePreviewControls } from './preview/usePreviewControls.js'
 import { readDraft, writeDraft, clearDraft } from './preferences/draftStorage.js'
 import { useFileUpload } from './editor/useFileUpload.jsx'
 import { useHistory } from './history/useHistory.js'
@@ -283,6 +284,17 @@ const Icon = {
       <line x1="12" y1="15" x2="12" y2="3"/>
     </svg>
   ),
+  zoomOut: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  ),
+  zoomIn: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  ),
 }
 
 export default function App() {
@@ -302,6 +314,31 @@ export default function App() {
   const [mobileTab, setMobileTab] = useState('editor')
   const [draft, setDraft] = useState(null)
   const sharedLinkOpenedRef = useRef(false)
+  const toolbarRef = useRef(null)
+
+  const previewControls = usePreviewControls(previewOnly)
+
+  // Measure toolbar height so preview-only mode can reserve space for the
+  // fixed-position toolbar (and so auto-hide reveals the right area).
+  useEffect(() => {
+    if (!toolbarRef.current) return
+    const root = document.documentElement
+    const update = () => {
+      const h = toolbarRef.current?.offsetHeight
+      if (h) root.style.setProperty('--toolbar-h', `${h}px`)
+    }
+    update()
+    let ro
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(update)
+      ro.observe(toolbarRef.current)
+    }
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      if (ro) ro.disconnect()
+    }
+  }, [previewOnly])
 
   const { input: fileInput, trigger: pickFile } = useFileUpload({
     onLoad: setMarkdown,
@@ -513,9 +550,14 @@ export default function App() {
     .filter(Boolean)
     .join(' ')
 
+  const appClass = ['app', previewOnly ? 'app-preview-only' : '']
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <div
-      className="app"
+      className={appClass}
+      style={{ '--preview-scale': previewControls.zoom }}
       data-editor-fontsize={prefs.editor.fontSize}
       data-editor-fontfamily={prefs.editor.fontFamily}
       data-editor-lineheight={prefs.editor.lineHeight}
@@ -532,7 +574,10 @@ export default function App() {
         aria-hidden="true"
       />
 
-      <header className="toolbar">
+      <header
+        ref={toolbarRef}
+        className={`toolbar${previewControls.toolbarHidden ? ' toolbar-hidden' : ''}`}
+      >
         <span className="toolbar-title">
           MD→Word
           {previewOnly && <span className="badge-readonly">PREVIEW</span>}
@@ -541,6 +586,35 @@ export default function App() {
         <div className="toolbar-actions">
           {previewOnly ? (
             <>
+              <div className="zoom-controls" role="group" aria-label="Zoom">
+                <button
+                  type="button"
+                  className="icon-btn zoom-btn"
+                  onClick={previewControls.zoomOut}
+                  aria-label="Zoom out"
+                  title="Zoom out"
+                >
+                  {Icon.zoomOut}
+                </button>
+                <button
+                  type="button"
+                  className="zoom-label"
+                  onClick={previewControls.zoomReset}
+                  aria-label={`Zoom ${Math.round(previewControls.zoom * 100)}%, click to reset`}
+                  title="Reset zoom to 100%"
+                >
+                  {Math.round(previewControls.zoom * 100)}%
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn zoom-btn"
+                  onClick={previewControls.zoomIn}
+                  aria-label="Zoom in"
+                  title="Zoom in"
+                >
+                  {Icon.zoomIn}
+                </button>
+              </div>
               <button onClick={handleExport}>Export</button>
               <button onClick={handleEditMode}>Edit</button>
               <ThemeToggle />
@@ -632,7 +706,11 @@ export default function App() {
         </div>
       )}
 
-      <main className={workspaceClass}>
+      <main
+        ref={previewControls.scrollRef}
+        className={workspaceClass}
+        onClick={previewOnly && previewControls.toolbarHidden ? previewControls.showToolbar : undefined}
+      >
         {!previewOnly && (
           <MarkdownEditor
             ref={editorRef}

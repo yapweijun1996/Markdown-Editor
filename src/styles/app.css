@@ -58,6 +58,24 @@ body {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   z-index: var(--z-toolbar);
+  transition: transform var(--dur-base) var(--ease-spring),
+              background-color var(--dur-base) var(--ease-standard);
+  will-change: transform;
+}
+
+/* In read/preview mode the toolbar can auto-hide on scroll down.
+   It stays in normal flex flow so the bar slot vanishes when hidden
+   (no overlap with status / error / draft bars). */
+.app-preview-only .toolbar {
+  transition: transform var(--dur-base) var(--ease-spring),
+              margin-bottom var(--dur-base) var(--ease-standard),
+              background-color var(--dur-base) var(--ease-standard);
+}
+
+.app-preview-only .toolbar.toolbar-hidden {
+  transform: translateY(-100%);
+  margin-bottom: calc(-1 * var(--toolbar-h, 52px));
+  pointer-events: none;
 }
 
 .toolbar-title {
@@ -791,26 +809,115 @@ body {
 
 .preview-content a { color: var(--accent); }
 
-/* ── Preview Only Mode ───────────────────────────── */
+/* ── Preview / Read Mode ─────────────────────────── *
+   Fullscreen, document-style reading view:
+   - workspace itself scrolls (so toolbar auto-hide can react to it)
+   - no card border / shadow on the article
+   - comfortable max-width for line length; user can zoom via --preview-scale
+   ------------------------------------------------- */
 .workspace-preview-only {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
+  display: block;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 .workspace-preview-only .panel {
   border-right: none;
   background: transparent;
+  overflow: visible;
+  display: block;
 }
 
 .workspace-preview-only .panel-label { display: none; }
 
 .workspace-preview-only .preview-content {
-  max-width: 1200px;
-  margin: var(--sp-6) auto;
-  padding: var(--sp-10) var(--sp-12);
-  border-radius: var(--radius-lg);
-  background: var(--bg-primary);
-  box-shadow: var(--shadow-md);
-  border: 0.5px solid var(--separator);
+  max-width: 820px;
+  margin: 0 auto;
+  padding: var(--sp-6) calc(var(--sp-5) + var(--safe-right))
+    calc(var(--sp-12) + var(--safe-bottom))
+    calc(var(--sp-5) + var(--safe-left));
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* ── Zoom scaling (driven by --preview-scale on .app) ─── */
+.workspace-preview-only .preview-content {
+  font-size: calc(var(--font-body) * var(--preview-scale, 1));
+  line-height: var(--leading-relaxed);
+}
+.workspace-preview-only .preview-content h1 {
+  font-size: calc(var(--font-large) * var(--preview-scale, 1));
+}
+.workspace-preview-only .preview-content h2 {
+  font-size: calc(var(--font-title1) * var(--preview-scale, 1));
+}
+.workspace-preview-only .preview-content h3 {
+  font-size: calc(var(--font-title2) * var(--preview-scale, 1));
+}
+.workspace-preview-only .preview-content h4 {
+  font-size: calc(var(--font-title3) * var(--preview-scale, 1));
+}
+.workspace-preview-only .preview-content h5,
+.workspace-preview-only .preview-content h6 {
+  font-size: calc(var(--font-headline) * var(--preview-scale, 1));
+}
+.workspace-preview-only .preview-content pre,
+.workspace-preview-only .preview-content code {
+  font-size: calc(0.92em);
+}
+
+/* ── Zoom controls (preview-mode toolbar) ────────── */
+.zoom-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--fill-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.zoom-controls .icon-btn.zoom-btn {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  background: transparent;
+  border-radius: var(--radius-sm);
+}
+
+.zoom-controls .icon-btn.zoom-btn:hover {
+  background: var(--fill-secondary);
+}
+
+.zoom-controls .zoom-label {
+  min-width: 46px;
+  height: 30px;
+  padding: 0 var(--sp-2);
+  border: none;
+  background: transparent;
+  color: var(--toolbar-text);
+  font-family: inherit;
+  font-size: var(--font-footnote);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.zoom-controls .zoom-label:hover {
+  background: var(--fill-secondary);
+}
+
+.zoom-controls .zoom-label:active {
+  transform: scale(0.97);
 }
 
 /* ── Preview Only Badge ──────────────────────────── */
@@ -1861,10 +1968,15 @@ body {
   .workspace.mobile-tab-preview .editor-panel { display: none; }
 
   .workspace-preview-only .preview-content {
-    margin: var(--sp-3) var(--sp-3);
-    padding: var(--sp-5) var(--sp-5);
-    border-radius: var(--radius-md);
+    margin: 0 auto;
+    padding: var(--sp-4) calc(var(--sp-4) + var(--safe-right))
+      calc(var(--sp-10) + var(--safe-bottom))
+      calc(var(--sp-4) + var(--safe-left));
   }
+
+  /* Compact zoom controls on phones */
+  .zoom-controls .zoom-label { min-width: 38px; font-size: var(--font-caption1); }
+  .zoom-controls .icon-btn.zoom-btn { width: 28px; height: 28px; min-width: 28px; min-height: 28px; }
 
   /* Modal as sheet on mobile (slides from bottom) */
   .modal-backdrop {
