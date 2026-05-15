@@ -100,12 +100,20 @@ export function LaserPointer({ active, color = 'red', size = 'md', trail = true 
 
   if (!active) return null
 
+  // Tight white-hot core (only the inner ~10%) so the dot reads as the laser
+  // color, not as a white blob. Triple-layer box-shadow gives a saturated halo
+  // that survives on both light and dark backgrounds without blend modes.
   const dotStyle = {
     width: `${sizePx}px`,
     height: `${sizePx}px`,
     transform: `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%)`,
-    background: `radial-gradient(circle, #ffffff 0%, ${colorHex} 45%, ${colorHex}00 75%)`,
-    boxShadow: `0 0 ${sizePx * 0.4}px ${sizePx * 0.15}px ${colorHex}d9, 0 0 ${sizePx * 1.2}px ${sizePx * 0.4}px ${colorHex}88`,
+    background: `radial-gradient(circle, #ffffff 0%, #ffffff 10%, ${colorHex} 28%, ${colorHex} 60%, ${colorHex}00 100%)`,
+    boxShadow: [
+      `0 0 0 1px ${colorHex}`,
+      `0 0 ${sizePx * 0.5}px ${sizePx * 0.1}px ${colorHex}`,
+      `0 0 ${sizePx * 1.4}px ${sizePx * 0.45}px ${colorHex}aa`,
+      `0 0 ${sizePx * 2.8}px ${sizePx * 0.9}px ${colorHex}55`,
+    ].join(', '),
   }
 
   return (

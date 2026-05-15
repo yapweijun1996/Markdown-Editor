@@ -2116,6 +2116,9 @@ body {
   cursor: pointer !important;
 }
 
+/* The laser dot uses its raw color (no blend mode) so it stays saturated
+   on both light and dark themes. Glow comes from the gradient + box-shadow
+   inlined on the element. */
 .laser-pointer {
   position: fixed;
   left: 0;
@@ -2123,12 +2126,13 @@ body {
   border-radius: 50%;
   pointer-events: none;
   z-index: 100000;
-  mix-blend-mode: screen;
   will-change: transform;
   transition: opacity 120ms var(--ease-standard);
   opacity: 1;
 }
 
+/* Canvas trail also uses normal compositing — the red shows through cleanly
+   on white, and is still vivid on dark backgrounds. */
 .laser-trail {
   position: fixed;
   inset: 0;
@@ -2136,7 +2140,12 @@ body {
   height: 100vh;
   pointer-events: none;
   z-index: 99998;
-  mix-blend-mode: screen;
+}
+
+/* On dark theme the trail benefits from additive blending for a "lit" feel.
+   On light theme keep normal compositing so the color stays saturated. */
+[data-theme="dark"] .laser-trail {
+  mix-blend-mode: lighten;
 }
 
 .laser-pointer-hidden {
