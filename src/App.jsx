@@ -14,6 +14,7 @@ import { useTheme } from './theme/useTheme.js'
 import { usePreferences } from './preferences/usePreferences.js'
 import { usePreviewControls } from './preview/usePreviewControls.js'
 import { readDraft, writeDraft, clearDraft } from './preferences/draftStorage.js'
+import { LaserPointer } from './preview/LaserPointer.jsx'
 import { useFileUpload } from './editor/useFileUpload.jsx'
 import { useHistory } from './history/useHistory.js'
 import { useImages } from './images/useImages.js'
@@ -296,6 +297,12 @@ const Icon = {
       <path d="M8 11V8a4 4 0 0 1 8 0"/>
     </svg>
   ),
+  present: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="12" r="7"/>
+    </svg>
+  ),
 }
 
 export default function App() {
@@ -312,12 +319,50 @@ export default function App() {
   const [showLayout, setShowLayout] = useState(false)
   const [showBatch, setShowBatch] = useState(false)
   const [previewOnly, setPreviewOnly] = useState(false)
+  const [presentationMode, setPresentationMode] = useState(false)
   const [mobileTab, setMobileTab] = useState('editor')
   const [draft, setDraft] = useState(null)
   const sharedLinkOpenedRef = useRef(false)
   const toolbarRef = useRef(null)
 
   const previewControls = usePreviewControls(previewOnly)
+
+  // Presentation mode lifecycle: only valid inside read mode; ESC exits.
+  useEffect(() => {
+    if (!previewOnly && presentationMode) setPresentationMode(false)
+  }, [previewOnly, presentationMode])
+
+  useEffect(() => {
+    if (!presentationMode) return
+    function onKey(e) {
+      if (e.key === 'Escape') setPresentationMode(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [presentationMode])
+
+  // Fullscreen API: enter on activation (if pref enabled), exit on deactivation.
+  // Also exit presentation if user leaves fullscreen via ESC / browser UI.
+  useEffect(() => {
+    if (!presentationMode) return
+    const root = document.documentElement
+    const wantFullscreen = !!prefs.presentation?.fullscreen
+    if (wantFullscreen && root.requestFullscreen && !document.fullscreenElement) {
+      root.requestFullscreen().catch(() => {})
+    }
+    function onFsChange() {
+      if (wantFullscreen && !document.fullscreenElement) {
+        setPresentationMode(false)
+      }
+    }
+    document.addEventListener('fullscreenchange', onFsChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange)
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {})
+      }
+    }
+  }, [presentationMode, prefs.presentation?.fullscreen])
 
   // Measure toolbar height so preview-only mode can reserve space for the
   // fixed-position toolbar (and so auto-hide reveals the right area).
@@ -551,9 +596,15 @@ export default function App() {
     .filter(Boolean)
     .join(' ')
 
-  const appClass = ['app', previewOnly ? 'app-preview-only' : '']
+  const appClass = [
+    'app',
+    previewOnly ? 'app-preview-only' : '',
+    presentationMode ? 'app-presentation' : '',
+  ]
     .filter(Boolean)
     .join(' ')
+
+  const toolbarHidden = presentationMode || previewControls.toolbarHidden
 
   const PREVIEW_BASE_WIDTH = 820 // px — comfortable reading column
   const previewMaxWidthPx = Math.round(
@@ -585,7 +636,7 @@ export default function App() {
 
       <header
         ref={toolbarRef}
-        className={`toolbar${previewControls.toolbarHidden ? ' toolbar-hidden' : ''}`}
+        className={`toolbar${toolbarHidden ? ' toolbar-hidden' : ''}`}
       >
         <span className="toolbar-title">
           MD→Word
@@ -634,6 +685,16 @@ export default function App() {
                   {previewControls.lockWidth ? Icon.lock : Icon.unlock}
                 </button>
               </div>
+              <button
+                type="button"
+                className={`icon-btn hide-on-mobile present-btn${presentationMode ? ' is-active' : ''}`}
+                onClick={() => setPresentationMode((v) => !v)}
+                aria-label={presentationMode ? 'Exit presentation mode' : 'Enter presentation mode (laser pointer)'}
+                aria-pressed={presentationMode}
+                title={presentationMode ? 'Exit presentation (Esc)' : 'Presentation mode — red laser pointer'}
+              >
+                {Icon.present}
+              </button>
               <button onClick={handleExport}>Export</button>
               <button onClick={handleEditMode}>Edit</button>
               <ThemeToggle />
@@ -728,7 +789,6 @@ export default function App() {
       <main
         ref={previewControls.scrollRef}
         className={workspaceClass}
-        onClick={previewOnly && previewControls.toolbarHidden ? previewControls.showToolbar : undefined}
       >
         {!previewOnly && (
           <MarkdownEditor
@@ -786,6 +846,24 @@ export default function App() {
       )}
 
       <UpdatePrompt />
+
+      <LaserPointer
+        active={presentationMode}
+        color={prefs.presentation?.color}
+        size={prefs.presentation?.size}
+        trail={prefs.presentation?.trail}
+      />
+      {presentationMode && (
+        <button
+          type="button"
+          className="presentation-exit"
+          onClick={() => setPresentationMode(false)}
+          aria-label="Exit presentation mode"
+          title="Exit (Esc)"
+        >
+          Exit ✕
+        </button>
+      )}
     </div>
   )
 }

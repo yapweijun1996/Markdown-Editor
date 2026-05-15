@@ -12,6 +12,25 @@ export const DEFAULT_PREFS = {
     autoSave: true,
     autoSaveInterval: 3000,
   },
+  presentation: {
+    color: 'red',
+    size: 'md',
+    trail: true,
+    fullscreen: true,
+  },
+}
+
+export const LASER_COLOR_HEX = {
+  red:    '#ff2a2a',
+  green:  '#22ee55',
+  blue:   '#3aa0ff',
+  yellow: '#ffd02a',
+}
+
+export const LASER_SIZE_PX = {
+  sm: 12,
+  md: 16,
+  lg: 22,
 }
 
 export const FONT_SIZE_PX = {

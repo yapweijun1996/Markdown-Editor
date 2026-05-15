@@ -31,7 +31,8 @@ An installable, offline-capable Markdown editor and Microsoft Word `.docx` conve
 - 📲  **Mobile responsive** — clean toolbar with iOS-style Action Sheet for secondary actions
 - 🔗  **Share link + QR** — encode entire Markdown into URL hash (no backend, no length limits) + QR code for mobile sharing
 - ✂️  **Optional URL shortener** — TinyURL integration (opt-in, single click)
-- 👁️  **Read mode (fullscreen)** — distraction-free article view (820 px reading column by default); zoom 70–300% with an optional paper-width lock toggle; toolbar auto-hides on scroll-down and returns on scroll-up. Preferences persist in localStorage.
+- 👁️  **Read mode (fullscreen)** — distraction-free article view (820 px reading column by default); zoom 70–300% with an optional paper-width lock toggle; toolbar auto-hides on scroll-down and returns only on scroll-up (clicks never reveal it). Preferences persist in localStorage.
+- 🔴  **Presentation mode (laser pointer)** — one-click toggle inside Read mode turns the mouse cursor into a red glowing laser dot, perfect for screen-sharing or demos. ESC or the floating Exit chip leaves the mode.
 - 💾  **Auto-save draft** — never lose work after browser crash (configurable interval)
 - 📚  **Document history** — IndexedDB stores every doc you ever edit
 - 🕐  **Snapshot timeline** — auto-versioned, restore any past state with one click
@@ -46,7 +47,8 @@ An installable, offline-capable Markdown editor and Microsoft Word `.docx` conve
 | Mode | UI | Use Case |
 |---|---|---|
 | **Edit Mode** (default) | Editor + Preview side-by-side | Writing & editing Markdown |
-| **Read Mode** | Fullscreen article view (820 px column default), zoom + width-lock controls, auto-hiding toolbar | Reading / presentation |
+| **Read Mode** | Fullscreen article view (820 px column default), zoom + width-lock controls, auto-hiding toolbar (scroll-up to reveal) | Reading |
+| **Presentation Mode** | Read mode + red laser-pointer cursor + toolbar force-hidden; ESC to exit | Live demos / screen-sharing |
 | **Preview-Only (shared)** | Read-mode view marked `PREVIEW` | Recipient of a shared link |
 | **Standalone (PWA)** | No browser UI | Installed home-screen app |
 

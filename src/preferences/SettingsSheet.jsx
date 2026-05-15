@@ -142,6 +142,49 @@ export default function SettingsSheet({ prefs, update, reset, onClose }) {
           </section>
 
           <section className="settings-section">
+            <div className="settings-section-title">Presentation Mode (Laser)</div>
+            <Row label="Laser Color">
+              <Segmented
+                ariaLabel="Laser Color"
+                value={prefs.presentation?.color || 'red'}
+                onChange={(v) => update('presentation', 'color', v)}
+                options={[
+                  { label: 'Red', value: 'red' },
+                  { label: 'Green', value: 'green' },
+                  { label: 'Blue', value: 'blue' },
+                  { label: 'Yellow', value: 'yellow' },
+                ]}
+              />
+            </Row>
+            <Row label="Laser Size">
+              <Segmented
+                ariaLabel="Laser Size"
+                value={prefs.presentation?.size || 'md'}
+                onChange={(v) => update('presentation', 'size', v)}
+                options={[
+                  { label: 'S', value: 'sm' },
+                  { label: 'M', value: 'md' },
+                  { label: 'L', value: 'lg' },
+                ]}
+              />
+            </Row>
+            <Row label="Glow Trail" hint="Fading red streak behind the laser">
+              <Switch
+                ariaLabel="Glow Trail"
+                checked={prefs.presentation?.trail !== false}
+                onChange={(v) => update('presentation', 'trail', v)}
+              />
+            </Row>
+            <Row label="Auto Fullscreen" hint="Enter browser fullscreen when starting presentation">
+              <Switch
+                ariaLabel="Auto Fullscreen"
+                checked={prefs.presentation?.fullscreen !== false}
+                onChange={(v) => update('presentation', 'fullscreen', v)}
+              />
+            </Row>
+          </section>
+
+          <section className="settings-section">
             <button className="settings-danger-btn" onClick={reset}>
               Reset All Settings
             </button>

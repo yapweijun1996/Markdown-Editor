@@ -2103,3 +2103,75 @@ body {
 @media (min-width: 768px) and (max-width: 1023px) {
   .toolbar-title { font-size: var(--font-callout); }
 }
+
+/* =========================================================
+   Presentation Mode — red laser pointer cursor
+   ========================================================= */
+.app-presentation,
+.app-presentation * {
+  cursor: none !important;
+}
+
+.app-presentation .presentation-exit {
+  cursor: pointer !important;
+}
+
+.laser-pointer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 100000;
+  mix-blend-mode: screen;
+  will-change: transform;
+  transition: opacity 120ms var(--ease-standard);
+  opacity: 1;
+}
+
+.laser-trail {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 99998;
+  mix-blend-mode: screen;
+}
+
+.laser-pointer-hidden {
+  opacity: 0;
+}
+
+.presentation-exit {
+  position: fixed;
+  right: calc(var(--sp-4) + var(--safe-right));
+  bottom: calc(var(--sp-4) + var(--safe-bottom));
+  z-index: 99999;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: inherit;
+  font-size: var(--font-subhead);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  border: none;
+  border-radius: var(--radius-md);
+  background: rgba(255, 0, 0, 0.92);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0.6;
+  transition: opacity var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
+}
+
+.presentation-exit:hover {
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.present-btn.is-active {
+  background: rgba(255, 0, 0, 0.92) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.35);
+}
