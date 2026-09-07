@@ -80,6 +80,8 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
 export default function MarkdownPreview({ markdown }) {
   const [renderedHtml, setRenderedHtml] = useState('')
   const [imageRevision, setImageRevision] = useState(0)
+  const [mathReady, setMathReady] = useState(false)
+  const [diagramReady, setDiagramReady] = useState(false)
   const containerRef = useRef(null)
 
   useEffect(() => subscribe(() => setImageRevision((revision) => revision + 1)), [])
@@ -96,15 +98,25 @@ export default function MarkdownPreview({ markdown }) {
 
   useEffect(() => {
     let cancelled = false
+    setMathReady(false)
+    setDiagramReady(false)
     setRenderedHtml(baseHtml)
     if (markdownHasMath(markdown)) {
       renderMathInHtml(baseHtml)
         .then((html) => {
-          if (!cancelled) setRenderedHtml(html)
+          if (!cancelled) {
+            setRenderedHtml(html)
+            setMathReady(true)
+          }
         })
         .catch(() => {
-          if (!cancelled) setRenderedHtml(baseHtml)
+          if (!cancelled) {
+            setRenderedHtml(baseHtml)
+            setMathReady(true)
+          }
         })
+    } else {
+      setMathReady(true)
     }
     return () => { cancelled = true }
   }, [baseHtml, markdown])
@@ -112,7 +124,12 @@ export default function MarkdownPreview({ markdown }) {
   // After HTML lands in DOM, hydrate mermaid blocks
   useEffect(() => {
     let cancelled = false
-    hydrateMermaidBlocks(containerRef.current, { isCancelled: () => cancelled }).catch(() => {})
+    setDiagramReady(false)
+    hydrateMermaidBlocks(containerRef.current, { isCancelled: () => cancelled })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setDiagramReady(true)
+      })
     return () => { cancelled = true }
   }, [renderedHtml])
 
@@ -122,6 +139,7 @@ export default function MarkdownPreview({ markdown }) {
       <div
         ref={containerRef}
         className="preview-content"
+        data-render-state={mathReady && diagramReady ? 'ready' : 'rendering'}
         dangerouslySetInnerHTML={{ __html: renderedHtml }}
         aria-label="Markdown preview"
       />

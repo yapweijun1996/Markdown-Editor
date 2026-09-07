@@ -10,6 +10,21 @@ export const PAGE_SIZES = {
   a3:     { width: 16838, height: 23811 },
 }
 
+// Keep the physical page mapping in twips. The docx package applies the
+// landscape swap when it serializes w:pgSz, so callers must pass these values
+// in their portrait/base order.
+export const PAGE_MARGINS = {
+  top: 1440,
+  right: 1440,
+  bottom: 1440,
+  left: 1440,
+  header: 708,
+  footer: 708,
+  gutter: 0,
+}
+
+const PX_PER_TWIP = 96 / 1440
+
 const ORIENTATION_MAP = {
   portrait: PageOrientation.PORTRAIT,
   landscape: PageOrientation.LANDSCAPE,
@@ -79,16 +94,30 @@ export function buildPageFooter({ footerText, showPageNumbers, title }) {
   })
 }
 
+export function getPageDimensions({ pageSize = 'a4', orientation = 'portrait' } = {}) {
+  const size = PAGE_SIZES[pageSize] || PAGE_SIZES.a4
+  if (orientation === 'landscape') {
+    return { width: size.height, height: size.width }
+  }
+  return { width: size.width, height: size.height }
+}
+
+export function getWritablePageWidthPx(options = {}) {
+  const { width } = getPageDimensions(options)
+  const writableTwips = Math.max(1, width - PAGE_MARGINS.left - PAGE_MARGINS.right)
+  return Math.round(writableTwips * PX_PER_TWIP)
+}
+
 export function buildPageProps({ pageSize = 'a4', orientation = 'portrait' }) {
   const size = PAGE_SIZES[pageSize] || PAGE_SIZES.a4
-  const isLandscape = orientation === 'landscape'
   return {
     page: {
       size: {
-        width:  isLandscape ? size.height : size.width,
-        height: isLandscape ? size.width  : size.height,
+        width: size.width,
+        height: size.height,
         orientation: ORIENTATION_MAP[orientation] || PageOrientation.PORTRAIT,
       },
+      margin: PAGE_MARGINS,
     },
   }
 }

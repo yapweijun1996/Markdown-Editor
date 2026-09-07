@@ -2,7 +2,7 @@ import { Paragraph, ImageRun, TextRun } from 'docx'
 import { wordStyleConfig } from '../styles/wordStyleConfig.js'
 import { isInternalImageUri, getBlob, imageIdFromUri, ensureLoaded } from '../images/imageCache.js'
 
-const MAX_DOCX_WIDTH_PX = 600
+const DEFAULT_DOCX_WIDTH_PX = 600
 const TYPE_FROM_MIME = {
   'image/png':  'png',
   'image/jpeg': 'jpg',
@@ -43,7 +43,7 @@ function detectImageType(mime) {
   return TYPE_FROM_MIME[mime] || 'png'
 }
 
-function readDimensions(buffer, mime) {
+function readDimensions(buffer, mime, maxWidth = DEFAULT_DOCX_WIDTH_PX) {
   return new Promise((resolve) => {
     if (
       typeof Blob === 'undefined' ||
@@ -63,9 +63,10 @@ function readDimensions(buffer, mime) {
       const h = img.naturalHeight
       let outW = w
       let outH = h
-      if (w > MAX_DOCX_WIDTH_PX) {
-        const scale = MAX_DOCX_WIDTH_PX / w
-        outW = MAX_DOCX_WIDTH_PX
+      const widthLimit = Math.max(1, Number(maxWidth) || DEFAULT_DOCX_WIDTH_PX)
+      if (w > widthLimit) {
+        const scale = widthLimit / w
+        outW = widthLimit
         outH = Math.round(h * scale)
       }
       resolve({ width: outW, height: outH })
@@ -94,7 +95,7 @@ function unavailableImageText(alt) {
   return alt ? `[Image: ${alt}]` : '[Image not available]'
 }
 
-export async function loadImageData(node) {
+export async function loadImageData(node, { maxWidth = DEFAULT_DOCX_WIDTH_PX } = {}) {
   const url = node.url || ''
   const alt = (node.alt || node.title || '').trim()
 
@@ -128,12 +129,12 @@ export async function loadImageData(node) {
 
   if (!buffer) return null
 
-  const { width, height } = await readDimensions(buffer, mime)
+  const { width, height } = await readDimensions(buffer, mime, maxWidth)
   return { buffer, mime, alt, width, height }
 }
 
-export async function convertInlineImage(node, inherited = {}) {
-  const data = await loadImageData(node)
+export async function convertInlineImage(node, inherited = {}, options = {}) {
+  const data = await loadImageData(node, options)
   if (!data) {
     return new TextRun({
       ...inherited,
@@ -145,8 +146,8 @@ export async function convertInlineImage(node, inherited = {}) {
   return createImageRun(data)
 }
 
-export async function convertImage(node) {
-  const data = await loadImageData(node)
+export async function convertImage(node, options = {}) {
+  const data = await loadImageData(node, options)
   if (!data) {
     const cfg = wordStyleConfig.paragraph
     return new Paragraph({

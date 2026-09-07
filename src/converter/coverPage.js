@@ -1,22 +1,28 @@
 import { Paragraph, TextRun, AlignmentType, PageBreak } from 'docx'
 import { defaultTemplate } from '../styles/templates/default.js'
 
-export function buildCoverPage(coverPage, cfg = defaultTemplate) {
+export function buildCoverPage(
+  coverPage,
+  cfg = defaultTemplate,
+  { fallbackTitle = '', fallbackDate = '' } = {}
+) {
   if (!coverPage || !coverPage.enabled) return []
 
   const fontFamily = cfg.document.font
+  const title = coverPage.title || fallbackTitle
+  const date = coverPage.date || fallbackDate
 
   const blocks = []
 
   // Big spacer at top
   blocks.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { before: 2400 } }))
 
-  if (coverPage.title) {
+  if (title) {
     blocks.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 480 },
       children: [new TextRun({
-        text: coverPage.title,
+        text: title,
         font: fontFamily,
         bold: true,
         size: 72, // 36pt
@@ -52,12 +58,12 @@ export function buildCoverPage(coverPage, cfg = defaultTemplate) {
     }))
   }
 
-  if (coverPage.date) {
+  if (date) {
     blocks.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
       children: [new TextRun({
-        text: coverPage.date,
+        text: date,
         font: fontFamily,
         size: 24, // 12pt
         color: '777777',

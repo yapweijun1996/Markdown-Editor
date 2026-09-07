@@ -57,9 +57,9 @@ async function svgStringToPng(svgString) {
   })
 }
 
-const MAX_DOCX_IMAGE_WIDTH = 600
+const DEFAULT_DOCX_IMAGE_WIDTH = 600
 
-export async function convertMermaid(node) {
+export async function convertMermaid(node, { maxWidth = DEFAULT_DOCX_IMAGE_WIDTH } = {}) {
   const code = node.value || ''
   try {
     const { svg, error } = await renderMermaidToSvg(code, 'docx')
@@ -69,9 +69,10 @@ export async function convertMermaid(node) {
 
     let outW = width
     let outH = height
-    if (outW > MAX_DOCX_IMAGE_WIDTH) {
-      const scale = MAX_DOCX_IMAGE_WIDTH / outW
-      outW = MAX_DOCX_IMAGE_WIDTH
+    const widthLimit = Math.max(1, Number(maxWidth) || DEFAULT_DOCX_IMAGE_WIDTH)
+    if (outW > widthLimit) {
+      const scale = widthLimit / outW
+      outW = widthLimit
       outH = Math.round(height * scale)
     }
 

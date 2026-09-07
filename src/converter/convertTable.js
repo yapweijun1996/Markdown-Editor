@@ -2,7 +2,7 @@ import { Table, TableRow, TableCell, Paragraph, WidthType, BorderStyle, ShadingT
 import { defaultTemplate } from '../styles/templates/default.js'
 import { convertInlineNodes } from './convertInline.js'
 
-export async function convertTable(node, cfg = defaultTemplate) {
+export async function convertTable(node, cfg = defaultTemplate, options = {}) {
   const c = cfg.table
   const border = {
     top:    { style: BorderStyle.SINGLE, size: 1, color: c.borderColor },
@@ -21,7 +21,7 @@ export async function convertTable(node, cfg = defaultTemplate) {
         ...(isHeader && c.headerColor ? { color: c.headerColor } : {}),
         ...(isHeader && c.headerBold ? { bold: true } : {}),
       }
-      const runs = await convertInlineNodes(cellNode.children, headerExtra, cfg)
+      const runs = await convertInlineNodes(cellNode.children, headerExtra, cfg, options)
 
       const cellOpts = {
         children: [new Paragraph({ children: runs })],

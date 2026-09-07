@@ -1,5 +1,5 @@
 import {
-  Document, Packer, Paragraph, TextRun,
+  Document, Packer, Paragraph, TextRun, Header, Footer,
   AlignmentType, LevelFormat, convertInchesToTwip,
 } from 'docx'
 import { parseMarkdown } from '../parser/parseMarkdown.js'
@@ -13,7 +13,12 @@ import { convertBlockquote } from './convertBlockquote.js'
 import { convertImage } from './convertImage.js'
 import { convertMermaid } from './convertMermaid.js'
 import { isTocPlaceholder, buildTableOfContents } from './convertToc.js'
-import { buildPageHeader, buildPageFooter, buildPageProps } from './pageLayout.js'
+import {
+  buildPageHeader,
+  buildPageFooter,
+  buildPageProps,
+  getWritablePageWidthPx,
+} from './pageLayout.js'
 import { buildCoverPage } from './coverPage.js'
 
 const MAX_LIST_LEVEL = 5
@@ -95,18 +100,18 @@ async function convertNode(node, cfg, context) {
 
   switch (node.type) {
     case 'heading':
-      return [await convertHeading(node, cfg)]
+      return [await convertHeading(node, cfg, context)]
 
     case 'paragraph': {
       if (paragraphIsImageOnly(node)) {
         const imageNode = node.children.find((c) => c.type === 'image')
-        return [await convertImage(imageNode)]
+        return [await convertImage(imageNode, context)]
       }
-      return [await convertParagraph(node, cfg)]
+      return [await convertParagraph(node, cfg, {}, context)]
     }
 
     case 'image':
-      return [await convertImage(node)]
+      return [await convertImage(node, context)]
 
     case 'list':
       return await convertList(
@@ -117,16 +122,21 @@ async function convertNode(node, cfg, context) {
       )
 
     case 'table':
-      return [await convertTable(node, cfg)]
+      return [await convertTable(node, cfg, context)]
 
     case 'code':
       if (isMermaidCodeBlock(node)) {
-        return [await convertMermaid(node)]
+        return [await convertMermaid(node, context)]
       }
       return convertCodeBlock(node, cfg)
 
     case 'blockquote':
-      return await convertBlockquote(node, cfg, (child) => convertNode(child, cfg, context))
+      return await convertBlockquote(
+        node,
+        cfg,
+        (child) => convertNode(child, cfg, context),
+        context
+      )
 
     case 'thematicBreak':
       return [new Paragraph({
@@ -149,16 +159,28 @@ export async function markdownToDocx(markdownText, options = {}) {
   const cfg = getTemplate(templateId)
   const ast = parseMarkdown(markdownText)
   const listContext = buildListContext(ast)
+  const conversionContext = {
+    ...listContext,
+    imageMaxWidth: getWritablePageWidthPx({
+      pageSize: layout.pageSize,
+      orientation: layout.orientation,
+    }),
+  }
 
   const childrenArrays = await Promise.all(
-    ast.children.map((node) => convertNode(node, cfg, listContext))
+    ast.children.map((node) => convertNode(node, cfg, conversionContext))
   )
   const bodyChildren = childrenArrays.flat()
 
   const titleForLayout = docTitle || layout?.coverPage?.title || ''
 
+  const coverEnabled = Boolean(layout.coverPage?.enabled)
+  const exportDate = new Date().toLocaleDateString()
   const sectionChildren = [
-    ...buildCoverPage(layout.coverPage, cfg),
+    ...buildCoverPage(layout.coverPage, cfg, {
+      fallbackTitle: titleForLayout,
+      fallbackDate: exportDate,
+    }),
     ...bodyChildren,
   ]
 
@@ -175,11 +197,23 @@ export async function markdownToDocx(markdownText, options = {}) {
   })
 
   const section = {
-    properties: pageProps,
+    properties: coverEnabled
+      ? { ...pageProps, titlePage: true }
+      : pageProps,
     children: sectionChildren,
   }
-  if (header) section.headers = { default: header }
-  if (footer) section.footers = { default: footer }
+  if (header) {
+    section.headers = {
+      default: header,
+      ...(coverEnabled ? { first: new Header({ children: [] }) } : {}),
+    }
+  }
+  if (footer) {
+    section.footers = {
+      default: footer,
+      ...(coverEnabled ? { first: new Footer({ children: [] }) } : {}),
+    }
+  }
 
   const doc = new Document({
     numbering: { config: listContext.config },
@@ -190,6 +224,7 @@ export async function markdownToDocx(markdownText, options = {}) {
         },
       },
     },
+    features: { updateFields: true },
     sections: [section],
   })
 

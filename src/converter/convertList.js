@@ -27,7 +27,7 @@ async function buildItems(node, level, paragraphs, cfg, convertBlock, context) {
           prefixRuns,
         }
         if (!firstParagraph) overrides.indent = buildIndent(lvl)
-        paragraphs.push(await convertParagraph(child, cfg, overrides))
+        paragraphs.push(await convertParagraph(child, cfg, overrides, context))
         paragraphIndex += 1
       } else if (child.type === 'list') {
         // nested list: recurse with level+1

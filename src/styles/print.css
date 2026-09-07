@@ -25,6 +25,12 @@
     display: block !important;
   }
 
+  /* Read-mode zoom is a screen preference, not a print setting. */
+  .app {
+    --preview-scale: 1 !important;
+    --preview-max-w: none !important;
+  }
+
   /* Hide app chrome */
   .toolbar,
   .mobile-tabs,
@@ -34,7 +40,10 @@
   .draft-prompt,
   .error-bar,
   .status-bar,
-  .panel-label {
+  .panel-label,
+  .laser-pointer,
+  .laser-trail,
+  .presentation-exit {
     display: none !important;
   }
 

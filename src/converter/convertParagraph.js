@@ -10,9 +10,14 @@ const ALIGN_MAP = {
   justify: AlignmentType.JUSTIFIED,
 }
 
-export async function convertParagraph(node, cfg = defaultTemplate, overrides = {}) {
+export async function convertParagraph(
+  node,
+  cfg = defaultTemplate,
+  overrides = {},
+  options = {}
+) {
   const c = cfg.paragraph
-  const runs = await convertInlineNodes(node.children, {}, cfg)
+  const runs = await convertInlineNodes(node.children, {}, cfg, options)
   const { prefixRuns = [], ...paragraphOverrides } = overrides
 
   return new Paragraph({

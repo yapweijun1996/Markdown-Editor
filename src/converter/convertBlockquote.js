@@ -2,7 +2,12 @@ import { Paragraph, BorderStyle, TextRun } from 'docx'
 import { defaultTemplate } from '../styles/templates/default.js'
 import { convertInlineNodes } from './convertInline.js'
 
-export async function convertBlockquote(node, cfg = defaultTemplate, convertBlock) {
+export async function convertBlockquote(
+  node,
+  cfg = defaultTemplate,
+  convertBlock,
+  options = {}
+) {
   const c = cfg.blockquote
   const paragraphs = []
 
@@ -14,7 +19,7 @@ export async function convertBlockquote(node, cfg = defaultTemplate, convertBloc
         size: c.fontSize,
       }
       paragraphs.push(new Paragraph({
-        children: await convertInlineNodes(child.children, inheritedRun, cfg),
+        children: await convertInlineNodes(child.children, inheritedRun, cfg, options),
         indent: { left: c.indentLeft },
         border: { left: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 8 } },
         spacing: { after: c.spacingAfter },
