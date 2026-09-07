@@ -142,7 +142,7 @@ PDF calls `window.print()` after 30 ms. It prints the preview with static A4 CSS
 
 Insertion stores a Blob, optionally downscales it, caches a temporary object URL and inserts `![alt](mdimg://id)` at the textarea selection. `mdimg://` is the persistent reference; `blob:` URLs are temporary browser resources, not stored Markdown identity.
 
-`imageCache.js` has cache/pending maps and subscribers. It revokes a URL when replacing the same entry, but has no bounded eviction or deletion invalidation. The orphan attachment callback is unused.
+`imageCache.js` has cache/pending/failed maps and subscribers. Preview subscribes to revisions, and loading failures settle to an inert error placeholder. It revokes a URL when replacing the same entry, but has no bounded eviction or deletion invalidation. Orphan attachment runs when a local document ID becomes available and refuses to transfer an image already owned by another document.
 
 History export writes `INDEX.md`, deduplicated `documents/*.md`, and optional `snapshots/<sanitized-title>/<second-resolution-time>.md`. It does not include image bytes, document metadata/layout or an import manifest. Duplicate titles/timestamps can collide in snapshot paths and the index can disagree with deduplicated filenames.
 

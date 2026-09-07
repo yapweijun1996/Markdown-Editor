@@ -397,6 +397,7 @@ export default function App() {
   const images = useImages({
     markdown,
     documentId: sharedSession ? null : history.currentDocId,
+    allowAttachment: !sharedSession,
   })
 
   async function prepareLocalMutation() {

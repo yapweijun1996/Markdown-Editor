@@ -61,7 +61,7 @@ The More menu contains New, History, Document Layout, PDF, Batch Convert, Insert
 | Strikethrough | Rendered | Text remains but strike formatting is missing |
 | Inline links | Rendered; HTTP(S) opens a new tab with `noopener noreferrer` | `ExternalHyperlink` for direct link nodes; reference-link resolution is not implemented in converter |
 | Horizontal rule | Rendered | Paragraph bottom border with fixed converter styling |
-| Local `mdimg://id` image | Blob URL resolution; known cache invalidation/XSS fallback issues | Standalone image-only paragraph supported; inline images are omitted |
+| Local `mdimg://id` image | Reactive Blob URL resolution with inert loading/error placeholders; ownership attaches only orphan records | Standalone image-only paragraph supported; inline images, eviction and complete ownership/reference policy remain incomplete |
 | Data URI image | Subject to markdown-it image URL validation | Data URI decoded for standalone image conversion |
 | Remote/relative image | Browser may request its URL | Not downloaded; standalone image becomes text fallback |
 | `[TOC]` on its own line | Literal text, not a generated heading list | TOC converter invoked; case-insensitive; HTML `<!-- TOC -->` placeholder also recognized by exporter |

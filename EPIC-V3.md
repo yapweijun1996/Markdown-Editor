@@ -14,7 +14,7 @@ Parent inventory: [EPIC.md](EPIC.md). Exact behavior/defaults: [SPEC.md](SPEC.md
 - Insertion uses textarea cursor/selection and optional raster downscale at a 2,400 px longest dimension; SVG/GIF bypass resizing.
 - DOCX conversion handles standalone local/data images with a fixed width ceiling; remote/relative URLs become fallback text rather than downloaded bytes.
 
-**Gaps:** loading-placeholder alt text is escaped in the current implementation but still lacks browser-level hostile-input acceptance; cached image completion does not invalidate preview HTML; orphan attachment is never invoked; no reference-safe cache/ownership cleanup; inline image export omitted; WebP/SVG support not complete end-to-end. Desktop file-picker action is inaccessible through the current toolbar.
+**Gaps:** loading-placeholder alt text is escaped and cache completion now invalidates preview HTML; missing assets settle to an inert error placeholder and orphan attachment preserves existing ownership. Browser/IndexedDB acceptance, bounded cache cleanup, inline image export, reference analysis and WebP/SVG end-to-end support remain incomplete. Desktop file-picker action is inaccessible through the current toolbar.
 
 **Not implemented:** ImageGallery/ImageDropZone components, image library/replace/delete UI, orphan cleanup tool, size-warning threshold, remote image fetching/embedding or Safari Blob fallback.
 

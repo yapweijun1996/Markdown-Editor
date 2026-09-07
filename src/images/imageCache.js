@@ -2,6 +2,7 @@ import { getImage } from './imageRepo.js'
 
 const cache = new Map()
 const pending = new Map()
+const failed = new Set()
 const subscribers = new Set()
 
 export const MDIMG_PROTOCOL = 'mdimg://'
@@ -20,6 +21,7 @@ export function uriFromImageId(id) {
 }
 
 export function setBlob(id, blob) {
+  failed.delete(id)
   const existing = cache.get(id)
   if (existing) {
     URL.revokeObjectURL(existing.objectUrl)
@@ -38,13 +40,29 @@ export function getBlob(id) {
   return cache.get(id)?.blob || null
 }
 
+export function isImageLoadFailed(id) {
+  return failed.has(id)
+}
+
 export async function ensureLoaded(id) {
   if (cache.has(id)) return cache.get(id).objectUrl
+  if (failed.has(id)) return null
   if (pending.has(id)) return pending.get(id)
-  const promise = getImage(id).then((rec) => {
-    if (!rec) return null
-    return setBlob(id, rec.blob)
-  }).finally(() => pending.delete(id))
+  const promise = getImage(id)
+    .then((rec) => {
+      if (!rec) {
+        failed.add(id)
+        notify()
+        return null
+      }
+      return setBlob(id, rec.blob)
+    })
+    .catch(() => {
+      failed.add(id)
+      notify()
+      return null
+    })
+    .finally(() => pending.delete(id))
   pending.set(id, promise)
   return promise
 }

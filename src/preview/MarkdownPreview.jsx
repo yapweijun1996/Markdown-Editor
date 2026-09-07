@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import MarkdownIt from 'markdown-it'
-import { isInternalImageUri, getObjectUrl, ensureLoaded, imageIdFromUri } from '../images/imageCache.js'
+import {
+  isInternalImageUri,
+  getObjectUrl,
+  imageIdFromUri,
+  isImageLoadFailed,
+  preloadFromMarkdown,
+  subscribe,
+} from '../images/imageCache.js'
 import { renderMathInHtml, markdownHasMath } from './mathRenderer.js'
 import { hydrateMermaidBlocks } from './mermaidRenderer.js'
 import { escapeHtml } from './htmlEscape.js'
@@ -44,10 +51,13 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
     if (objectUrl) {
       token.attrSet('src', objectUrl)
     } else {
-      ensureLoaded(id).catch(() => {})
       token.attrSet('src', '')
       token.attrSet('data-pending', '1')
       const alt = token.content || ''
+      if (isImageLoadFailed(id)) {
+        const label = alt || 'Image unavailable'
+        return `<span class="image-error" role="img" aria-label="${escapeHtml(label)}">Image unavailable: ${escapeHtml(label)}</span>`
+      }
       return `<span class="image-loading" aria-label="Loading image">${escapeHtml(alt || 'Loading image…')}</span>`
     }
   }
@@ -69,10 +79,20 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
 
 export default function MarkdownPreview({ markdown }) {
   const [renderedHtml, setRenderedHtml] = useState('')
+  const [imageRevision, setImageRevision] = useState(0)
   const containerRef = useRef(null)
 
+  useEffect(() => subscribe(() => setImageRevision((revision) => revision + 1)), [])
+
+  useEffect(() => {
+    preloadFromMarkdown(markdown).catch(() => {})
+  }, [markdown])
+
   // Render markdown synchronously, then async post-process math
-  const baseHtml = useMemo(() => md.render(markdown || ''), [markdown])
+  const baseHtml = useMemo(
+    () => md.render(markdown || ''),
+    [imageRevision, markdown]
+  )
 
   useEffect(() => {
     let cancelled = false

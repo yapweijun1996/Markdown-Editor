@@ -34,9 +34,9 @@ These records document choices visible in the source; they do not invent histori
 
 ## D04 — Persistent image references are `mdimg://`, not Blob URLs
 
-**Status: Implemented with lifecycle gaps.** IndexedDB stores Blob records; Markdown stores IDs; in-memory cache creates temporary object URLs for display. DOCX embeds local/data images and deliberately does not download remote URLs.
+**Status: Implemented with lifecycle gaps.** IndexedDB stores Blob records; Markdown stores IDs; in-memory cache creates temporary object URLs for display, publishes load/error revisions and preserves ownership when attaching orphans. DOCX embeds local/data images and deliberately does not download remote URLs.
 
-**Consequences:** text can remain small, but sharing/copying the text alone is not portable. Unowned images and shared references are not managed safely; cache reactivity is incomplete.
+**Consequences:** text can remain small, but sharing/copying the text alone is not portable. Cache eviction, deletion invalidation, reference analysis across documents/snapshots and asset-bearing backups remain incomplete.
 
 **Proposed refinement:** reference-aware ownership/retention across documents and snapshots (T06), followed by a versioned asset-bearing backup/import format (T07). Decide manifest, identity/remapping, integrity validation, limits and conflict policy before implementing import. Neither a shared-library nor strict single-owner model has been selected as the final design.
 

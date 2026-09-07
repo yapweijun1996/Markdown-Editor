@@ -96,10 +96,19 @@ export async function deleteImagesByDocument(documentId) {
   await tx.done
 }
 
+export function canAttachImage(existing, documentId) {
+  return Boolean(
+    existing &&
+    documentId &&
+    (!existing.documentId || existing.documentId === documentId)
+  )
+}
+
 export async function attachImageToDocument(imageId, documentId) {
   const db = await getDB()
   const existing = await db.get(STORE_IMAGES, imageId)
-  if (!existing || existing.documentId === documentId) return existing
+  if (!existing || !canAttachImage(existing, documentId)) return existing
+  if (existing.documentId === documentId) return existing
   await db.put(STORE_IMAGES, { ...existing, documentId })
   return { ...existing, documentId }
 }

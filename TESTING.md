@@ -92,12 +92,12 @@ Each fix must carry a focused regression fixture. Complete browser/Office checks
 
 - [ ] Paste/drop/pick multiple images, including insertion at selected text and while writes are delayed.
 - [ ] After T11, verify the picker is reachable on desktop as well as mobile.
-- [ ] Test insertion before a document has an ID, then save/reload; ownership is attached and preview loads without editing Markdown.
-- [ ] Missing/deleted assets resolve to useful inert placeholders, not perpetual loading or injected HTML.
+- [ ] Test insertion before a document has an ID, then save/reload; orphan ownership is attached and preview loads without editing Markdown. Current hook performs the attachment.
+- [ ] Missing/deleted assets resolve to useful inert loading/error placeholders, not perpetual loading or injected HTML. Current cache has an error state; browser verification remains pending.
 - [ ] Test PNG/JPEG/GIF/WebP/SVG/BMP, invalid MIME/bytes, very large pixels/bytes, transparent images and downscale behavior. Picker acceptance is not proof of DOCX support.
 - [ ] Confirm standalone/inline asset embedding, reader compatibility and page-aware dimensions; compare aspect ratio.
 - [ ] Delete a document while another document/snapshot references its image; enforce defined ownership/retention policy.
-- [ ] Bound cache growth and revoke only unused object URLs on removal/switches.
+- [ ] Bound cache growth and revoke only unused object URLs on removal/switches; replacement revocation exists, eviction/removal is still pending.
 - [ ] For current history ZIP, inspect text entries only; do not claim asset/layout recovery or import.
 - [ ] After T07, export/import into a fresh profile and compare document IDs/remapping, content, images, settings and snapshots; test duplicate titles/timestamps, corrupt entries, missing assets and oversized archives.
 

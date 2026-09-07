@@ -24,7 +24,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 | T03 | P0 | Target-safe, atomic version restoration | In progress | T02, T05 | R07 |
 | T04 | P0 | Isolated shared-document sessions | In progress | T02 | R03, R06 |
 | T05 | P0 | Content-aware snapshots and mandatory recovery snapshots | In progress | T17 | R07 |
-| T06 | P1 | Reactive images, ownership and cache lifecycle | Open | T02, T17 | R08 |
+| T06 | P1 | Reactive images, ownership and cache lifecycle | In progress | T02, T17 | R08 |
 | T07 | P1 | Portable, importable document/history backups | Open | T06 | R03, R09 |
 | T08 | P1 | Recursive, loss-aware DOCX conversion | Open | T17 | R04 |
 | T09 | P1 | Token-aware math and asynchronous preview lifecycle | Open | T01, T17 | R02, R05 |
@@ -79,8 +79,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T06 — Image lifecycle
 
-- Evidence: preview `useMemo` depends only on Markdown, so cache notifications do not invalidate cached HTML. `useImages.attach` is exposed but never called. Images inserted before first save remain unowned; the cache has no eviction/removal API.
-- Subscribe the preview to asset revision/loading/error state, attach new-document assets, define reference ownership across documents/snapshots, and revoke unused object URLs safely.
+- Baseline evidence: preview `useMemo` depended only on Markdown, so cache notifications did not invalidate cached HTML. `useImages.attach` was exposed but never called. Images inserted before first save remained unowned; the cache had no eviction/removal API.
+- Current evidence: `MarkdownPreview` subscribes to cache revisions, preloads references outside render, and renders a stable inert error placeholder for missing assets. `useImages` attaches referenced orphan records after a local document ID exists; owned records cannot be reparented, and shared sessions skip attachment. Pure ownership tests cover orphan/same-owner/other-owner cases.
+- Remaining: add cache eviction/revocation and reference analysis across documents/snapshots, plus browser/IndexedDB tests for reload, deletion and format failures.
 - Done when saved images display after reload without editing text, missing images settle to a useful error, deleting a document does not break another document's referenced image, and cache/storage cleanup is bounded.
 
 ### T07 — Portable backups
@@ -146,7 +147,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T17 — Harness and CI
 
-- Evidence: `package.json` now has a `test` script using Node's built-in `node:test`; `test/` covers pure DB helpers, Markdown AST parsing, share URL round trips, preview escaping and snapshot policy. GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes before deployment.
+- Evidence: `package.json` now has a `test` script using Node's built-in `node:test`; `test/` covers pure DB helpers, Markdown AST parsing, share URL round trips, preview escaping, snapshot policy, save timing and image ownership. GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes before deployment.
 - Remaining: add component/persistence fixtures, DOCX XML assertions, failure-first regression fixtures for T01–T16, lint/type checks and browser E2E. Vitest/React Testing Library/fake-indexeddb/Playwright remain candidates, not current dependencies.
 - Keep real-browser/Word validation distinct from unit results.
 - Done when documented commands run in a clean checkout, failing critical regressions block deployment, and test artifacts/limitations are recorded. Large refactors must follow, not precede, this foundation.
