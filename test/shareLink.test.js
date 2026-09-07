@@ -32,3 +32,11 @@ test('share links identify local image references without uploading them', () =>
   assert.equal(hasLocalImageReferences('![local](mdimg://image-1)'), true)
   assert.equal(hasLocalImageReferences('![remote](https://example.test/image.png)'), false)
 })
+
+test('share encoding rejects oversized markdown before compression', () => {
+  setLocation()
+  assert.throws(
+    () => encodeShareUrl('x'.repeat(1_000_001)),
+    /too large to encode/
+  )
+})

@@ -1,4 +1,8 @@
 import LZString from 'lz-string'
+import {
+  getTextByteLength,
+  RESOURCE_LIMITS,
+} from '../limits/resourceLimits.js'
 
 const PARAM_CONTENT = 'content'
 const PARAM_MODE = 'mode'
@@ -9,13 +13,21 @@ export function hasLocalImageReferences(markdown) {
 }
 
 export function encodeShareUrl(markdown, previewOnly = false) {
-  const compressed = LZString.compressToEncodedURIComponent(markdown || '')
+  const source = markdown || ''
+  if (source.length > RESOURCE_LIMITS.shareMarkdownCharacters) {
+    throw new Error('Markdown is too large to encode in a share link.')
+  }
+  const compressed = LZString.compressToEncodedURIComponent(source)
   const params = new URLSearchParams()
   params.set(PARAM_CONTENT, compressed)
   if (previewOnly) params.set(PARAM_MODE, MODE_PREVIEW)
 
   const baseUrl = `${window.location.origin}${window.location.pathname}`
-  return `${baseUrl}#${params.toString()}`
+  const url = `${baseUrl}#${params.toString()}`
+  if (getTextByteLength(url) > RESOURCE_LIMITS.encodedShareCharacters) {
+    throw new Error('The generated share link exceeds the supported size.')
+  }
+  return url
 }
 
 function readHashParams() {
@@ -37,9 +49,11 @@ export function decodeShareUrl() {
   }
 
   if (!content) return null
+  if (content.length > RESOURCE_LIMITS.encodedShareCharacters) return null
 
   const markdown = LZString.decompressFromEncodedURIComponent(content)
   if (markdown === null) return null
+  if (markdown.length > RESOURCE_LIMITS.shareMarkdownCharacters) return null
 
   return {
     markdown,
@@ -48,17 +62,23 @@ export function decodeShareUrl() {
 }
 
 export async function copyToClipboard(text) {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text)
-    return true
+  let textarea = null
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+    textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    const ok = document.execCommand('copy')
+    return ok
+  } catch {
+    return false
+  } finally {
+    textarea?.remove()
   }
-  const ta = document.createElement('textarea')
-  ta.value = text
-  ta.style.position = 'fixed'
-  ta.style.opacity = '0'
-  document.body.appendChild(ta)
-  ta.select()
-  const ok = document.execCommand('copy')
-  document.body.removeChild(ta)
-  return ok
 }

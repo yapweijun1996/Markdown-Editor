@@ -1,5 +1,9 @@
 import { nanoid } from 'nanoid'
 import { getDB, STORE_IMAGES } from '../history/db.js'
+import {
+  normalizeImageMimeType,
+  RESOURCE_LIMITS,
+} from '../limits/resourceLimits.js'
 
 const MAX_DIMENSION = 2400
 
@@ -22,6 +26,9 @@ async function readImageDimensions(blob) {
 async function maybeDownscale(blob, mimeType) {
   const { width, height } = await readImageDimensions(blob)
   if (!width || !height) return { blob, width, height }
+  if (width * height > RESOURCE_LIMITS.imagePixels) {
+    throw new Error('Image dimensions exceed the supported pixel limit.')
+  }
   if (width <= MAX_DIMENSION && height <= MAX_DIMENSION) {
     return { blob, width, height }
   }
@@ -45,7 +52,22 @@ async function maybeDownscale(blob, mimeType) {
 }
 
 export async function createImage({ documentId, blob, filename }) {
-  const mimeType = blob.type || 'image/png'
+  if (!blob || typeof blob.size !== 'number') {
+    throw new Error('Invalid image data.')
+  }
+  if (blob.size > RESOURCE_LIMITS.imageBytes) {
+    throw new Error('Image is too large. Maximum size is 25 MB.')
+  }
+  const mimeType = normalizeImageMimeType(blob.type)
+  if (!mimeType) {
+    throw new Error('This image format is not supported. Use PNG, JPEG, GIF, BMP or SVG.')
+  }
+  if (mimeType === 'image/svg+xml') {
+    const source = await blob.text()
+    if (/<script\b|\bon[a-z]+\s*=|javascript:/i.test(source)) {
+      throw new Error('This SVG contains active content and was rejected.')
+    }
+  }
   const processed = await maybeDownscale(blob, mimeType)
   const record = {
     id: nanoid(),

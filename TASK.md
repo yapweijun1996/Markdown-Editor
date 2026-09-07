@@ -1,6 +1,6 @@
 # TASK — Implementation and hardening ledger
 
-Source baseline: `445cc05bcbc69647c3d08eb17edcd2d2da5ee56a`. Documentation review: 2026-09-07 (UTC).
+Source baseline: `d946eab` plus the currently verified working-tree changes. Documentation review: 2026-09-07 (UTC).
 
 This is the canonical task-status record. [SPEC.md](SPEC.md) owns requirements; [ROADMAP.md](ROADMAP.md) owns sequencing; [docs/REVIEW.md](docs/REVIEW.md) records evidence. Documentation updates do **not** resolve application defects.
 
@@ -28,12 +28,12 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 | T07 | P1 | Portable, importable document/history backups | In progress | T06 | R03, R09 |
 | T08 | P1 | Recursive, loss-aware DOCX conversion | In progress | T17 | R04 |
 | T09 | P1 | Token-aware math and asynchronous preview lifecycle | In progress | T01, T17 | R02, R05 |
-| T10 | P1 | Correct page layout, cover, TOC and print readiness | Open | T08, T09 | R10, R11 |
-| T11 | P1 | Desktop/mobile action parity | Open | T17 | R01, R12 |
-| T12 | P1 | Shared, validated preferences and stable document metadata | Open | T02, T17 | R06, R13 |
-| T13 | P1 | Stable batch queue and explicit file-only scope | Open | T08, T17 | R14 |
-| T14 | P1 | Resource limits and sharing/network resilience | Open | T17 | R03, R08, R14, R16 |
-| T15 | P1 | Keyboard, modal and presentation accessibility | Open | T11, T17 | R12, R15 |
+| T10 | P1 | Correct page layout, cover, TOC and print readiness | In progress | T08, T09 | R10, R11 |
+| T11 | P1 | Desktop/mobile action parity | In progress | T17 | R01, R12 |
+| T12 | P1 | Shared, validated preferences and stable document metadata | In progress | T02, T17 | R06, R13 |
+| T13 | P1 | Stable batch queue and explicit file-only scope | In progress | T08, T17 | R14 |
+| T14 | P1 | Resource limits and sharing/network resilience | In progress | T17 | R03, R08, R14, R16 |
+| T15 | P1 | Keyboard, modal and presentation accessibility | In progress | T11, T17 | R12, R15 |
 | T16 | P0 | Dependency advisory triage and safe upgrades | Open | Initial triage has no prerequisite; upgrades need T17 | R16, R17 |
 | T17 | P0 | Automated test harness and CI quality gates | In progress | None | R17 |
 | T18 | P2 | Measured preview, history, batch and PWA performance | Open | T06, T09, T13, T17 | R18 |
@@ -107,39 +107,39 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T10 — Layout and PDF correctness
 
-- Evidence: `pageLayout.js` swaps landscape dimensions before `docx` swaps them again; generated A4 XML has portrait dimensions plus a landscape flag. Cover content shares the body section; there is no different-first-page header/footer setting. Cover title/date placeholders are not persisted values. TOC interoperability is unverified.
-- Use one authoritative page-size mapping; define cover/header/footer/page-number behavior, validate TOC structure and field refresh in actual readers. Derive image sizing from writable page dimensions rather than fixed 600 px assumptions.
-- Define PDF as preview printing, not Word-layout parity. Await images, math, diagrams and fonts before printing; verify presentation overlays and zoom do not contaminate output.
+- Current evidence: `pageLayout.js` now passes base page dimensions to `docx`, which serializes the landscape swap once. Explicit 1-inch page margins are shared with page-aware image sizing; A4 XML tests produce `11906×16838` portrait and `16838×11906` landscape. Cover export falls back to the document title/export date when fields are empty, sets `w:titlePg`, and supplies empty first-page header/footer parts so body headers/page numbers do not appear on the cover. DOCX requests `w:updateFields` for the generated TOC field. `test/layoutPrint.test.js` covers these XML/settings contracts and the print readiness helper.
+- Current PDF behavior remains preview printing, not Word-layout parity. The preview exposes a render-ready state; `downloadPdf` waits for math/diagram hydration, fonts, images and two layout frames, with a bounded five-second best-effort timeout. Print CSS resets Read zoom and hides presentation overlays.
+- Remaining: verify cover/header/footer/page-number behavior, TOC links/field refresh, all page sizes, image aspect ratios and PDF pagination in actual Word/LibreOffice and supported browsers. A reader may still differ from XML contracts, and PDF layout synchronization beyond HTML print requires an explicit decision.
 - Done when portrait/landscape XML dimensions are correct, promised cover/TOC behavior passes reader checks, and print output is complete across supported browsers. PDF layout synchronization beyond this requires an explicit decision.
 
 ### T11 — Action parity
 
-- Evidence: Document Layout, Batch Convert and Insert Image picker exist only in `moreItems`, while the More trigger is hidden on desktop.
-- Render responsive actions from one registry, keeping content/session-dependent enabled states correct.
+- Current evidence: Document Layout, Batch Convert and Insert Image picker remain in the shared `moreItems` action registry, and the overflow-menu trigger is now rendered on desktop, tablet and mobile. Content/session-dependent disabled states remain owned by the registry.
+- Remaining: verify pointer/keyboard reachability, focus behavior, action-sheet sizing and saved-document/session-dependent enabled states at representative viewport widths. A browser/component check is still required.
 - Done when these features are reachable by keyboard and pointer on desktop/tablet/mobile, and layout does not require waiting for an unexplained autosave to become available.
 
 ### T12 — Preferences and metadata
 
-- Evidence: separate `useTheme` instances own independent state; reset only resets `prefs.v1`, not theme/share/zoom keys. Preference merge is not schema validation. `updateDocument` re-derives the title and overwrites manual renames; read/modify/write metadata updates use separate transactions.
-- Share theme state; validate persisted values, define reset scope and migrations, and distinguish custom titles from derived titles. Preserve layout/pin/title during overlapping saves and metadata changes.
+- Current evidence: `normalizePrefs` now allowlists persisted editor/draft/presentation values and drops unknown fields; `useTheme` shares state across hook instances, normalizes invalid modes and consumes cross-tab `theme.mode` storage events. Settings reset explicitly resets `prefs.v1` plus the Settings theme to `system`; it does not delete history, share or Read-control keys. Documents now persist `titleSource`, preserve manual titles during content updates, preserve legacy derived-title behavior, and serialize document content/layout/pin/rename/delete mutations per document. Backup manifests preserve optional title-source metadata.
+- Remaining: verify preference/theme behavior in a browser and prove serialized IndexedDB metadata operations under failure/concurrency. Full preference migrations and reset behavior for keys outside the Settings sheet remain out of scope until defined.
 - Done when all theme controls agree, old/malformed storage recovers safely, reset matches its label, renamed titles survive edits and concurrent operations do not revert metadata.
 
 ### T13 — Batch queue
 
-- Evidence: UI progress/errors/keys/removal use filenames, while input deduplication uses name plus size. Files can be added while a captured queue is processing; no folder traversal or cancellation exists.
-- Give every input a stable identity and define immutable processing batches; handle retries, failures and cancellation. Retain file-only wording unless directory traversal is separately implemented.
-- Done when duplicate filenames, partial/all failures and changing selections cannot corrupt progress/results; successful ZIP entries remain unique.
+- Current evidence: `createBatchEntry` gives each accepted file a stable queue ID; the UI keys progress/errors/removal by that ID and passes a copied batch to the processor. Processing disables selection/removal, duplicate output names receive unique ZIP entries, failed entries can be retried, and an `AbortController` stops the queue at a safe conversion boundary. Batch limits are 100 files, 2 MiB per Markdown file and 50 MiB total input. The UI remains explicitly file-only; no directory traversal is implied.
+- Remaining: run browser checks for duplicate names, partial/all failures, retry, cancellation and changing selections. Keep file-only wording unless directory traversal is separately implemented.
+- Done when duplicate filenames, partial/all failures, failed-entry retry, cancellation and changing selections cannot corrupt progress/results; successful ZIP entries remain unique.
 
 ### T14 — Resource and network boundaries
 
-- Evidence: single-file upload enforces 2 MiB, but pasted/shared/batch content and images have no equivalent limits. Share decompression is synchronous; TinyURL lacks timeout/cancellation and stale-result protection. Broad image acceptance is not full DOCX format support (WebP defaults to PNG type without transcoding; SVG fallback needs validation).
-- Define configurable limits for encoded/decoded text, images/pixels, diagrams and batch work; bound processing and explain refusals. Normalize supported image formats. Handle clipboard failure, QR capacity, shortener timeout and changed input.
+- Current evidence: `src/limits/resourceLimits.js` defines Markdown/share/QR/image/pixel/diagram/batch limits. Share encoding and decoding reject oversized content before the expensive path; QR controls refuse links above the configured capacity; TinyURL requests have a timeout, caller cancellation and stale-result protection; clipboard failures return a user-visible fallback message. Image insertion accepts only converter-supported MIME types, rejects active SVG content and bounds bytes/pixels; Mermaid and batch input sizes are bounded with explicit errors.
+- Remaining: verify large-input behavior in browsers, test image decode failures and malformed SVGs, and decide whether decompression/diagram work needs worker offload. Network egress remains opt-in through the existing TinyURL action.
 - Done when boundary/oversized inputs fail safely without freezing, late shortener results cannot replace a newer link, and data-egress consent is clear.
 
 ### T15 — Accessibility
 
-- Evidence: modal components do not provide a shared focus trap/return/Escape contract; the history rename input is nested in a button. Reduced-motion CSS does not stop the laser's canvas animation.
-- Introduce accessible modal/menu primitives, labelled fields, keyboard tabs/radio groups, live save/error feedback and motion-aware presentation behavior.
+- Current evidence: `useModalA11y` provides initial focus, Tab containment, Escape close and focus restoration for Settings, Layout, Share, Batch, More, History and Versions surfaces. Dialog/menu labels and existing control roles remain in place; history rename no longer nests an input inside a button. Laser canvas trail animation is disabled when `prefers-reduced-motion: reduce` is active.
+- Remaining: run keyboard/screen-reader/focus checks in supported browsers and record measured contrast/touch-target results. The current hook is a small shared primitive, not a substitute for full browser accessibility certification.
 - Done when keyboard-only workflows, focus restoration, screen-reader labels and reduced-motion presentation pass documented browser checks; record measured contrast/touch-target results rather than assuming HIG compliance.
 
 ### T16 — Dependency safety
@@ -150,8 +150,8 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T17 — Harness and CI
 
-- Evidence: `package.json` now has a `test` script using Node's built-in `node:test`; `test/` covers DB helpers, Markdown AST parsing, share URL/local-image warnings, preview escaping, snapshot policy, save timing, image ownership, backup manifest/reference validation and DOCX XML/media contracts. GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes before deployment.
-- Remaining: add component/persistence fixtures, DOCX XML assertions, failure-first regression fixtures for T01–T16, lint/type checks and browser E2E. Vitest/React Testing Library/fake-indexeddb/Playwright remain candidates, not current dependencies.
+- Evidence: `package.json` now has a `test` script using Node's built-in `node:test`; `test/` covers DB helpers, Markdown AST parsing, share URL/local-image warnings and limits, preview escaping, snapshot policy, save timing, image ownership/format boundaries, backup manifest/reference validation, document metadata, batch identities/cancellation, shortener cancellation, DOCX XML/media contracts, math HTML boundaries and page/layout/print contracts. The latest local run passed **35 tests**. GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes before deployment.
+- Remaining: add component/persistence fixtures, failure-first regression fixtures for T01–T16, lint/type checks and browser E2E. Vitest/React Testing Library/fake-indexeddb/Playwright remain candidates, not current dependencies.
 - Keep real-browser/Word validation distinct from unit results.
 - Done when documented commands run in a clean checkout, failing critical regressions block deployment, and test artifacts/limitations are recorded. Large refactors must follow, not precede, this foundation.
 
@@ -185,6 +185,6 @@ Custom Word template upload, native Word math, image library UI, true directory 
 
 ## Immediate next steps
 
-1. Complete T01's browser/security, T04 transition and T05 persistence acceptance; add T02 failure/multi-tab fixtures.
-2. Keep transition and recovery checks against disposable data before expanding fidelity/asset work.
-3. Complete fidelity, portability and UI work, then measure/refactor. Keep this ledger and linked acceptance evidence updated in the same change.
+1. Run disposable browser/Office reader checks for T10 layout/TOC/cover/print and T11/T15 keyboard/focus behavior.
+2. Complete T01's browser/security, T02/T04 transition and T05/T07 persistence/round-trip acceptance; add failure/multi-tab fixtures.
+3. Run T13 retry/cancel UX and T14 large-input/image decode browser checks before claiming the interaction hardening tasks complete.

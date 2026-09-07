@@ -1,6 +1,6 @@
 # EPIC — Implemented capabilities and active stabilization scope
 
-Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
+Baseline: `d946eab` plus the currently verified working-tree changes · reviewed 2026-09-07 (UTC).
 
 This replaces the old blanket “V2 shipped/all checks passed” record. Code presence is not proof of deployment, browser compatibility, performance or acceptance. Package version is still `0.1.0`. V1/V2/V3 labels describe historical feature groups only.
 
@@ -11,10 +11,10 @@ Canonical references: [SPEC.md](SPEC.md) (requirements), [TASK.md](TASK.md) (tas
 | Epic | Implementation present | Acceptance position |
 |---|---|---|
 | E01 — Core authoring/compiler (V1 group) | Textarea, `.md` upload, sample, recursive AST-to-DOCX modules and download | Focused XML contracts now cover key recursive/inline cases; broader fidelity gaps and Office acceptance remain |
-| E02 — Local/PWA experience (V2 group) | Generated SW/manifest/icons, responsive UI, themes, preferences, draft/history/snapshot and versioned asset-bearing backup import/export, lazy heavy dependencies | Save/restore/share safety, theme consistency, accessibility and browser/PWA validation incomplete |
-| E03 — Rich output (V3 group) | Images, four built-in templates, page/cover/TOC modules, print PDF, KaTeX/Mermaid, file batch ZIP, QR/TinyURL | Partial against original ambitions; see EPIC-V3 for omissions and defects |
-| E04 — Read and presentation | Read width/zoom/toolbar controls, laser color/size/trail/fullscreen and Exit/ESC behavior | Code present in recent commits; device/fullscreen/a11y acceptance not performed |
-| E05 — Safety and fidelity hardening | Review and source-aligned docs completed (T20); minimal Node test/CI gate started (T17); T01–T09 remediation in progress | T01–T09 remain incomplete; T10–T16/T18–T19/T21 are Open and T17 is In progress |
+| E02 — Local/PWA experience (V2 group) | Generated SW/manifest/icons, responsive UI, shared theme state, validated preferences, draft/history/snapshot and versioned asset-bearing backup import/export, lazy heavy dependencies | Save/restore/share safety, browser/PWA/storage acceptance and non-theme cross-tab policy incomplete |
+| E03 — Rich output (V3 group) | Images with bounded supported formats, four built-in templates, page/cover/TOC modules, print PDF, KaTeX/Mermaid, stable file batch ZIP, QR/TinyURL | Partial against original ambitions; see EPIC-V3 for omissions and defects |
+| E04 — Read and presentation | Read width/zoom/toolbar controls, laser color/size/trail/fullscreen, reduced-motion trail suppression and Exit/ESC behavior | Code present; device/fullscreen/a11y acceptance not performed |
+| E05 — Safety and fidelity hardening | Review/docs baseline completed (T20); 34-test Node contract/CI gate; T01–T15 source remediation in progress | T01–T15 remain incomplete at integration acceptance; T16/T18–T19/T21 are Open and T17 is In progress |
 
 ## E01 — Core authoring and compiler
 
@@ -30,18 +30,18 @@ Canonical references: [SPEC.md](SPEC.md) (requirements), [TASK.md](TASK.md) (tas
 |---|---|---|
 | V2.0 PWA | VitePWA-generated manifest/SW, icons/safe areas, prompt registration, update countdown | No custom source SW/register module, BUILD_VERSION comparison, URL unregister kill-switch or guaranteed update detection within 30 seconds |
 | V2.1 Responsive/design | theme.css tokens, light/dark/system, translucent toolbar, mobile tabs/sheets, table overflow | No verified Lighthouse/HIG/contrast certification; no swipe tabs, Web Share or haptics; not every value is tokenized |
-| V2.2 Preferences/draft | prefs.v1 editor/draft/presentation defaults, settings and global draft prompt | No PreferencesProvider, accent selector, preferences import/export or complete reset; editor preferences do not globally restyle preview/Word |
-| V2.3 History | IndexedDB v2 documents/snapshots/images, serialized save hook, save feedback, title/content search, pin/rename/delete/open | 8-second inactivity save with 30-second maximum wait and transition flushes; browser crash/multi-tab policy and full-text index/eviction/Clear History remain |
+| V2.2 Preferences/draft | prefs.v1 editor/draft/presentation defaults, allowlisted normalization, Settings reset for prefs + theme and global draft prompt | No PreferencesProvider, accent selector, preferences import/export or full-profile reset; editor preferences do not globally restyle preview/Word |
+| V2.3 History | IndexedDB v2 documents/snapshots/images, serialized save hook, save feedback, title/content search, pin/rename/delete/open, manual-title metadata and per-document mutation queue | 8-second inactivity save with 30-second maximum wait and transition flushes; browser crash/multi-tab policy and full-text index/eviction/Clear History remain |
 | V2.4 Versions/ZIP | Timeline, delete/restore, recovery backup, storage estimate and versioned manifest archive import/export with metadata, snapshots and image assets | 30-second trailing snapshot; changed-content filter and forced recovery path are corrected, but FIFO persistence/failure, target-transaction and backup round-trip acceptance remain; no pinned snapshots or backup merge/conflict policy |
 | V2.5 Chunking | Manual vendor chunks, lazy DOCX/ZIP/math/diagram/QR imports | Modals are statically imported; SW precaches lazy assets too; historical bundle/performance claims are not current browser measurements |
 
-**Remaining work:** T01–T07/T11/T12/T14–T19. Offline/install/update and backup round trips must be verified on target browsers, and storage failures must not be hidden.
+**Remaining work:** T01–T07/T11–T19. Offline/install/update and backup round trips must be verified on target browsers, and storage failures must not be hidden.
 
 ## E03 — Rich output
 
-The main V3 code paths are implemented, but the original proposal included work that never landed: custom Word template upload/store, Word math conversion, image gallery/cleanup, directory traversal, preview TOC generation and PDF/Word layout parity.
+The main V3 code paths are implemented, but the original proposal included work that never landed: custom Word template upload/store, Word math conversion, image gallery/cleanup, directory traversal, preview TOC generation and PDF/Word layout parity. T10 now corrects the source-level DOCX page/cover/TOC and print-readiness defects; reader and browser acceptance is still open.
 
-Landscape dimensions and cover/header behavior also differ from the promised output. See [EPIC-V3.md](EPIC-V3.md) for the source-level scope matrix. Do not restore a blanket “V3 complete” label until narrowed requirements and their acceptance tests pass.
+Word reader behavior, cross-browser pagination and PDF/Word parity still differ from the original proposal. See [EPIC-V3.md](EPIC-V3.md) for the source-level scope matrix. Do not restore a blanket “V3 complete” label until narrowed requirements and their acceptance tests pass.
 
 ## E04 — Read/presentation (latest source work)
 
@@ -52,9 +52,9 @@ Recent source history includes:
 - `f7ad49b`: configurable presentation laser/trail/fullscreen behavior.
 - `445cc05`: saturated laser dot on light/dark themes.
 
-Read uses a centered 820 px base maximum column, 70–300% scale, persisted width lock, and scroll-driven toolbar visibility. It does not itself call the browser Fullscreen API. Presentation is a desktop Read action; it hides the toolbar, optionally requests fullscreen, follows the mouse and exits through Escape/Exit/fullscreen lifecycle.
+Read uses a centered 820 px base maximum column, 70–300% scale, persisted width lock, and scroll-driven toolbar visibility. It does not itself call the browser Fullscreen API. Presentation is a desktop Read action; it hides the toolbar, optionally requests fullscreen, follows the mouse, suppresses the trail under reduced-motion preference and exits through Escape/Exit/fullscreen lifecycle.
 
-**Remaining work:** T02 (Read pauses saving), T12 (preference state), T15 (focus/motion/device access), T18 (measurement). Commit existence is not evidence of live deployment/device testing.
+**Remaining work:** T02 (Read pauses saving), T12 (browser/concurrency preference acceptance), T15 (focus/motion/device access), T18 (measurement). Commit existence is not evidence of live deployment/device testing.
 
 ## E05 — Active planning focus: trustworthy editing/export
 

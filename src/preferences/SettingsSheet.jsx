@@ -1,6 +1,7 @@
 import React from 'react'
 import { useTheme } from '../theme/useTheme.js'
 import { AUTO_SAVE_INTERVALS } from './defaults.js'
+import { useModalA11y } from '../accessibility/useModalA11y.js'
 
 function Segmented({ value, options, onChange, ariaLabel }) {
   return (
@@ -46,10 +47,18 @@ function Row({ label, children, hint }) {
 
 export default function SettingsSheet({ prefs, update, reset, onClose }) {
   const { mode: themeMode, setMode: setThemeMode } = useTheme()
+  const modalRef = useModalA11y(onClose)
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal settings-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={modalRef}
+        className="modal settings-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Settings"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <span>Settings</span>
           <button className="modal-close" onClick={onClose}>×</button>
@@ -185,8 +194,14 @@ export default function SettingsSheet({ prefs, update, reset, onClose }) {
           </section>
 
           <section className="settings-section">
-            <button className="settings-danger-btn" onClick={reset}>
-              Reset All Settings
+            <button
+              className="settings-danger-btn"
+              onClick={() => {
+                reset()
+                setThemeMode('system')
+              }}
+            >
+              Reset Editor, Draft, Presentation &amp; Theme
             </button>
           </section>
         </div>

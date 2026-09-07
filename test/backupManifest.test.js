@@ -77,6 +77,18 @@ test('backup manifest validation rejects duplicate identities', () => {
   )
 })
 
+test('backup manifest validates optional title source metadata', () => {
+  assert.equal(validateBackupManifest(createManifest({
+    documents: [{ ...createManifest().documents[0], titleSource: 'manual' }],
+  })), true)
+  assert.throws(
+    () => validateBackupManifest(createManifest({
+      documents: [{ ...createManifest().documents[0], titleSource: 'unknown' }],
+    })),
+    /Invalid backup document 0 titleSource/
+  )
+})
+
 test('backup paths remain unique for duplicate document titles', () => {
   const usedPaths = new Set()
   assert.equal(

@@ -1,8 +1,10 @@
 # DESIGN — Current architecture and design boundaries
 
-Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
+Baseline: `d946eab` plus the currently verified working-tree changes · reviewed 2026-09-07 (UTC).
 
 This replaces the original MVP proposal with the architecture actually present in `src/`. Proposed corrections are labelled explicitly. [SPEC.md](SPEC.md) owns requirements/defaults, [TASK.md](TASK.md) owns work status, and [docs/DECISIONS.md](docs/DECISIONS.md) records implemented choices versus proposals.
+
+Current source note: `d946eab` plus the verified working-tree changes described in TASK and REVIEW; no browser/Office acceptance is implied.
 
 ## 1. Product model
 
@@ -22,12 +24,14 @@ src/main.jsx (React.StrictMode; theme -> app -> print CSS)
   +-- history/useHistory ---------------> current ID, docs, restore -> setMarkdown
   +-- images/useImages -----------------> IndexedDB blobs + in-memory URL cache
   +-- preferences/usePreferences -------> prefs.v1
-  +-- theme/useTheme --------------------> theme.mode + document data-theme
+  +-- theme/useTheme --------------------> shared theme.mode + document data-theme
+  +-- limits/resourceLimits --------------> shared input/image/share/batch boundaries
+  +-- accessibility/useModalA11y ---------> modal focus, Tab and Escape lifecycle
   +-- preview/usePreviewControls -------> zoom, width, scroll-driven toolbar
   |
   +-- MarkdownPreview: markdown-it -> HTML -> async KaTeX -> DOM -> Mermaid SVG
   +-- downloadDocx: remark/GFM AST -> converter modules -> docx Blob -> file-saver
-  +-- downloadPdf: delayed window.print() -> print.css -> browser Save as PDF
+  +-- downloadPdf: render-ready barrier -> print.css -> browser Save as PDF
   +-- ShareModal: LZ compression -> URL fragment -> clipboard / QR / TinyURL opt-in
   +-- BatchConvertSheet: selected .md files -> sequential DOCX -> JSZip
   +-- HistoryPanel/VersionsView: repositories -> list/search/restore/text ZIP
@@ -53,11 +57,13 @@ These modules are separated by responsibility but **not independent failure doma
 | `src/styles/print.css` | Separate static print layout; not driven by document layout |
 | `src/history/` | DB opening, document/snapshot repositories, hook, history UI, versioned backup export/import |
 | `src/images/` | Blob repository, downscale, URI helpers, process-wide object URL cache and insertion helpers |
-| `src/preferences/` | Version-1 defaults, storage merge, hook, Settings sheet, draft storage/prompt |
-| `src/theme/` | Each hook instance owns mode state and writes document theme/localStorage |
-| `src/components/` | Mobile More sheet and per-document Layout sheet |
-| `src/share/` | Hash compression/decoding, copy fallback, QR canvas, optional TinyURL request |
-| `src/batch/` | File collection/progress UI and sequential DOCX ZIP generation |
+| `src/preferences/` | Version-1 defaults, allowlisted storage normalization, hook, Settings sheet, draft storage/prompt |
+| `src/theme/` | Shared in-page theme state, mode normalization and document theme/localStorage synchronization |
+| `src/components/` | Responsive More action sheet and per-document Layout sheet |
+| `src/share/` | Hash compression/decoding, bounded copy/share/QR paths, optional cancellable TinyURL request |
+| `src/batch/` | File collection with stable entry IDs, immutable processing batches and sequential DOCX ZIP generation |
+| `src/limits/` | Central resource and supported-image MIME limits used by share, image, diagram and batch paths |
+| `src/accessibility/` | Shared modal focus/Tab/Escape/focus-return behavior |
 | `src/pwa/UpdatePrompt.jsx` | SW registration via virtual module, hourly checks and 30-second countdown |
 
 ## 4. Document/session state and lifecycle
@@ -82,14 +88,14 @@ Source: `src/history/db.js` and repositories. DB: `markdown-editor-db`, version 
 
 | Store | Indexes | Record fields |
 |---|---|---|
-| `documents` | `updatedAt`, `pinned` | `id`, `title`, `content`, `createdAt`, `updatedAt`, `wordCount`, `sizeBytes`, `pinned` (0/1), `templateId`, `layout` |
+| `documents` | `updatedAt`, `pinned` | `id`, `title`, `titleSource` (`derived`/`manual`), `content`, `createdAt`, `updatedAt`, `wordCount`, `sizeBytes`, `pinned` (0/1), `templateId`, `layout` |
 | `snapshots` | `documentId`, `createdAt` | `id`, `documentId`, `content`, `createdAt` |
 | `images` | `documentId`, `createdAt` | `id`, nullable `documentId`, `filename`, `mimeType`, `blob`, `width`, `height`, `sizeBytes`, `createdAt` |
 
 - `layout` contains pageSize/orientation/header/footer/pageNumbers and coverPage enabled/title/subtitle/author/date. Defaults are merged on reads; no separate template store exists.
 - `listDocuments()` loads all records, then sorts pins first and updated time descending. Search scans title/content in React memory; no full-text index or pagination exists.
 - Titles derive from the first Markdown heading of any level or first nonblank line, strip selected formatting characters and cap at 80 characters. Word count splits on whitespace, not language-aware segmentation.
-- Metadata/content updates use separate get/put transactions and can race. Each content save re-derives title, overriding manual rename.
+- Legacy records without `titleSource` are treated as derived. Manual renames persist their source and survive content saves. Content/layout/pin/rename/delete repository mutations are queued per document to reduce stale read/modify/write overwrites; IndexedDB failure/concurrency acceptance remains pending.
 - Deleting a document uses a multi-store transaction to cascade snapshots and images indexed to that ID. Unowned images are not included. Shared-reference safety is not modeled.
 - Snapshots contain content only: no layout, title, pin or image copy. Automatic retention caps them at 50, with no pinned-snapshot exception. Changed content is eligible regardless of length; forced recovery snapshots use the same FIFO store and may preserve empty content.
 - DB open failure resets the cached open promise. Blocked upgrade only logs a warning; no user-assisted multi-tab upgrade recovery is implemented.
@@ -118,8 +124,7 @@ Known boundary violations:
 
 - Missing-image alt text and Mermaid error text are escaped at construction through `src/preview/htmlEscape.js`; browser-level hostile-input and final DOM acceptance remain pending (T01).
 - Cache notifications rerender App but do not invalidate Markdown-only HTML memoization (T06).
-- Math regexes operate on tags, attributes and code as well as intended text; HTML escaping precedes formula parsing (T09).
-- Math post-processing now scans text nodes rather than arbitrary HTML and skips code/attributes; KaTeX failures fall back to base HTML. Mermaid hydration is cancellation/current-container aware, but browser readiness/error and viewport lifecycle acceptance remain incomplete (T09/T18).
+- Math post-processing scans text nodes rather than arbitrary HTML and skips code/attributes; KaTeX failures fall back to base HTML. Mermaid hydration is cancellation/current-container aware, and `MarkdownPreview` exposes a render-ready state for print. Browser error/accessibility and viewport lifecycle acceptance remain incomplete (T09/T10/T18).
 
 Remote images may be fetched by the browser. No final common sanitizer or CSP meta is configured. Proposed safety changes must preserve legitimate KaTeX/SVG/image rendering and be verified with hostile-input fixtures.
 
@@ -128,33 +133,33 @@ Remote images may be fetched by the browser. No final common sanitizer or CSP me
 `downloadDocx` imports the converter and file-saver on demand. The converter parses Markdown, registers list numbering, recursively converts block/inline nodes (including async image runs) concurrently at the top level with `Promise.all`, flattens output, prepends cover paragraphs, applies page properties/header/footer, and packs one section to Blob. Unsupported block nodes become readable fallback paragraphs instead of disappearing silently.
 
 - Most converter modules receive the selected template `cfg`; the default is `defaultTemplate`.
-- List conversion is recursive only for nested list/paragraph children, not generic blocks; blockquote conversion accepts only paragraphs. Inline handling lacks image/delete/reference-link semantics.
+- List conversion preserves focused nested list/paragraph/continuation blocks and delegates other nested blocks to the fallback-aware converter; blockquotes preserve supported nested blocks. Inline handling includes local/data images and deletion runs; reference-link semantics remain incomplete.
 - Numbering defines six bullet/ordered levels. Both list depth limits and numbering/layout/style values remain partially hardcoded.
 - Images resolve cached/stored `mdimg://` Blobs or data URIs. Remote fetching is deliberately absent from DOCX conversion. Image format normalization and SVG fallback are incomplete.
 - Mermaid export uses DOM/Image/canvas to rasterize SVG, so the full converter is not a headless Node-only API even though simple text export can run in Node.
-- Cover content is part of the same section as the body, ending in a page break. Different-first-page headers/footers are not configured.
-- Landscape dimensions are swapped twice between app and docx library; generated XML proves incorrect width/height (T10).
-- TOC is a generated Word field, not computed page numbers. Office compatibility/field update behavior needs real-reader validation.
+- Cover content remains in the same section as the body and ends in a page break, but enabled covers set `w:titlePg` and provide empty first-page header/footer parts. Empty cover title/date fields fall back to the document title/export date.
+- `pageLayout.js` is the page-size source of truth: it passes base dimensions to `docx`, sets explicit margins and derives writable image width from the oriented physical page. XML contracts now cover portrait/landscape output; reader behavior remains to be validated.
+- TOC is a generated Word field, not computed page numbers. `w:updateFields` is requested in settings, but Office compatibility, links and actual page numbers still need real-reader validation.
 
-PDF calls `window.print()` after 30 ms. It prints the preview with static A4 CSS; Word templates/layout/cover/TOC do not drive it. No image/math/diagram/font completion barrier exists.
+PDF prints the preview with static A4 CSS; Word templates/layout/cover/TOC do not drive it. `downloadPdf` waits for the preview render-ready state, fonts, images and two layout frames, then calls `window.print()` with a five-second best-effort bound. Presentation overlays are hidden and Read zoom is reset by print CSS. Browser pagination and print-dialog output remain unverified.
 
 ## 8. Asset and archive boundaries
 
-Insertion stores a Blob, optionally downscales it, caches a temporary object URL and inserts `![alt](mdimg://id)` at the textarea selection. `mdimg://` is the persistent reference; `blob:` URLs are temporary browser resources, not stored Markdown identity.
+Insertion stores a Blob, validates supported MIME types/size, rejects active SVG content, optionally downscales it, caches a temporary object URL and inserts `![alt](mdimg://id)` at the textarea selection. `mdimg://` is the persistent reference; `blob:` URLs are temporary browser resources, not stored Markdown identity. Decoded pixel and image byte limits are enforced.
 
 `imageCache.js` has cache/pending/failed maps and subscribers. Preview subscribes to revisions, and loading failures settle to an inert error placeholder. It revokes a URL when replacing the same entry, but has no bounded eviction or deletion invalidation. Orphan attachment runs when a local document ID becomes available and refuses to transfer an image already owned by another document.
 
-History export writes a versioned `markdown-editor-backup` v1 archive with `manifest.json`, `INDEX.md`, collision-safe document/snapshot paths and image asset bytes. The manifest preserves document IDs, title/timestamps, pin/template/layout metadata, snapshot identity/timestamps and asset ownership metadata. Import validates relative paths, duplicate identities, missing files, UTF-8/content references, archive entry/count limits and image sizes, remaps IDs to avoid collisions and commits documents/snapshots/images in one IndexedDB transaction. Browser/IndexedDB round-trip and failure evidence remains pending.
+History export writes a versioned `markdown-editor-backup` v1 archive with `manifest.json`, `INDEX.md`, collision-safe document/snapshot paths and image asset bytes. The manifest preserves document IDs, title/title-source/timestamps, pin/template/layout metadata, snapshot identity/timestamps and asset ownership metadata. Import validates relative paths, duplicate identities, missing files, UTF-8/content references, archive entry/count limits and image sizes, remaps IDs to avoid collisions and commits documents/snapshots/images in one IndexedDB transaction. Browser/IndexedDB round-trip and failure evidence remains pending.
 
-Share URLs similarly carry text only and warn when local `mdimg://` references are present; they do not upload assets. The backup manifest is intentionally separate from share serialization and the storage schema.
+Share URLs similarly carry text only and warn when local `mdimg://` references are present; they do not upload assets. Encoded/decoded text, share-link and QR bounds are enforced; TinyURL is opt-in and cancellable. The backup manifest is intentionally separate from share serialization and the storage schema.
 
 ## 9. UX, preferences and presentation
 
 The main responsive breakpoint is 767/768 px. Mobile tabs are click-driven, not swipe gestures. Settings/History/Share/Layout/Batch are statically imported and rendered conditionally, not React.lazy modals.
 
-Theme tokens support light/dark/system and safe-area padding. CSS reduced-motion shortens token durations; it does not suppress the laser canvas loop. `useTheme` instances do not subscribe to shared state changes. Duplicated settings controls and independent keys weaken reset/synchronization semantics.
+Theme tokens support light/dark/system and safe-area padding. `useTheme` hook instances share mode state and notify each other; invalid stored modes fall back to `system`. Settings reset covers `prefs.v1` and the Settings theme, while share/read/history keys remain separate by design. CSS reduced-motion shortens token durations and the laser component also suppresses its Canvas trail loop when the media preference is active.
 
-Read mode uses an 820 px base maximum width, persisted zoom/width-lock and scroll-driven toolbar hiding. Presentation uses mouse events, a saturated DOM laser dot and optional fading canvas trail; color/size/trail/fullscreen are configurable. It is not a touch presentation implementation. Modal focus trapping, consistent Escape/focus return and keyboard navigation are pending (T15).
+Read mode uses an 820 px base maximum width, persisted zoom/width-lock and scroll-driven toolbar hiding. Presentation uses mouse events, a saturated DOM laser dot and optional fading canvas trail; color/size/trail/fullscreen are configurable. It is not a touch presentation implementation. Modal surfaces use the shared focus/Tab/Escape/focus-return hook; browser screen-reader, contrast and touch-target checks remain pending (T15).
 
 ## 10. Delivery and cache architecture
 

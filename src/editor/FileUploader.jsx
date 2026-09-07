@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { RESOURCE_LIMITS } from '../limits/resourceLimits.js'
 
 export default function FileUploader({ onLoad, onError }) {
   const inputRef = useRef(null)
@@ -13,7 +14,7 @@ export default function FileUploader({ onLoad, onError }) {
       return
     }
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > RESOURCE_LIMITS.markdownBytes) {
       onError('File is too large. Maximum size is 2 MB.')
       e.target.value = ''
       return

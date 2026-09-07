@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { formatRelativeTime } from '../preferences/draftStorage.js'
 import VersionsView from './VersionsView.jsx'
 import { exportAllAsZip } from './exportHistory.js'
+import { useModalA11y } from '../accessibility/useModalA11y.js'
 
 const PinIcon = ({ filled }) => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -84,6 +85,7 @@ export default function HistoryPanel({
   const [importing, setImporting] = useState(false)
   const [storage, setStorage] = useState(null)
   const importInputRef = useRef(null)
+  const modalRef = useModalA11y(onClose, { active: !versionsDoc })
 
   useEffect(() => {
     if (navigator.storage?.estimate) {
@@ -147,7 +149,14 @@ export default function HistoryPanel({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal history-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={modalRef}
+        className="modal history-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="History"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <span>
             History
@@ -207,9 +216,17 @@ export default function HistoryPanel({
                 key={doc.id}
                 className={`history-item ${doc.id === currentDocId ? 'active' : ''}`}
               >
-                <button
+                <div
                   className="history-item-main"
-                  onClick={async () => {
+                  role={renameTarget === doc.id ? undefined : 'button'}
+                  tabIndex={renameTarget === doc.id ? -1 : 0}
+                  onClick={renameTarget === doc.id ? undefined : async () => {
+                    const opened = await onOpen(doc.id)
+                    if (opened) onClose()
+                  }}
+                  onKeyDown={renameTarget === doc.id ? undefined : async (event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return
+                    event.preventDefault()
                     const opened = await onOpen(doc.id)
                     if (opened) onClose()
                   }}
@@ -221,7 +238,6 @@ export default function HistoryPanel({
                         className="history-rename-input"
                         value={renameValue}
                         autoFocus
-                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) => setRenameValue(e.target.value)}
                         onBlur={commitRename}
                         onKeyDown={(e) => {
@@ -239,7 +255,7 @@ export default function HistoryPanel({
                     {doc.wordCount} word{doc.wordCount === 1 ? '' : 's'}
                     {doc.id === currentDocId && <span className="history-current-tag"> · current</span>}
                   </div>
-                </button>
+                </div>
 
                 <div className="history-item-actions" onClick={(e) => e.stopPropagation()}>
                   <button

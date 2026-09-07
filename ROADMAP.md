@@ -1,12 +1,14 @@
 # ROADMAP — Stabilize before expanding
 
-Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
+Baseline: `d946eab` plus the currently verified working-tree changes · reviewed 2026-09-07 (UTC).
 
 This is an ordered plan, not a release calendar. Package version remains `0.1.0`; V1/V2/V3 are historical feature-group labels, not verified semantic release tags. [TASK.md](TASK.md) is the task-status source of truth; application fixes below are in progress or open until their acceptance evidence is recorded.
 
+Current source note: `d946eab` plus verified working-tree changes; no browser/Office acceptance or local Git commit for the current working-tree batch is implied.
+
 ## Current position
 
-Core editor/DOCX, PWA/history/preferences, rich-output components and Read/presentation code exist. Follow-up source commits now cover preview interpolation escaping, bounded/serialized saves, shared-session isolation, target-safe restore, content-aware snapshots, reactive image ownership and a versioned asset-bearing backup path. Build and a Node contract suite succeed, but security, data lifecycle, backup round-trip and output correctness acceptance remains incomplete. No full browser/Office acceptance results exist.
+Core editor/DOCX, PWA/history/preferences, rich-output components and Read/presentation code exist. Follow-up source changes now cover preview interpolation escaping, bounded/serialized saves, shared-session isolation, target-safe restore, content-aware snapshots, reactive image ownership, a versioned asset-bearing backup path, page/print readiness contracts, validated/shared preferences, stable batch identities, resource/network bounds and shared modal accessibility behavior. Build and a 34-test Node contract suite succeed, but security, data lifecycle, backup round-trip and browser/Office output acceptance remain incomplete. No full browser/Office acceptance results exist.
 
 See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich-output scope corrections, and [docs/REVIEW.md](docs/REVIEW.md) for evidence.
 
@@ -37,7 +39,7 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 - Verify the versioned backup/import implementation with collision-safe assets/metadata and failure cases (T07).
 - Complete recursive DOCX conversion, unsupported-feature reporting and formatting/list semantics, then run reader checks (T08).
 - Complete structure-aware, lifecycle-safe math/diagram processing and browser acceptance (T09).
-- Fix landscape XML, validate cover/TOC behavior, image sizing and print readiness (T10).
+- Validate the implemented landscape XML, cover/TOC behavior, page-aware image sizing and print readiness in actual readers/browsers (T10).
 
 **Exit gate:** supported syntax survives export; unsupported syntax is visible rather than silently dropped; complete backups round-trip into an empty browser profile; portrait/landscape and representative TOC/cover files pass Word and LibreOffice checks; PDF does not race unfinished renderers.
 
@@ -46,10 +48,10 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 ## Milestone 3 — Reliable interaction across devices
 
 - Expose all existing actions on desktop/mobile from one registry (T11).
-- Share/validate preferences and preserve user-renamed metadata (T12).
-- Correct batch identities/progress/retry and processing-queue rules (T13).
-- Bound shared/file/image/diagram workloads and harden QR/copy/shortener behavior (T14).
-- Complete keyboard/modal/focus/reduced-motion accessibility (T15).
+- Finish browser/concurrency acceptance for shared preferences and preserved user-renamed metadata (T12).
+- Verify retry/cancel UX and browser edge-case behavior for the stable batch queue (T13).
+- Complete browser large-input/image-decode checks for bounded shared/file/image/diagram workloads and QR/copy/shortener behavior (T14).
+- Complete browser keyboard/modal/focus/reduced-motion accessibility checks (T15).
 - Confirm repository licensing with the owner (T21).
 
 **Exit gate:** desktop/tablet/mobile controls are reachable; settings and save feedback agree; duplicate names/partial batch failures are safe; oversized input is handled without uncontrolled processing; keyboard and representative assistive-technology checks are recorded. Browser/Office access is an acceptance prerequisite, not evidence already collected.
@@ -89,4 +91,4 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 
 ## Recommended next action
 
-Complete T07's disposable-profile backup round trip alongside T01 browser/security, T04 transition and T05 persistence acceptance; continue T16 dependency triage, then add T02's IndexedDB failure/multi-tab fixtures. Use the cycle **observe code -> orient with a failing fixture -> decide the smallest coherent design -> act -> evaluate tests and user-visible behavior**. Every implementation change must update the linked requirements, task evidence and affected docs; do not mark an epic accepted because it compiles.
+Run T10's disposable browser/Office reader checks against the new XML and print contracts, then complete T07's backup round trip alongside T01 browser/security, T04 transition and T05 persistence acceptance. Run T11/T15 keyboard/focus checks, verify T13 retry/cancel behavior and add T14 large-input/image-decode browser checks. Continue T16 dependency triage and add T02's IndexedDB failure/multi-tab fixtures. Use the cycle **observe code -> orient with a failing fixture -> decide the smallest coherent design -> act -> evaluate tests and user-visible behavior**. Every implementation change must update the linked requirements, task evidence and affected docs; do not mark an epic accepted because it compiles.

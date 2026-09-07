@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
 import { getDB, STORE_DOCUMENTS, STORE_SNAPSHOTS, STORE_IMAGES, countWords } from './db.js'
-import { DEFAULT_LAYOUT, listDocuments } from './documentRepo.js'
+import { DEFAULT_LAYOUT, listDocuments, TITLE_SOURCE } from './documentRepo.js'
 import { listSnapshots } from './snapshotRepo.js'
 import { listAllImages } from '../images/imageRepo.js'
 
@@ -94,6 +94,11 @@ export function validateBackupManifest(manifest) {
     if (documentIds.has(document.id)) throw new Error(`Duplicate backup document ID: ${document.id}`)
     documentIds.add(document.id)
     assertString(document.title, `document ${index} title`)
+    if (document.titleSource !== undefined &&
+      document.titleSource !== TITLE_SOURCE.DERIVED &&
+      document.titleSource !== TITLE_SOURCE.MANUAL) {
+      throw new Error(`Invalid backup document ${index} titleSource`)
+    }
     assertString(document.templateId, `document ${index} templateId`)
     if (!isRecord(document.layout)) throw new Error(`Invalid backup document ${index} layout`)
     assertTimestamp(document.createdAt, `document ${index} createdAt`)
@@ -256,6 +261,9 @@ export async function exportAllAsZip({ includeSnapshots = true } = {}) {
     manifest.documents.push({
       id: document.id,
       title: document.title,
+      titleSource: document.titleSource === TITLE_SOURCE.MANUAL
+        ? TITLE_SOURCE.MANUAL
+        : TITLE_SOURCE.DERIVED,
       createdAt: document.createdAt,
       updatedAt: document.updatedAt,
       pinned: document.pinned ? 1 : 0,
@@ -389,6 +397,9 @@ export async function importHistoryZip(input, {
     importedDocuments.push({
       id: documentIdMap.get(document.id),
       title: document.title,
+      titleSource: document.titleSource === TITLE_SOURCE.MANUAL
+        ? TITLE_SOURCE.MANUAL
+        : TITLE_SOURCE.DERIVED,
       content,
       createdAt: document.createdAt,
       updatedAt: document.updatedAt,

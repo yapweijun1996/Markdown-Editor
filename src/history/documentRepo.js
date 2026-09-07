@@ -1,6 +1,33 @@
 import { nanoid } from 'nanoid'
 import { getDB, STORE_DOCUMENTS, STORE_SNAPSHOTS, STORE_IMAGES, deriveTitle, countWords } from './db.js'
 
+export const TITLE_SOURCE = {
+  DERIVED: 'derived',
+  MANUAL: 'manual',
+}
+
+const documentMutationQueues = new Map()
+
+function normalizeTitleSource(value) {
+  return value === TITLE_SOURCE.MANUAL ? TITLE_SOURCE.MANUAL : TITLE_SOURCE.DERIVED
+}
+
+function enqueueDocumentMutation(id, operation) {
+  const previous = documentMutationQueues.get(id) || Promise.resolve()
+  const next = previous.then(operation, operation)
+  const settled = next.catch(() => {})
+  documentMutationQueues.set(id, settled)
+  return next.finally(() => {
+    if (documentMutationQueues.get(id) === settled) documentMutationQueues.delete(id)
+  })
+}
+
+export function resolveDocumentTitle(existing, content) {
+  return existing?.titleSource === TITLE_SOURCE.MANUAL
+    ? existing.title
+    : deriveTitle(content)
+}
+
 export const DEFAULT_LAYOUT = {
   pageSize: 'a4',
   orientation: 'portrait',
@@ -20,6 +47,7 @@ function withDefaults(doc) {
   if (!doc) return doc
   return {
     ...doc,
+    titleSource: normalizeTitleSource(doc.titleSource),
     templateId: doc.templateId || 'default',
     layout: {
       ...DEFAULT_LAYOUT,
@@ -38,6 +66,7 @@ export async function createDocument(content) {
   const doc = {
     id: nanoid(),
     title: deriveTitle(content),
+    titleSource: TITLE_SOURCE.DERIVED,
     content,
     createdAt: now,
     updatedAt: now,
@@ -52,42 +81,48 @@ export async function createDocument(content) {
 }
 
 export async function updateDocument(id, content) {
-  const db = await getDB()
-  const existing = await db.get(STORE_DOCUMENTS, id)
-  if (!existing) return null
+  return enqueueDocumentMutation(id, async () => {
+    const db = await getDB()
+    const existing = await db.get(STORE_DOCUMENTS, id)
+    if (!existing) return null
 
-  const updated = {
-    ...existing,
-    title: deriveTitle(content),
-    content,
-    updatedAt: Date.now(),
-    wordCount: countWords(content),
-    sizeBytes: new Blob([content]).size,
-  }
-  await db.put(STORE_DOCUMENTS, updated)
-  return withDefaults(updated)
+    const updated = {
+      ...existing,
+      title: resolveDocumentTitle(existing, content),
+      titleSource: normalizeTitleSource(existing.titleSource),
+      content,
+      updatedAt: Date.now(),
+      wordCount: countWords(content),
+      sizeBytes: new Blob([content]).size,
+    }
+    await db.put(STORE_DOCUMENTS, updated)
+    return withDefaults(updated)
+  })
 }
 
 export async function updateDocumentLayout(id, patch) {
-  const db = await getDB()
-  const existing = await db.get(STORE_DOCUMENTS, id)
-  if (!existing) return null
-  const merged = withDefaults(existing)
-  const next = {
-    ...existing,
-    templateId: patch.templateId !== undefined ? patch.templateId : merged.templateId,
-    layout: {
-      ...merged.layout,
-      ...(patch.layout || {}),
-      coverPage: {
-        ...merged.layout.coverPage,
-        ...((patch.layout && patch.layout.coverPage) || {}),
+  return enqueueDocumentMutation(id, async () => {
+    const db = await getDB()
+    const existing = await db.get(STORE_DOCUMENTS, id)
+    if (!existing) return null
+    const merged = withDefaults(existing)
+    const next = {
+      ...existing,
+      titleSource: normalizeTitleSource(existing.titleSource),
+      templateId: patch.templateId !== undefined ? patch.templateId : merged.templateId,
+      layout: {
+        ...merged.layout,
+        ...(patch.layout || {}),
+        coverPage: {
+          ...merged.layout.coverPage,
+          ...((patch.layout && patch.layout.coverPage) || {}),
+        },
       },
-    },
-    updatedAt: Date.now(),
-  }
-  await db.put(STORE_DOCUMENTS, next)
-  return withDefaults(next)
+      updatedAt: Date.now(),
+    }
+    await db.put(STORE_DOCUMENTS, next)
+    return withDefaults(next)
+  })
 }
 
 export async function getDocument(id) {
@@ -108,47 +143,62 @@ export async function listDocuments() {
 }
 
 export async function deleteDocument(id) {
-  const db = await getDB()
-  const tx = db.transaction(
-    [STORE_DOCUMENTS, STORE_SNAPSHOTS, STORE_IMAGES],
-    'readwrite'
-  )
-  await tx.objectStore(STORE_DOCUMENTS).delete(id)
+  return enqueueDocumentMutation(id, async () => {
+    const db = await getDB()
+    const tx = db.transaction(
+      [STORE_DOCUMENTS, STORE_SNAPSHOTS, STORE_IMAGES],
+      'readwrite'
+    )
+    await tx.objectStore(STORE_DOCUMENTS).delete(id)
 
-  // Cascade-delete snapshots
-  const snapStore = tx.objectStore(STORE_SNAPSHOTS)
-  let cursor = await snapStore.index('documentId').openCursor(IDBKeyRange.only(id))
-  while (cursor) {
-    await cursor.delete()
-    cursor = await cursor.continue()
-  }
+    // Cascade-delete snapshots
+    const snapStore = tx.objectStore(STORE_SNAPSHOTS)
+    let cursor = await snapStore.index('documentId').openCursor(IDBKeyRange.only(id))
+    while (cursor) {
+      await cursor.delete()
+      cursor = await cursor.continue()
+    }
 
-  // Cascade-delete images
-  const imgStore = tx.objectStore(STORE_IMAGES)
-  let imgCursor = await imgStore.index('documentId').openCursor(IDBKeyRange.only(id))
-  while (imgCursor) {
-    await imgCursor.delete()
-    imgCursor = await imgCursor.continue()
-  }
+    // Cascade-delete images
+    const imgStore = tx.objectStore(STORE_IMAGES)
+    let imgCursor = await imgStore.index('documentId').openCursor(IDBKeyRange.only(id))
+    while (imgCursor) {
+      await imgCursor.delete()
+      imgCursor = await imgCursor.continue()
+    }
 
-  await tx.done
+    await tx.done
+  })
 }
 
 export async function togglePin(id) {
-  const db = await getDB()
-  const existing = await db.get(STORE_DOCUMENTS, id)
-  if (!existing) return null
-  const updated = { ...existing, pinned: existing.pinned ? 0 : 1 }
-  await db.put(STORE_DOCUMENTS, updated)
-  return updated
+  return enqueueDocumentMutation(id, async () => {
+    const db = await getDB()
+    const existing = await db.get(STORE_DOCUMENTS, id)
+    if (!existing) return null
+    const updated = {
+      ...existing,
+      titleSource: normalizeTitleSource(existing.titleSource),
+      pinned: existing.pinned ? 0 : 1,
+    }
+    await db.put(STORE_DOCUMENTS, updated)
+    return withDefaults(updated)
+  })
 }
 
 export async function renameDocument(id, title) {
-  const db = await getDB()
-  const existing = await db.get(STORE_DOCUMENTS, id)
-  if (!existing) return null
-  const cleaned = (title || '').trim().slice(0, 80) || deriveTitle(existing.content)
-  const updated = { ...existing, title: cleaned, updatedAt: Date.now() }
-  await db.put(STORE_DOCUMENTS, updated)
-  return updated
+  return enqueueDocumentMutation(id, async () => {
+    const db = await getDB()
+    const existing = await db.get(STORE_DOCUMENTS, id)
+    if (!existing) return null
+    const manualTitle = (title || '').trim().slice(0, 80)
+    const updated = {
+      ...existing,
+      title: manualTitle || deriveTitle(existing.content),
+      titleSource: manualTitle ? TITLE_SOURCE.MANUAL : TITLE_SOURCE.DERIVED,
+      updatedAt: Date.now(),
+    }
+    await db.put(STORE_DOCUMENTS, updated)
+    return withDefaults(updated)
+  })
 }

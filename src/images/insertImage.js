@@ -1,7 +1,7 @@
-const ACCEPTED_PREFIX = 'image/'
+import { normalizeImageMimeType } from '../limits/resourceLimits.js'
 
 export function isImageFile(file) {
-  return file && file.type && file.type.startsWith(ACCEPTED_PREFIX)
+  return Boolean(file && normalizeImageMimeType(file.type))
 }
 
 export function pickImagesFromFileList(files) {
@@ -12,8 +12,9 @@ export function pickImageFromClipboard(clipboardData) {
   if (!clipboardData) return null
   const items = clipboardData.items || []
   for (const item of items) {
-    if (item.kind === 'file' && item.type.startsWith(ACCEPTED_PREFIX)) {
-      return item.getAsFile()
+    if (item.kind === 'file' && normalizeImageMimeType(item.type)) {
+      const file = item.getAsFile()
+      if (isImageFile(file)) return file
     }
   }
   return null

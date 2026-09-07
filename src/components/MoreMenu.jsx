@@ -1,11 +1,16 @@
 import React from 'react'
+import { useModalA11y } from '../accessibility/useModalA11y.js'
 
 export default function MoreMenu({ onClose, items }) {
+  const menuRef = useModalA11y(onClose)
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
+        ref={menuRef}
         className="more-sheet"
         role="menu"
+        aria-label="More actions"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="more-sheet-grabber" />

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { listSnapshots, deleteSnapshot } from './snapshotRepo.js'
 import { formatRelativeTime } from '../preferences/draftStorage.js'
+import { useModalA11y } from '../accessibility/useModalA11y.js'
 
 function previewSnippet(content) {
   if (!content) return ''
@@ -15,6 +16,7 @@ function previewSnippet(content) {
 export default function VersionsView({ doc, onRestore, onClose }) {
   const [snapshots, setSnapshots] = useState([])
   const [loading, setLoading] = useState(true)
+  const modalRef = useModalA11y(onClose)
 
   useEffect(() => {
     let cancelled = false
@@ -32,7 +34,14 @@ export default function VersionsView({ doc, onRestore, onClose }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal versions-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={modalRef}
+        className="modal versions-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Versions of ${doc.title}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <span>Versions of "{doc.title}"</span>
           <button className="modal-close" onClick={onClose}>×</button>

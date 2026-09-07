@@ -1,5 +1,6 @@
 // Lazy-loaded Mermaid diagram renderer.
 import { escapeHtml } from './htmlEscape.js'
+import { RESOURCE_LIMITS } from '../limits/resourceLimits.js'
 
 let mermaidLib = null
 let pending = null
@@ -20,6 +21,9 @@ async function loadMermaid() {
 let counter = 0
 export async function renderMermaidToSvg(code, idHint = '') {
   const id = `mermaid-${idHint || counter++}-${Date.now().toString(36)}`
+  if (String(code || '').length > RESOURCE_LIMITS.diagramCharacters) {
+    return { svg: null, error: 'Diagram is too large to render.' }
+  }
   try {
     const mermaid = await loadMermaid()
     const { svg } = await mermaid.render(id, code)

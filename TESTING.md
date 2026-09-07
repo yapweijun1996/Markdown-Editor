@@ -1,13 +1,13 @@
 # TESTING — Evidence, regression plan and manual acceptance
 
-Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
+Baseline: `d946eab` plus the currently verified working-tree changes · reviewed 2026-09-07 (UTC).
 
 **A checklist is not a test report.** All unchecked items below are pending acceptance, not passed checks. Known-broken scenarios intentionally appear as regression requirements. Actual review results and an exploratory reproduction script are in [docs/REVIEW.md](docs/REVIEW.md).
 
 ## 1. Current verification infrastructure
 
 - `npm run build` exists and passed in this review.
-- A small committed `node:test` suite covers DB helpers, Markdown AST parsing, share URL round trips and local-image warnings, preview escaping, save timing, snapshot policy, image ownership, backup manifest/reference validation, DOCX XML/media contracts and math HTML boundaries. It is not a browser, component, IndexedDB or Office suite.
+- A small committed `node:test` suite currently passes **35 tests** covering DB helpers, Markdown AST parsing, share URL round trips/local-image warnings/limits, preview escaping, save timing, snapshot policy, image ownership and supported-format boundaries, backup manifest/reference validation, document metadata, batch identities/cancellation, shortener cancellation, DOCX XML/media contracts, math HTML boundaries and page/layout/print readiness contracts. It is not a browser, component, IndexedDB or Office suite.
 - GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes; lint/type-check and richer fixtures remain T17 work. The UI sample's percentage coverage table is illustrative content, not measured coverage.
 - No live-site, browser installation/offline update, Lighthouse, real-device, screen-reader or Word/LibreOffice/Google Docs acceptance was performed during the review.
 
@@ -52,12 +52,13 @@ For every result record commit, environment, command/steps, expected/actual, art
 | Equal-length snapshot | Replace content with different same-length text; also make small edits | Unit policy covers both changes; persistence must prove the defined snapshot protection and forced backups | T05 |
 | Failed restore backup | Force the recovery-snapshot write to fail | Restore aborts or preserves a documented recovery path; no silent overwrite | T03, T05 |
 | Multi-tab | Concurrent edits/metadata changes and DB version upgrade across two tabs | Defined conflict/blocked-upgrade recovery; no silent metadata reversal | T02, T12 |
+| Layout/print contract | Generate portrait/landscape DOCX with cover, header/footer, TOC and images; invoke the print readiness helper with a delayed render state | XML dimensions, first-page settings, field-update request and page-aware width are correct; print waits or reaches its bounded fallback | T10 |
 
 Known baseline defects are described in TASK and REVIEW. These cases have not been run as browser E2E in this review.
 
 ## 4. Automated suite expansion (T17; partially installed)
 
-- **Current:** Node built-in `node:test` runs 23 contract tests through `npm test`, including DB helpers, Markdown AST, share URL/local-image warnings, preview escaping, save timing, snapshot policy, image ownership, backup manifest/reference validation, DOCX XML/media contracts and math HTML boundaries.
+- **Current:** Node built-in `node:test` runs 35 contract tests through `npm test`, including DB helpers, Markdown AST, share URL/local-image warnings/limits, preview escaping, save timing, snapshot policy, image ownership/format boundaries, backup manifest/reference validation, document metadata, batch identities/cancellation, shortener cancellation, DOCX XML/media contracts, math HTML boundaries and page/layout/print readiness contracts.
 - **Unit/component:** candidate Vitest + React Testing Library; preference/schema/URL limits and renderer fixtures.
 - **Persistence:** candidate fake-indexeddb with explicit IDs, delayed/failing transactions, concurrent operations, snapshot retention and image references.
 - **DOCX integration:** the current Node suite generates Blob, unzips with JSZip and asserts XML text/styles/list starts/relationships/media content and unsupported-node warnings. It remains a focused contract layer; reader interoperability and browser-only image paths still require manual acceptance.
@@ -82,10 +83,10 @@ Each fix must carry a focused regression fixture. Complete browser/Office checks
 - [ ] Include lists starting at values other than 1, separated lists, mixed nesting, six-plus levels, continuation paragraphs, task state and blocks inside items.
 - [ ] Test table alignment, nested inline runs, header bold/color/shading and row/column counts in XML and a reader.
 - [ ] Exercise all four template IDs; default fallback leaves content unchanged and template typography/spacing applies where promised. Check font substitution on reader machines.
-- [ ] Verify A4/Letter/A3 portrait and landscape numeric XML dimensions; current landscape output is incorrect.
+- [x] Verify A4/Letter/A3 portrait and landscape numeric XML dimensions in the Node DOCX contract; actual reader rendering remains pending.
 - [ ] Check header/footer title/date/page/total expansion and page-number toggle.
-- [ ] Check cover values versus placeholders and promised first-page header/footer/page-number policy. Current cover shares the body section and does not suppress header/footer.
-- [ ] Test `[TOC]` and HTML TOC placeholders; verify generated XML structure, Word field update, links and actual heading/page numbers. Do not assume fields update automatically on open.
+- [x] Check cover fallback values and first-page header/footer/page-number XML policy in the Node DOCX contract; actual Word/LibreOffice pagination remains pending.
+- [x] Test `[TOC]` placeholder packaging and the `w:updateFields` request in the Node DOCX contract; links, field refresh and actual heading/page numbers remain pending.
 - [ ] Open representative files in Word and LibreOffice, then optionally Google Docs/Apple Pages; record versions, warnings and screenshots.
 
 ## 7. Images and complete backups
@@ -94,8 +95,8 @@ Each fix must carry a focused regression fixture. Complete browser/Office checks
 - [ ] After T11, verify the picker is reachable on desktop as well as mobile.
 - [ ] Test insertion before a document has an ID, then save/reload; orphan ownership is attached and preview loads without editing Markdown. Current hook performs the attachment.
 - [ ] Missing/deleted assets resolve to useful inert loading/error placeholders, not perpetual loading or injected HTML. Current cache has an error state; browser verification remains pending.
-- [ ] Test PNG/JPEG/GIF/WebP/SVG/BMP, invalid MIME/bytes, very large pixels/bytes, transparent images and downscale behavior. Picker acceptance is not proof of DOCX support.
-- [ ] Confirm standalone/inline asset embedding, reader compatibility and page-aware dimensions; compare aspect ratio.
+- [ ] Test PNG/JPEG/GIF/SVG/BMP, explicitly reject WebP/unknown MIME, invalid bytes, very large pixels/bytes, active SVG content, transparent images and downscale behavior. Picker acceptance is not proof of DOCX support.
+- [ ] Confirm standalone/inline asset embedding, reader compatibility and page-aware dimensions; compare aspect ratio. Page width derivation has a pure contract; browser-only image dimensions and readers remain pending.
 - [ ] Delete a document while another document/snapshot references its image; enforce defined ownership/retention policy.
 - [ ] Bound cache growth and revoke only unused object URLs on removal/switches; replacement revocation exists, eviction/removal is still pending.
 - [ ] Inspect a current history ZIP and verify `manifest.json`, `INDEX.md`, document/snapshot paths and image assets match the manifest; pure path/reference validation is covered by `test/backupManifest.test.js`.
@@ -114,44 +115,44 @@ Each fix must carry a focused regression fixture. Complete browser/Office checks
 ## 9. PDF/printing
 
 - [ ] With the production preview, print from desktop and mobile actions; only intended document content appears.
-- [ ] Test slow images/fonts/math/diagrams; printing waits for readiness after T10 rather than the current fixed delay.
+- [x] Contract-test slow render state handling; printing now waits for math/diagram readiness, fonts, images and layout frames, then uses a bounded five-second fallback. Browser timing remains pending.
 - [ ] Test long tables/code, headings near page boundaries and horizontal overflow across Chrome/Edge/Firefox/Safari.
-- [ ] Check light/dark theme, Read zoom/width and presentation mode for print artifacts; no laser/trail/Exit overlay should appear.
+- [ ] Check light/dark theme, Read zoom/width and presentation mode for print artifacts; print CSS now resets Read zoom and hides laser/trail/Exit overlays.
 - [ ] Confirm external link URL suffixes and static A4 CSS behavior. Word templates/header/footer/cover/page settings are not currently PDF features.
 - [ ] Save and reopen the PDF, recording browser and print options; a dialog opening alone is insufficient.
 
 ## 10. Share, QR and network boundaries
 
-- [ ] Encode/decode empty, multilingual, emoji, malformed and large inputs; reject unsafe resource sizes after T14.
+- [ ] Encode/decode empty, multilingual, emoji, malformed and large inputs; verify 1,000,000-character decoded and 200,000-byte encoded bounds without blocking the UI.
 - [ ] Exercise clipboard success, denied clipboard access and fallback failure with visible feedback.
-- [ ] QR small links display/download/scan; capacity errors are useful and do not freeze the UI.
+- [ ] QR small links display/download/scan; links above the 2,953-character bound are disabled with a clear message and do not freeze the UI.
 - [ ] Preview toggle changes URL/QR. UI must not promise recipients cannot edit.
 - [ ] TinyURL is disabled/rejected **above** 6,000 characters; test a small non-sensitive URL only with explicit consent.
-- [ ] Test offline/timeout/non-HTTP responses and toggling mode while shortening; late results must not replace a new URL.
+- [ ] Test offline/timeout/non-HTTP responses and toggling mode while shortening; the 10-second timeout/cancellation guard and stale-result protection must keep late results from replacing a new URL.
 - [ ] Confirm fragment sharing versus legacy query exposure and explain that compression is not encryption.
 - [ ] In a clean profile, local `mdimg://` images are unavailable in current text links; after any asset-aware sharing feature, retest its explicit portability/privacy contract.
 
 ## 11. History, preferences and batch
 
-- [ ] Save/open/search/pin/rename/delete documents; verify manual rename survives later edits after T12.
+- [ ] Save/open/search/pin/rename/delete documents; verify manual rename survives later edits and backup import/export preserves title-source metadata after T12.
 - [ ] Confirm 50-snapshot FIFO and no snapshot pin feature unless explicitly implemented; test same timestamps/concurrent inserts and failing writes. Pure policy coverage exists for equal-length/small changes.
-- [ ] Theme controls stay synchronized; system theme changes, reload and Settings reset match the chosen scope.
+- [ ] Theme controls stay synchronized across hook instances; system theme changes, reload and Settings reset match the chosen scope.
 - [ ] Editor size/family/line-height/wrap affect textarea; read zoom and Word templates remain separate controls.
 - [ ] Invalid/stale stored preferences recover safely; unsupported-version behavior is documented.
 - [ ] Batch processes multiple files sequentially and ZIPs successes; all-failed outcome is clear.
-- [ ] Test identical names with different sizes/content, duplicate selection, retries, adding files while running, failure progress and cancellation policy.
+- [ ] Test identical names with different sizes/content, duplicate selection, stable-ID progress, retries, adding files while running, failure progress and cancellation policy.
 - [ ] Current batch is files only and uses default export options; directory traversal and active-document layout inheritance are not delivered.
 
 ## 12. Read, presentation, responsive and accessibility
 
-- [ ] At mobile/tablet/desktop widths, every intended action is reachable; known desktop More gap is T11.
+- [ ] At mobile/tablet/desktop widths, every intended action is reachable through the shared overflow action registry; the trigger is now rendered at all Edit-mode widths, but keyboard/focus and visual overflow checks remain T11.
 - [ ] Read defaults: 820 px base maximum column, 100% zoom, width locked; 70–300% steps/reset and persistence work.
 - [ ] Toolbar hides on meaningful downward scrolling beyond threshold, returns on upward scrolling; clicking content is not a reveal action.
 - [ ] Presentation starts from desktop Read: saturated red/green/blue/yellow, S/M/L sizes and optional trail match preferences on light/dark backgrounds.
 - [ ] Fullscreen requested only when enabled/available; refusal does not break presentation. Escape/Exit/fullscreen exit and leaving Read stop listeners/animation appropriately.
-- [ ] Keyboard navigation covers tabs, radio groups, menus and dialogs, including Escape, focus trap and focus return after T15.
+- [ ] Keyboard navigation covers tabs, radio groups, menus and dialogs, including the shared initial focus, Tab trap, Escape and focus return behavior.
 - [ ] Screen-reader labels/statuses, contrast, touch targets and iOS safe areas are measured, not inferred from CSS tokens.
-- [ ] Reduced-motion preference suppresses inappropriate animation after T15; existing CSS duration reduction does not stop the laser canvas loop.
+- [ ] Reduced-motion preference suppresses inappropriate animation; the laser component must stop its canvas trail loop as well as shorten CSS transitions.
 
 ## 13. PWA, browser matrix and performance
 

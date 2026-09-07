@@ -440,7 +440,7 @@ export default function App() {
       if (sharedSession && !await prepareLocalMutation()) return null
       return await images.insertBlob(blob, filename)
     } catch (err) {
-      setError('Failed to insert image. Please try again.')
+      setError(err?.message || 'Failed to insert image. Please try again.')
       return null
     }
   }, [images, markdown, sharedSession, history.forkDocument])
@@ -854,9 +854,9 @@ export default function App() {
               </button>
               <ThemeToggle />
 
-              {/* Mobile-only More menu trigger */}
+              {/* Responsive overflow menu keeps secondary actions reachable at every viewport. */}
               <button
-                className="icon-btn show-on-mobile"
+                className="icon-btn more-actions-trigger"
                 onClick={() => setShowMore(true)}
                 aria-label="More actions"
                 title="More"

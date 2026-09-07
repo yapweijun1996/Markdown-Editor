@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { TEMPLATE_LIST } from '../styles/templates/index.js'
+import { useModalA11y } from '../accessibility/useModalA11y.js'
 
 function Row({ label, hint, children }) {
   return (
@@ -58,6 +59,7 @@ function TextInput({ value, onChange, placeholder }) {
 export default function DocumentLayoutSheet({ doc, onUpdate, onClose }) {
   const [templateId, setTemplateId] = useState(doc.templateId || 'default')
   const [layout, setLayout] = useState(doc.layout)
+  const modalRef = useModalA11y(onClose)
 
   function commit(patch) {
     onUpdate(patch)
@@ -82,7 +84,14 @@ export default function DocumentLayoutSheet({ doc, onUpdate, onClose }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal layout-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={modalRef}
+        className="modal layout-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Document Layout"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <span>Document Layout</span>
           <button className="modal-close" onClick={onClose}>×</button>

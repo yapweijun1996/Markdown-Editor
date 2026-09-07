@@ -8,8 +8,18 @@ export function LaserPointer({ active, color = 'red', size = 'md', trail = true 
   const sizePx = LASER_SIZE_PX[size] || LASER_SIZE_PX.md
 
   const [pos, setPos] = useState({ x: -1000, y: -1000, visible: false })
+  const [reducedMotion, setReducedMotion] = useState(false)
   const posRef = useRef(pos)
   const canvasRef = useRef(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReducedMotion(media.matches)
+    update()
+    media.addEventListener?.('change', update)
+    return () => media.removeEventListener?.('change', update)
+  }, [])
 
   // Mouse position tracking. React 18 auto-batches setState, and mousemove
   // already throttles to the screen refresh rate, so we update directly.
@@ -49,7 +59,7 @@ export function LaserPointer({ active, color = 'red', size = 'md', trail = true 
 
   // Trail rendering loop on canvas — fade + draw current point each frame
   useEffect(() => {
-    if (!active || !trail) return
+    if (!active || !trail || reducedMotion) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -96,7 +106,7 @@ export function LaserPointer({ active, color = 'red', size = 'md', trail = true 
       window.removeEventListener('resize', resize)
       ctx.clearRect(0, 0, canvas.width, canvas.height)
     }
-  }, [active, trail, colorHex, sizePx])
+  }, [active, trail, reducedMotion, colorHex, sizePx])
 
   if (!active) return null
 

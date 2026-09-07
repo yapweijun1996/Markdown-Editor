@@ -1,6 +1,5 @@
 import React, { useRef } from 'react'
-
-const MAX_BYTES = 2 * 1024 * 1024
+import { RESOURCE_LIMITS } from '../limits/resourceLimits.js'
 
 export function useFileUpload({ onLoad, onError, accept = '.md' }) {
   const inputRef = useRef(null)
@@ -15,7 +14,7 @@ export function useFileUpload({ onLoad, onError, accept = '.md' }) {
       return
     }
 
-    if (file.size > MAX_BYTES) {
+    if (file.size > RESOURCE_LIMITS.markdownBytes) {
       onError && onError('File is too large. Maximum size is 2 MB.')
       e.target.value = ''
       return

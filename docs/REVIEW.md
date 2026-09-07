@@ -1,6 +1,6 @@
 # Review evidence — source baseline and documentation reconciliation
 
-Reviewed: **2026-09-07 (UTC)**. Source commit: **`445cc05bcbc69647c3d08eb17edcd2d2da5ee56a`**. Package: `markdown-editor@0.1.0`.
+Reviewed: **2026-09-07 (UTC)**. Historical documentation baseline: **`445cc05bcbc69647c3d08eb17edcd2d2da5ee56a`**. Current implementation baseline: **`d946eab` plus the verified working tree**. Package: `markdown-editor@0.1.0`.
 
 This is a point-in-time evidence record, not a declaration that the application is safe or fully tested. [TASK](../TASK.md) owns current remediation status. [TESTING](../TESTING.md) owns acceptance procedures.
 
@@ -12,7 +12,7 @@ Inspected root documentation, source modules, package/lockfile, Vite/PWA config 
 
 Local environment: Windows, Node **25.2.1**, npm **11.6.2**. Existing CI config uses Node 20; parity was not tested. The documentation-only reconciliation itself did not change application source, package/lockfile or CI; later follow-up commits are recorded below. Dependency installation and build created local ignored artifacts.
 
-No browser automation/subagent/MCP KB tool was available in this session. No external KB sync was performed. There was no live-site or actual browser/Office execution, so static findings and isolated probes must not be described as browser-reproduced bugs.
+No external KB sync was performed. Browser/Office execution was not completed: the local Vite/static servers were blocked by the managed environment (config/parent-directory access and socket permission), and the browser tool rejected the built `file://` URL by policy. There was no live-site or actual browser/Office result, so static findings and isolated probes must not be described as browser-reproduced bugs.
 
 ## 2. Commands/results observed
 
@@ -26,6 +26,12 @@ No browser automation/subagent/MCP KB tool was available in this session. No ext
 | `npm audit --json` | 19 affected-package vulnerability entries: 12 high, 6 moderate, 1 low, 0 critical | Includes transitive/build chains; exposure still requires triage |
 | Follow-up `npm.cmd run build` | Passed again; the same production chunks and PWA output were generated | Confirms source/build reproducibility in the current Windows workspace |
 | Follow-up `npm.cmd test` | Passed; 23 Node built-in contract tests | Adds save timing, image ownership, local-image share warning, backup manifest/reference, DOCX XML/media and math HTML-boundary contracts; still not browser, storage or Office validation |
+| Latest follow-up `npm.cmd test` | Passed; 25 Node built-in contract tests | Adds page/layout/print-readiness contracts for orientation, cover/TOC settings and delayed print state; still not browser, storage or Office validation |
+| Current working-tree `npm.cmd test` | Passed; 35 Node built-in contract tests | Adds preference normalization/theme mode, document metadata, batch identity/cancellation, resource/image boundaries and shortener cancellation contracts; still not browser, storage or Office validation |
+| Current working-tree `npm.cmd run build` | Passed; Vite 6.4.2, 2249 transformed modules and 69 PWA precache entries / 4566.43 KiB | Confirms current source compiles; existing Mermaid chunk warning remains under T18 |
+| Current working-tree `git diff --check` | Passed; only CRLF normalization warnings | No whitespace error detected in the current source/docs diff |
+| Current browser acceptance attempt | Blocked before app load | Local server startup was denied by the managed environment and direct `file://` navigation was rejected by browser URL policy; T01/T11–T15 browser evidence remains pending |
+| Current local Git commit | Blocked before commit creation | The managed workspace denied creation of `.git/index.lock`; no commit or push is claimed |
 | Follow-up `npm.cmd audit --json` | Not completed; npm advisory endpoint request failed | Do not reinterpret the earlier audit snapshot as a fresh security result |
 | Isolated preview rule evaluation | Raw injected `<img ... onerror=...>` retained in generated placeholder HTML | Confirms unsafe string construction, not browser execution |
 | DOCX XML probe | Strike/nested-code/quoted-heading/inline-image preservation checks false | Concrete export fidelity omissions |
@@ -133,13 +139,13 @@ The following were traced in source but not executed as complete browser workflo
 | T07 | Baseline archives/shares omitted assets and metadata, had no importer and allowed snapshot path collisions; current code has a versioned asset-bearing import/export path with ID remapping and text-only share warnings, but browser/IndexedDB round-trip and failure evidence remain | `src/history/exportHistory.js`, `src/share/shareLink.js`, `src/history/HistoryPanel.jsx`, `test/backupManifest.test.js` |
 | T08 | Baseline list/block/inline conversion dropped nested blocks, inline images and deletion formatting; current converter preserves the focused recursive/inline cases, emits unsupported block fallbacks and has XML/media contract tests, while reader/browser acceptance remains | `src/converter/`, `test/docx.test.js` |
 | T09 | Baseline regex math processed arbitrary HTML; current math scans text nodes and skips code/attributes, while math/Mermaid browser readiness, rapid-edit and accessibility acceptance remain | `src/preview/mathRenderer.js`, `src/preview/mermaidRenderer.js`, `src/preview/MarkdownPreview.jsx`, `test/mathRenderer.test.js` |
-| T10 | App and docx both swap landscape dimensions; cover/body one section; PDF fixed timeout/CSS | `pageLayout.js`, `markdownToDocx.js`, `coverPage.js`, downloadPdf |
-| T11 | Layout/batch/image-picker actions exist only in mobile More | `src/App.jsx`, `.show-on-mobile` CSS |
-| T12 | Theme hooks independent, reset limited, unvalidated merge, autosave re-derives renamed title, get/put races | Theme/preferences, documentRepo |
-| T13 | Batch identity maps use filenames; selection mutable during processing; no traversal | Batch sheet/processor |
-| T14 | Typed/shared/batch/image limits incomplete, format normalization gaps, shortener lacks timeout/stale-result guard | File/image/share/batch modules |
-| T15 | No common modal focus/escape contract, nested rename input/button, laser ignores reduced-motion preference | Modal components, HistoryPanel, LaserPointer |
-| T17 | Minimal Node contract suite and test/build PR gate now exist; component/storage/E2E/lint/type checks remain absent | `package.json`, `test/`, workflow and tracked file inventory |
+| T10 | Baseline app/docx double-swap, missing first-page cover rule and fixed PDF delay are corrected in `d946eab`; current XML/print contracts still need reader/browser evidence | `pageLayout.js`, `markdownToDocx.js`, `coverPage.js`, `downloadPdf.js`, `test/layoutPrint.test.js` |
+| T11 | Layout/batch/image-picker actions remain in the shared More registry; the overflow trigger is now visible across Edit-mode viewport sizes, while browser keyboard/focus acceptance remains | `src/App.jsx`, `src/components/MoreMenu.jsx` |
+| T12 | Current code shares theme state, validates persisted preference values, handles theme storage events, defines reset scope, preserves manual titles and serializes per-document mutations; browser/concurrency acceptance remains | `src/preferences/storage.js`, `src/theme/useTheme.js`, `src/history/documentRepo.js`, `test/preferences.test.js`, `test/documentMetadata.test.js` |
+| T13 | Current code assigns stable batch IDs, freezes a processing copy, bounds file/total counts, keys progress/errors by ID, retries failed entries and supports cancellation; browser edge acceptance remains | `src/batch/BatchConvertSheet.jsx`, `src/batch/batchProcess.js`, `test/batchProcess.test.js` |
+| T14 | Current code centralizes share/image/diagram/batch limits, normalizes supported image types, rejects active SVG, bounds QR/share work and adds cancellable/stale-safe TinyURL requests; browser large-input/decode acceptance remains | `src/limits/resourceLimits.js`, `src/share/`, `src/images/`, `src/preview/mermaidRenderer.js`, tests |
+| T15 | Current code uses a shared modal focus/Tab/Escape/return hook, removes the nested rename control and suppresses laser canvas animation under reduced motion; browser assistive-technology/contrast/touch-target acceptance remains | `src/accessibility/useModalA11y.js`, modal components, `HistoryPanel.jsx`, `LaserPointer.jsx` |
+| T17 | Node contract suite and test/build PR gate now exist; the current working-tree run passes 35 tests; component/storage/E2E/lint/type checks remain absent | `package.json`, `test/`, workflow and tracked file inventory |
 | T18 | Full synchronous preview, getAll history and broad precache; no browser profiling evidence | Preview/history/Vite config |
 | T19 | Root orchestration and sample/icons combined; duplicate config/settings controls | App/styles/components |
 | T21 | MIT badge previously existed but no tracked license file | Original README and git file inventory |
@@ -156,7 +162,7 @@ Missing original-plan features (custom templates, Word math, gallery, directory 
 - At the documentation baseline, added a twelve-test Node contract layer and made test/build verification run for pull requests and main pushes; richer application coverage remains T17.
 - The documentation-only baseline did not fix an application defect; subsequent implementation work is tracked separately below.
 
-Final local documentation validation passed:
+Final local documentation validation passed at the documentation baseline:
 
 - 13 Markdown files inspected (12 updated/created documents plus unchanged CLAUDE.md).
 - 62 local links/anchors, 64 literal source-path references, 21 task IDs and 18 requirement IDs checked.
@@ -167,9 +173,9 @@ Final local documentation validation passed:
 
 These are local consistency checks, not an installed CI documentation gate. The application hardening/test harness remains open.
 
-## 5a. Follow-up implementation evidence (T17/T01–T09)
+## 5a. Follow-up implementation evidence (T17/T01–T15)
 
-- T17 added `npm test`, now covering twenty-three Node built-in contract tests, and a pull-request/main-push test/build gate.
+- T17 added `npm test`, now covering thirty-five Node built-in contract tests, and a pull-request/main-push test/build gate.
 - T01 now escapes image-loading alt text and Mermaid error text through `src/preview/htmlEscape.js`; the focused escaping regression test passes.
 - T02–T05 now have bounded/serialized save and transition code, explicit shared-session fork behavior, target-ID restoration and content-aware/forced snapshot policy; browser and persistence acceptance remains pending.
 - `npm test`, `npm run build` and `git diff --check` pass locally. The build still reports the existing large Mermaid chunk warning; this is tracked under T18.
@@ -177,11 +183,16 @@ These are local consistency checks, not an installed CI documentation gate. The 
 - T07 now exports/imports a versioned `markdown-editor-backup` v1 manifest with document metadata/layout, snapshots and image assets. Imports validate archive paths/limits/references, remap IDs to avoid collisions and write all three stores transactionally; text-only share URLs warn about local images without uploading them. Pure manifest/reference tests pass, while disposable-profile browser/IndexedDB round-trip and failure evidence remain pending.
 - T08 now awaits recursive DOCX block/inline conversion, preserves focused list/quote/strike/image/table contracts and makes unsupported block nodes explicit. `test/docx.test.js` unzips the generated package and passes XML/media assertions; Word/LibreOffice and browser-only image acceptance remain pending.
 - T09 now ignores code/attributes during math HTML processing, handles KaTeX load failure through base-HTML fallback, and guards Mermaid hydration against stale/cancelled containers. `test/mathRenderer.test.js` passes; browser rapid-edit, diagram and accessibility acceptance remains pending.
-- The follow-up production build passed with 2247 transformed modules and 69 PWA precache entries; the existing large Mermaid chunk warning remains tracked under T18.
-- Browser DOM/security fixtures, storage/persistence tests, Office validation, lint/type checks and dependency triage remain incomplete; T02/T05/T06/T07/T09 still need browser or fake-IndexedDB/reference evidence and T02 needs multi-tab checks.
+- T10 now uses one page-size mapping with explicit margins, emits correct portrait/landscape XML, derives DOCX image width from writable page dimensions, defines first-page cover header/footer behavior, requests TOC field updates, and waits for preview/fonts/images/layout readiness before browser print. `test/layoutPrint.test.js` passes; Word/LibreOffice and browser print/pagination acceptance remains pending.
+- The latest follow-up production build passed with 2249 transformed modules and 69 PWA precache entries (4566.43 KiB in this run); the existing large Mermaid chunk warning remains tracked under T18.
+- T12 now validates preference values, shares theme state, consumes theme storage events, defines Settings reset scope, preserves manual document titles and queues document mutations; pure preference/metadata contracts pass, while browser/IndexedDB concurrency evidence remains pending.
+- T13 now uses stable batch IDs, immutable processing snapshots, unique output names, bounded file/total input, failed-entry retry and cancellation; pure identity/cancellation coverage passes, while browser queue evidence remains pending.
+- T14 now rejects oversized share/image/diagram/batch inputs, limits QR use, normalizes supported image formats, rejects active SVG content, hardens copy and adds abortable/stale-safe shortener requests; browser large-input/decode evidence remains pending.
+- T15 now provides shared modal focus/Tab/Escape/return behavior, accessible dialog/menu labels, non-nested rename editing and reduced-motion laser-trail suppression; browser screen-reader/contrast/touch-target evidence remains pending.
+- Browser DOM/security fixtures, storage/persistence tests, Office/print validation, lint/type checks and dependency triage remain incomplete; T02/T05/T06/T07/T09/T10/T11/T12/T13/T14/T15 still need browser, fake-IndexedDB or reader evidence as specified in TESTING.
 
 ## 6. Remaining evidence gaps and next step
 
 No end-to-end browser reproduction, real storage-failure injection, actual PWA install/update, Office/print visual validation, accessibility certification, first-paint/profile or live deployment check was performed. These are pending acceptance under TESTING, not assumed passes.
 
-Recommended next implementation: run T07's disposable-profile backup round trip and failure cases, then complete T01 browser/security, T04 transition and T05 persistence acceptance, continue T16 dependency triage, and add T02 failure/multi-tab fixtures. Preserve user data before exercising destructive paths, and record commit-specific evidence before changing task status.
+Recommended next implementation: run T10's disposable browser/Office reader checks for layout, TOC and print readiness, then run T07's disposable-profile backup round trip and failure cases alongside T01 browser/security, T04 transition and T05 persistence acceptance. Preserve user data before exercising destructive paths, and record commit-specific evidence before changing task status.
