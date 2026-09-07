@@ -96,19 +96,24 @@ export default function MarkdownPreview({ markdown }) {
 
   useEffect(() => {
     let cancelled = false
+    setRenderedHtml(baseHtml)
     if (markdownHasMath(markdown)) {
-      renderMathInHtml(baseHtml).then((html) => {
-        if (!cancelled) setRenderedHtml(html)
-      })
-    } else {
-      setRenderedHtml(baseHtml)
+      renderMathInHtml(baseHtml)
+        .then((html) => {
+          if (!cancelled) setRenderedHtml(html)
+        })
+        .catch(() => {
+          if (!cancelled) setRenderedHtml(baseHtml)
+        })
     }
     return () => { cancelled = true }
   }, [baseHtml, markdown])
 
   // After HTML lands in DOM, hydrate mermaid blocks
   useEffect(() => {
-    hydrateMermaidBlocks(containerRef.current).catch(() => {})
+    let cancelled = false
+    hydrateMermaidBlocks(containerRef.current, { isCancelled: () => cancelled }).catch(() => {})
+    return () => { cancelled = true }
   }, [renderedHtml])
 
   return (

@@ -36,7 +36,7 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 - Complete image reactivity, ownership, references and lifecycle acceptance (T06).
 - Verify the versioned backup/import implementation with collision-safe assets/metadata and failure cases (T07).
 - Complete recursive DOCX conversion, unsupported-feature reporting and formatting/list semantics, then run reader checks (T08).
-- Make math/diagram processing structure-aware and lifecycle-safe (T09).
+- Complete structure-aware, lifecycle-safe math/diagram processing and browser acceptance (T09).
 - Fix landscape XML, validate cover/TOC behavior, image sizing and print readiness (T10).
 
 **Exit gate:** supported syntax survives export; unsupported syntax is visible rather than silently dropped; complete backups round-trip into an empty browser profile; portrait/landscape and representative TOC/cover files pass Word and LibreOffice checks; PDF does not race unfinished renderers.

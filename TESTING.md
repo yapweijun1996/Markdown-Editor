@@ -7,7 +7,7 @@ Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
 ## 1. Current verification infrastructure
 
 - `npm run build` exists and passed in this review.
-- A small committed `node:test` suite covers DB helpers, Markdown AST parsing, share URL round trips and local-image warnings, preview escaping, save timing, snapshot policy, image ownership, backup manifest/reference validation and DOCX XML/media contracts. It is not a browser, component, IndexedDB or Office suite.
+- A small committed `node:test` suite covers DB helpers, Markdown AST parsing, share URL round trips and local-image warnings, preview escaping, save timing, snapshot policy, image ownership, backup manifest/reference validation, DOCX XML/media contracts and math HTML boundaries. It is not a browser, component, IndexedDB or Office suite.
 - GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes; lint/type-check and richer fixtures remain T17 work. The UI sample's percentage coverage table is illustrative content, not measured coverage.
 - No live-site, browser installation/offline update, Lighthouse, real-device, screen-reader or Word/LibreOffice/Google Docs acceptance was performed during the review.
 
@@ -57,7 +57,7 @@ Known baseline defects are described in TASK and REVIEW. These cases have not be
 
 ## 4. Automated suite expansion (T17; partially installed)
 
-- **Current:** Node built-in `node:test` runs 21 contract tests through `npm test`, including DB helpers, Markdown AST, share URL/local-image warnings, preview escaping, save timing, snapshot policy, image ownership, backup manifest/reference validation and DOCX XML/media contracts.
+- **Current:** Node built-in `node:test` runs 23 contract tests through `npm test`, including DB helpers, Markdown AST, share URL/local-image warnings, preview escaping, save timing, snapshot policy, image ownership, backup manifest/reference validation, DOCX XML/media contracts and math HTML boundaries.
 - **Unit/component:** candidate Vitest + React Testing Library; preference/schema/URL limits and renderer fixtures.
 - **Persistence:** candidate fake-indexeddb with explicit IDs, delayed/failing transactions, concurrent operations, snapshot retention and image references.
 - **DOCX integration:** the current Node suite generates Blob, unzips with JSZip and asserts XML text/styles/list starts/relationships/media content and unsupported-node warnings. It remains a focused contract layer; reader interoperability and browser-only image paths still require manual acceptance.
@@ -103,7 +103,7 @@ Each fix must carry a focused regression fixture. Complete browser/Office checks
 
 ## 8. Math and Mermaid
 
-- [ ] Inline/block math renders only intended tokens; escaped dollars, currency, code fences/inline code, HTML attributes and `<`/`&` formula text are preserved correctly.
+- [ ] Inline/block math renders only intended tokens; the current contract covers code fences/inline code, escaped dollars, currency, code content and HTML attributes. Browser checks must still verify escaped formula text and DOM output.
 - [ ] Invalid LaTeX displays an intelligible error; failed KaTeX JS/CSS load is recoverable.
 - [ ] Test current `output: html` accessibility limitation; verify chosen accessible output after T09.
 - [ ] Word math remains ordinary parsed text until separately implemented; do not mark equation-image/native-math tests passed.

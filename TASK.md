@@ -27,7 +27,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 | T06 | P1 | Reactive images, ownership and cache lifecycle | In progress | T02, T17 | R08 |
 | T07 | P1 | Portable, importable document/history backups | In progress | T06 | R03, R09 |
 | T08 | P1 | Recursive, loss-aware DOCX conversion | In progress | T17 | R04 |
-| T09 | P1 | Token-aware math and asynchronous preview lifecycle | Open | T01, T17 | R02, R05 |
+| T09 | P1 | Token-aware math and asynchronous preview lifecycle | In progress | T01, T17 | R02, R05 |
 | T10 | P1 | Correct page layout, cover, TOC and print readiness | Open | T08, T09 | R10, R11 |
 | T11 | P1 | Desktop/mobile action parity | Open | T17 | R01, R12 |
 | T12 | P1 | Shared, validated preferences and stable document metadata | Open | T02, T17 | R06, R13 |
@@ -100,8 +100,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T09 — Math/diagram preview lifecycle
 
-- Evidence: `src/preview/mathRenderer.js` rewrites the entire HTML string with regular expressions; a code-fence fixture was rewritten as math. Formula text can already be HTML-escaped. KaTeX output is HTML only; import rejection is not handled by the preview's promise chain.
-- Parse math at the token/AST layer or another structure-aware boundary; preserve escaped dollars, code and attributes. Add cancellation/error/retry and stable hydration for asynchronous math/diagrams.
+- Baseline evidence: `src/preview/mathRenderer.js` rewrote the entire HTML string with regular expressions; a code-fence fixture was rewritten as math. Formula text could already be HTML-escaped. KaTeX output is HTML only; import rejection was not handled by the preview's promise chain.
+- Current evidence: math detection ignores fenced/inline code, escaped dollars and currency; HTML post-processing maps text nodes only and skips `pre/code` plus attributes. KaTeX loading failures fall back to base preview HTML, and preview effects reset to the latest base revision before async work completes. Mermaid loader/render failures become visible error content, and hydration checks cancellation plus current-container ownership before mutation. `test/mathRenderer.test.js` covers code/currency detection and HTML boundary behavior.
+- Remaining: browser DOM tests for rapid math/Mermaid edits, malformed/slow diagrams, accessibility output and CSS/readiness behavior. Word math remains ordinary text by design.
 - Done when math affects only intended tokens, malformed input and failed lazy imports do not leave stale output, rapid edits settle to the latest render, and accessible math output has an explicit policy.
 
 ### T10 — Layout and PDF correctness

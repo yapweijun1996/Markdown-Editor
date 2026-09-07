@@ -14,7 +14,7 @@ Canonical references: [SPEC.md](SPEC.md) (requirements), [TASK.md](TASK.md) (tas
 | E02 — Local/PWA experience (V2 group) | Generated SW/manifest/icons, responsive UI, themes, preferences, draft/history/snapshot and versioned asset-bearing backup import/export, lazy heavy dependencies | Save/restore/share safety, theme consistency, accessibility and browser/PWA validation incomplete |
 | E03 — Rich output (V3 group) | Images, four built-in templates, page/cover/TOC modules, print PDF, KaTeX/Mermaid, file batch ZIP, QR/TinyURL | Partial against original ambitions; see EPIC-V3 for omissions and defects |
 | E04 — Read and presentation | Read width/zoom/toolbar controls, laser color/size/trail/fullscreen and Exit/ESC behavior | Code present in recent commits; device/fullscreen/a11y acceptance not performed |
-| E05 — Safety and fidelity hardening | Review and source-aligned docs completed (T20); minimal Node test/CI gate started (T17); T01–T08 remediation in progress | T01–T08 remain incomplete; T09–T16/T18–T19/T21 are Open and T17 is In progress |
+| E05 — Safety and fidelity hardening | Review and source-aligned docs completed (T20); minimal Node test/CI gate started (T17); T01–T09 remediation in progress | T01–T09 remain incomplete; T10–T16/T18–T19/T21 are Open and T17 is In progress |
 
 ## E01 — Core authoring and compiler
 

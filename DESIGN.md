@@ -119,7 +119,7 @@ Known boundary violations:
 - Missing-image alt text and Mermaid error text are escaped at construction through `src/preview/htmlEscape.js`; browser-level hostile-input and final DOM acceptance remain pending (T01).
 - Cache notifications rerender App but do not invalidate Markdown-only HTML memoization (T06).
 - Math regexes operate on tags, attributes and code as well as intended text; HTML escaping precedes formula parsing (T09).
-- Async import/render work lacks a complete cancellation/readiness/error contract; diagram work is not viewport-deferred (T09/T18).
+- Math post-processing now scans text nodes rather than arbitrary HTML and skips code/attributes; KaTeX failures fall back to base HTML. Mermaid hydration is cancellation/current-container aware, but browser readiness/error and viewport lifecycle acceptance remain incomplete (T09/T18).
 
 Remote images may be fetched by the browser. No final common sanitizer or CSP meta is configured. Proposed safety changes must preserve legitimate KaTeX/SVG/image rendering and be verified with hostile-input fixtures.
 

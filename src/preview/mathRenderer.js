@@ -1,6 +1,4 @@
-// Lazy-loaded KaTeX renderer with simple post-processing of HTML.
-// Block math:  $$...$$ on its own paragraph
-// Inline math: $...$  inside text (not preceded by backslash)
+// Lazy-loaded KaTeX renderer with structure-aware HTML post-processing.
 
 let katexLib = null
 let cssInjected = false
@@ -11,7 +9,11 @@ async function loadKatex() {
   if (pending) return pending
   pending = (async () => {
     if (!cssInjected) {
-      await import('katex/dist/katex.min.css')
+      try {
+        await import('katex/dist/katex.min.css')
+      } catch {
+        // Math HTML remains usable when a CSS asset is unavailable.
+      }
       cssInjected = true
     }
     const mod = await import('katex')
@@ -21,19 +23,58 @@ async function loadKatex() {
   return pending
 }
 
-const HAS_MATH_RE = /(?:^|[^\\])\$\$?[^\n$]/m
-export function markdownHasMath(markdown) {
-  if (!markdown) return false
-  return HAS_MATH_RE.test(markdown)
-}
-
 function htmlEscape(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
+function decodeHtmlEntities(s) {
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+}
+
+function containsMathText(text) {
+  if (/\$\$(?!\$)[\s\S]+?\$\$/.test(text)) return true
+  const inline = /(^|[^\\$])\$(?!\$|\s|\d)([^$\n]+?)\$(?!\$)/g
+  let match
+  while ((match = inline.exec(text))) {
+    if (match[2].trim() && !/\s$/.test(match[2])) return true
+  }
+  return false
+}
+
+function stripMarkdownCode(markdown) {
+  const lines = markdown.split('\n')
+  const visible = []
+  let fence = null
+
+  for (const line of lines) {
+    const fenceMatch = line.match(/^\s{0,3}(`{3,}|~{3,})/)
+    if (fence) {
+      if (fenceMatch && fenceMatch[1][0] === fence[0] && fenceMatch[1].length >= fence.length) {
+        fence = null
+      }
+      continue
+    }
+    if (fenceMatch) {
+      fence = fenceMatch[1]
+      continue
+    }
+    visible.push(line.replace(/(`+)[\s\S]*?\1/g, ''))
+  }
+  return visible.join('\n')
+}
+
+export function markdownHasMath(markdown) {
+  return Boolean(markdown && containsMathText(stripMarkdownCode(markdown)))
+}
+
 function safeRender(katex, source, displayMode) {
   try {
-    return katex.renderToString(source, {
+    return katex.renderToString(decodeHtmlEntities(source), {
       displayMode,
       throwOnError: false,
       strict: 'ignore',
@@ -44,22 +85,66 @@ function safeRender(katex, source, displayMode) {
   }
 }
 
+function isProtectedTag(tag) {
+  const name = tag.match(/^<\s*([a-z0-9-]+)/i)?.[1]?.toLowerCase()
+  if (['pre', 'code', 'script', 'style'].includes(name)) return true
+  return /class\s*=\s*["'][^"']*(?:katex|math-block)[^"']*["']/i.test(tag)
+}
+
+function mapHtmlTextNodes(html, mapText) {
+  const tagPattern = /<[^>]*>/g
+  let output = ''
+  let cursor = 0
+  let protectedDepth = 0
+  let match
+
+  while ((match = tagPattern.exec(html))) {
+    const text = html.slice(cursor, match.index)
+    output += protectedDepth ? text : mapText(text)
+
+    const tag = match[0]
+    output += tag
+    const closing = /^<\s*\/\s*([a-z0-9-]+)/i.test(tag)
+    const selfClosing = /\/\s*>$/.test(tag)
+    if (closing) {
+      if (protectedDepth) protectedDepth -= 1
+    } else if (!selfClosing && isProtectedTag(tag)) {
+      protectedDepth += 1
+    }
+    cursor = match.index + tag.length
+  }
+
+  const tail = html.slice(cursor)
+  output += protectedDepth ? tail : mapText(tail)
+  return output
+}
+
+function htmlHasMath(html) {
+  let found = false
+  mapHtmlTextNodes(html, (text) => {
+    if (containsMathText(text)) found = true
+    return text
+  })
+  return found
+}
+
+function renderInlineMathText(text, katex) {
+  const inline = /(^|[^\\$])\$(?!\$|\s|\d)([^$\n]+?)\$(?!\$)/g
+  return text.replace(inline, (match, prefix, equation) => {
+    if (!equation.trim() || /\s$/.test(equation)) return match
+    return `${prefix}${safeRender(katex, equation, false)}`
+  })
+}
+
 export async function renderMathInHtml(html) {
-  if (!html || !markdownHasMath(html)) return html
+  if (!html || !htmlHasMath(html)) return html
   const katex = await loadKatex()
-  let out = html
 
-  // Block math: <p>$$ ... $$</p> (markdown-it wraps in paragraph)
-  out = out.replace(
+  let out = html.replace(
     /<p>\s*\$\$([\s\S]+?)\$\$\s*<\/p>/g,
-    (_, eq) => `<div class="math-block">${safeRender(katex, eq.trim(), true)}</div>`
+    (_, equation) => `<div class="math-block">${safeRender(katex, equation.trim(), true)}</div>`
   )
 
-  // Inline math: $...$ but not $$...$$
-  out = out.replace(
-    /(^|[^\\$])\$([^$\n]+?)\$(?!\$)/g,
-    (_, prefix, eq) => `${prefix}${safeRender(katex, eq, false)}`
-  )
-
+  out = mapHtmlTextNodes(out, (text) => renderInlineMathText(text, katex))
   return out
 }

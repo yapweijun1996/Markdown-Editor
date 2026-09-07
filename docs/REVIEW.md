@@ -25,7 +25,7 @@ No browser automation/subagent/MCP KB tool was available in this session. No ext
 | `npm run build` | Passed; Vite 6.4.2 and PWA 1.2.0 generated dist | Build only, not user-flow validation |
 | `npm audit --json` | 19 affected-package vulnerability entries: 12 high, 6 moderate, 1 low, 0 critical | Includes transitive/build chains; exposure still requires triage |
 | Follow-up `npm.cmd run build` | Passed again; the same production chunks and PWA output were generated | Confirms source/build reproducibility in the current Windows workspace |
-| Follow-up `npm.cmd test` | Passed; 21 Node built-in contract tests | Adds save timing, image ownership, local-image share warning, backup manifest/reference and DOCX XML/media contracts; still not browser, storage or Office validation |
+| Follow-up `npm.cmd test` | Passed; 23 Node built-in contract tests | Adds save timing, image ownership, local-image share warning, backup manifest/reference, DOCX XML/media and math HTML-boundary contracts; still not browser, storage or Office validation |
 | Follow-up `npm.cmd audit --json` | Not completed; npm advisory endpoint request failed | Do not reinterpret the earlier audit snapshot as a fresh security result |
 | Isolated preview rule evaluation | Raw injected `<img ... onerror=...>` retained in generated placeholder HTML | Confirms unsafe string construction, not browser execution |
 | DOCX XML probe | Strike/nested-code/quoted-heading/inline-image preservation checks false | Concrete export fidelity omissions |
@@ -132,7 +132,7 @@ The following were traced in source but not executed as complete browser workflo
 | T06 | Baseline preview memo excluded cache revision and orphan attachment was unused; current preview subscribes to cache load/error revisions and local hooks attach only orphan records without reparenting owned assets, but eviction/deletion/reference tests remain | `src/preview/MarkdownPreview.jsx`, `src/images/useImages.js`, `src/images/imageCache.js`, `src/images/imageRepo.js`, `test/imageOwnership.test.js` |
 | T07 | Baseline archives/shares omitted assets and metadata, had no importer and allowed snapshot path collisions; current code has a versioned asset-bearing import/export path with ID remapping and text-only share warnings, but browser/IndexedDB round-trip and failure evidence remain | `src/history/exportHistory.js`, `src/share/shareLink.js`, `src/history/HistoryPanel.jsx`, `test/backupManifest.test.js` |
 | T08 | Baseline list/block/inline conversion dropped nested blocks, inline images and deletion formatting; current converter preserves the focused recursive/inline cases, emits unsupported block fallbacks and has XML/media contract tests, while reader/browser acceptance remains | `src/converter/`, `test/docx.test.js` |
-| T09 | Regex math processes arbitrary HTML; async load/hydration error/readiness incomplete | Preview math/Mermaid modules |
+| T09 | Baseline regex math processed arbitrary HTML; current math scans text nodes and skips code/attributes, while math/Mermaid browser readiness, rapid-edit and accessibility acceptance remain | `src/preview/mathRenderer.js`, `src/preview/mermaidRenderer.js`, `src/preview/MarkdownPreview.jsx`, `test/mathRenderer.test.js` |
 | T10 | App and docx both swap landscape dimensions; cover/body one section; PDF fixed timeout/CSS | `pageLayout.js`, `markdownToDocx.js`, `coverPage.js`, downloadPdf |
 | T11 | Layout/batch/image-picker actions exist only in mobile More | `src/App.jsx`, `.show-on-mobile` CSS |
 | T12 | Theme hooks independent, reset limited, unvalidated merge, autosave re-derives renamed title, get/put races | Theme/preferences, documentRepo |
@@ -167,17 +167,18 @@ Final local documentation validation passed:
 
 These are local consistency checks, not an installed CI documentation gate. The application hardening/test harness remains open.
 
-## 5a. Follow-up implementation evidence (T17/T01–T07)
+## 5a. Follow-up implementation evidence (T17/T01–T09)
 
-- T17 added `npm test`, now covering twenty-one Node built-in contract tests, and a pull-request/main-push test/build gate.
+- T17 added `npm test`, now covering twenty-three Node built-in contract tests, and a pull-request/main-push test/build gate.
 - T01 now escapes image-loading alt text and Mermaid error text through `src/preview/htmlEscape.js`; the focused escaping regression test passes.
 - T02–T05 now have bounded/serialized save and transition code, explicit shared-session fork behavior, target-ID restoration and content-aware/forced snapshot policy; browser and persistence acceptance remains pending.
 - `npm test`, `npm run build` and `git diff --check` pass locally. The build still reports the existing large Mermaid chunk warning; this is tracked under T18.
 - T06 now has reactive cache/error rendering, orphan-only attachment and pure ownership coverage; eviction and full asset lifecycle acceptance remain pending.
 - T07 now exports/imports a versioned `markdown-editor-backup` v1 manifest with document metadata/layout, snapshots and image assets. Imports validate archive paths/limits/references, remap IDs to avoid collisions and write all three stores transactionally; text-only share URLs warn about local images without uploading them. Pure manifest/reference tests pass, while disposable-profile browser/IndexedDB round-trip and failure evidence remain pending.
 - T08 now awaits recursive DOCX block/inline conversion, preserves focused list/quote/strike/image/table contracts and makes unsupported block nodes explicit. `test/docx.test.js` unzips the generated package and passes XML/media assertions; Word/LibreOffice and browser-only image acceptance remain pending.
+- T09 now ignores code/attributes during math HTML processing, handles KaTeX load failure through base-HTML fallback, and guards Mermaid hydration against stale/cancelled containers. `test/mathRenderer.test.js` passes; browser rapid-edit, diagram and accessibility acceptance remains pending.
 - The follow-up production build passed with 2247 transformed modules and 69 PWA precache entries; the existing large Mermaid chunk warning remains tracked under T18.
-- Browser DOM/security fixtures, storage/persistence tests, Office validation, lint/type checks and dependency triage remain incomplete; T02/T05/T06 still need fake-IndexedDB failure/reference evidence and T02 needs multi-tab checks.
+- Browser DOM/security fixtures, storage/persistence tests, Office validation, lint/type checks and dependency triage remain incomplete; T02/T05/T06/T07/T09 still need browser or fake-IndexedDB/reference evidence and T02 needs multi-tab checks.
 
 ## 6. Remaining evidence gaps and next step
 

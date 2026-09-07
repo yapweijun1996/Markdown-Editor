@@ -19,9 +19,9 @@ async function loadMermaid() {
 
 let counter = 0
 export async function renderMermaidToSvg(code, idHint = '') {
-  const mermaid = await loadMermaid()
   const id = `mermaid-${idHint || counter++}-${Date.now().toString(36)}`
   try {
+    const mermaid = await loadMermaid()
     const { svg } = await mermaid.render(id, code)
     return { svg, error: null }
   } catch (err) {
@@ -31,11 +31,12 @@ export async function renderMermaidToSvg(code, idHint = '') {
 
 // Hydrate <code class="language-mermaid"> blocks into SVG diagrams.
 // Run after the preview HTML is committed to the DOM.
-export async function hydrateMermaidBlocks(rootEl) {
-  if (!rootEl) return
+export async function hydrateMermaidBlocks(rootEl, { isCancelled = () => false } = {}) {
+  if (!rootEl || isCancelled()) return
   const blocks = rootEl.querySelectorAll('pre > code.language-mermaid')
   if (blocks.length === 0) return
   for (const codeEl of blocks) {
+    if (isCancelled()) return
     const pre = codeEl.parentElement
     if (!pre || pre.dataset.mermaidRendered === '1') continue
     pre.dataset.mermaidRendered = '1'
@@ -46,6 +47,7 @@ export async function hydrateMermaidBlocks(rootEl) {
     pre.replaceWith(wrapper)
 
     const { svg, error } = await renderMermaidToSvg(source)
+    if (isCancelled() || !rootEl.contains(wrapper)) continue
     if (error) {
       wrapper.innerHTML =
         `<div class="mermaid-error">Mermaid error: ${escapeHtml(error)}</div>`
