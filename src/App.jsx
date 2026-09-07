@@ -319,10 +319,12 @@ export default function App() {
   const [showLayout, setShowLayout] = useState(false)
   const [showBatch, setShowBatch] = useState(false)
   const [previewOnly, setPreviewOnly] = useState(false)
+  const [sharedSession, setSharedSession] = useState(
+    () => typeof window !== 'undefined' && Boolean(decodeShareUrl())
+  )
   const [presentationMode, setPresentationMode] = useState(false)
   const [mobileTab, setMobileTab] = useState('editor')
   const [draft, setDraft] = useState(null)
-  const sharedLinkOpenedRef = useRef(false)
   const toolbarRef = useRef(null)
 
   const previewControls = usePreviewControls(previewOnly)
@@ -394,12 +396,12 @@ export default function App() {
   const history = useHistory({
     markdown,
     setMarkdown,
-    paused: previewOnly || sharedLinkOpenedRef.current,
+    paused: previewOnly || sharedSession,
   })
 
   const images = useImages({
     markdown,
-    documentId: history.currentDocId,
+    documentId: sharedSession ? null : history.currentDocId,
   })
 
   const editorRef = useRef(null)
@@ -433,7 +435,7 @@ export default function App() {
   useEffect(() => {
     const shared = decodeShareUrl()
     if (shared) {
-      sharedLinkOpenedRef.current = true
+      setSharedSession(true)
       setMarkdown(shared.markdown || '')
       setPreviewOnly(shared.previewOnly)
       if (!shared.previewOnly) setMobileTab('preview')
@@ -453,28 +455,41 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    function onHashChange() {
+    async function onHashChange() {
       const shared = decodeShareUrl()
       if (shared) {
+        setSharedSession(true)
         setMarkdown(shared.markdown)
         setPreviewOnly(shared.previewOnly)
+        if (!shared.previewOnly) setMobileTab('preview')
+        return
+      }
+
+      if (sharedSession) {
+        try {
+          await history.forkDocument(markdown)
+          setSharedSession(false)
+          setPreviewOnly(false)
+        } catch (err) {
+          setError('Could not create a local copy of the shared document.')
+        }
       }
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
+  }, [history.forkDocument, markdown, sharedSession])
 
   // Auto-save draft (debounced)
   useEffect(() => {
     if (!prefs.draft.autoSave) return
-    if (sharedLinkOpenedRef.current) return
+    if (sharedSession) return
     if (previewOnly) return
 
     const t = setTimeout(() => {
       writeDraft(markdown)
     }, prefs.draft.autoSaveInterval)
     return () => clearTimeout(t)
-  }, [markdown, prefs.draft.autoSave, prefs.draft.autoSaveInterval, previewOnly])
+  }, [markdown, prefs.draft.autoSave, prefs.draft.autoSaveInterval, previewOnly, sharedSession])
 
   async function handleExport() {
     if (!markdown.trim()) {
@@ -484,7 +499,7 @@ export default function App() {
     setError('')
     setStatus('Exporting...')
     try {
-      const opts = history.currentDoc
+      const opts = !sharedSession && history.currentDoc
         ? {
             templateId: history.currentDoc.templateId,
             layout: history.currentDoc.layout,
@@ -521,11 +536,19 @@ export default function App() {
     setError('')
   }
 
-  function handleEditMode() {
+  async function handleEditMode() {
+    if (sharedSession) {
+      try {
+        await history.forkDocument(markdown)
+      } catch (err) {
+        setError('Could not create a local copy of the shared document.')
+        return
+      }
+      setSharedSession(false)
+      const baseUrl = `${window.location.origin}${window.location.pathname}`
+      window.history.replaceState({}, '', baseUrl)
+    }
     setPreviewOnly(false)
-    sharedLinkOpenedRef.current = false
-    const baseUrl = `${window.location.origin}${window.location.pathname}`
-    window.history.replaceState({}, '', baseUrl)
   }
 
   function handleRestoreDraft() {

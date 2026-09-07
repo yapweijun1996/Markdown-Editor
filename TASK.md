@@ -22,7 +22,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 | T01 | P0 | Safe preview HTML boundary | In progress | T17 | R02, R16 |
 | T02 | P0 | Durable document-session lifecycle and save feedback | Open | T17 | R06, R16 |
 | T03 | P0 | Target-safe, atomic version restoration | In progress | T02, T05 | R07 |
-| T04 | P0 | Isolated shared-document sessions | Open | T02 | R03, R06 |
+| T04 | P0 | Isolated shared-document sessions | In progress | T02 | R03, R06 |
 | T05 | P0 | Content-aware snapshots and mandatory recovery snapshots | In progress | T17 | R07 |
 | T06 | P1 | Reactive images, ownership and cache lifecycle | Open | T02, T17 | R08 |
 | T07 | P1 | Portable, importable document/history backups | Open | T06 | R03, R09 |
@@ -65,8 +65,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T04 — Shared-document isolation
 
-- Evidence: opening a share leaves `history.currentDocId` selected; clicking Edit clears the shared flag and resumes saving into that ID. The `hashchange` handler does not establish the initial-load shared flag. A share opened directly in edit mode can remain permanently paused for saving.
-- Use explicit local/shared session state; editing a received document creates a new local identity. Make initial hash/query decoding and later hash changes follow the same transition policy.
+- Baseline evidence: opening a share left `history.currentDocId` selected; clicking Edit cleared the shared flag and resumed autosave into that ID. The `hashchange` handler did not establish the initial-load shared flag. A share opened directly in edit mode could remain permanently paused for saving.
+- Current evidence: App state now tracks `sharedSession`; initial hash/query and later hash changes pause local persistence, and Edit/hash removal forks the content through `history.forkDocument` before enabling local autosave. Shared-mode exports do not reuse the previously selected local document's layout/title, and image ownership is not attached while shared.
+- Remaining: verify first-load/hash/edit/reload transitions in a browser and coordinate pending-save flushes with T02 before treating the session boundary as complete.
 - Done when receiving/editing shares, switching hashes, returning to local history and reloading never overwrite a pre-existing document or silently disable saving. Preview mode must be described as a UI mode, not access control.
 
 ### T05 — Snapshot integrity

@@ -50,11 +50,11 @@ These records document choices visible in the source; they do not invent histori
 
 ## D06 — Compressed fragment sharing, optional third-party shortening
 
-**Status: Implemented with session/privacy limitations.** lz-string compresses text into URLSearchParams in the fragment; decoder also accepts legacy query parameters. QR uses this URL; TinyURL is opt-in and refuses links longer than 6,000 characters.
+**Status: Implemented with session/privacy limitations.** lz-string compresses text into URLSearchParams in the fragment; decoder also accepts legacy query parameters. QR uses this URL; TinyURL is opt-in and refuses links longer than 6,000 characters. App shared-session state now pauses local persistence and forks a new local document on Edit.
 
 **Consequences:** no share database required, but anyone holding the URL can recover text. Hashes avoid server request-path limits, not browser/messaging/QR capacity constraints. TinyURL receives the full encoded URL. Preview-only is not an authorization model. Stored assets/layout are excluded.
 
-**Proposed refinement:** distinguish shared versus local sessions, create a new local identity on Edit, handle stale shortening/copy failures and define resource limits (T04/T14). Asset packaging is T07; no automatic public upload is authorized.
+**Remaining refinement:** coordinate pending-save transitions, handle stale shortening/copy failures and define resource limits (T02/T14). Asset packaging is T07; no automatic public upload is authorized.
 
 ## D07 — PWA prompt registration and broad precache
 
@@ -76,7 +76,7 @@ These records document choices visible in the source; they do not invent histori
 
 ## D09 — Explicit document sessions and transactional restoration
 
-**Status: Proposed; not implemented.** Replace implicit coupling of Markdown, a remembered ID, ref flags and independent timers with a session contract.
+**Status: Partially implemented.** Shared-session state, fork-on-Edit and explicit target-ID restoration now exist; the durable save/transition contract and failure policy remain incomplete.
 
 **Motivation:** T02–T05 identify lost edits, wrong-target restoration, share overwrite and skipped safety snapshots.
 

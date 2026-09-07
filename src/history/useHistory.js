@@ -119,6 +119,14 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     setMarkdown('')
   }, [setMarkdown])
 
+  const forkDocument = useCallback(async (content) => {
+    const created = await createDocument(content)
+    setCurrentDocId(created.id)
+    lastSavedRef.current = created.content
+    await refresh()
+    return created
+  }, [refresh])
+
   const deleteDoc = useCallback(async (id) => {
     await repoDelete(id)
     if (id === currentDocId) {
@@ -172,6 +180,7 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     refresh,
     openDoc,
     newDoc,
+    forkDocument,
     deleteDoc,
     togglePin,
     rename,

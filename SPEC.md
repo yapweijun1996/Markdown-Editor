@@ -18,10 +18,10 @@ No backend, authentication, authorization, collaboration, cloud synchronization 
 |---|---|---|---|
 | R01 | Author, upload and navigate Markdown with desktop/mobile controls | Implemented editor, sample, clear/new, file picker and mobile tabs; some actions unreachable on desktop | T02, T11 |
 | R02 | Safe, correct live preview of supported syntax | Partial: markdown-it, tables, links, math, diagrams and local-image resolution exist; identified image-placeholder and Mermaid-error text interpolation is escaped, but final browser/security and rendering-lifecycle acceptance remains incomplete | T01, T06, T09 |
-| R03 | Share text transparently without damaging local work | Partial: compressed hash/query decoding, copy, QR and opt-in TinyURL exist; local identity isolation, assets and limits incomplete | T04, T07, T14 |
+| R03 | Share text transparently without damaging local work | Partial: compressed hash/query decoding, copy, QR and opt-in TinyURL exist; shared sessions now fork on Edit, but pending-transition, assets and limits remain incomplete | T04, T07, T14 |
 | R04 | Export supported Markdown structure as editable DOCX without silent content loss | Partial: basic conversion exists; nested/inline omissions and formatting gaps reproduced | T08 |
 | R05 | Display technical math and diagrams with useful failure handling | Partial: KaTeX HTML and Mermaid SVG preview; Mermaid PNG DOCX attempt; no Word math conversion | T09, T14 |
-| R06 | Save/recover documents and metadata reliably, with visible failure states | Partial: trailing debounced draft/document saves; no coordinated flush or robust recovery/identity contract | T02, T04, T12 |
+| R06 | Save/recover documents and metadata reliably, with visible failure states | Partial: trailing debounced draft/document saves and explicit shared-session fork exist; no coordinated flush or complete recovery/failure contract | T02, T04, T12 |
 | R07 | Restore the correct version with a guaranteed pre-restore recovery point | Partial: changed-content snapshots and forced recovery backup logic now exist; browser/persistence failure and target-transaction acceptance remain incomplete | T03, T05 |
 | R08 | Persist, display, embed and safely manage images | Partial: Blob storage/insertion/export exist; reactivity, ownership, format normalization and cleanup incomplete | T06, T14 |
 | R09 | Export/import portable history including assets and settings | Partial: text ZIP export only; no import | T07 |

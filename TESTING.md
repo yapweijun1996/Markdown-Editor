@@ -47,8 +47,8 @@ For every result record commit, environment, command/steps, expected/actual, art
 | PWA update | Make unsaved edits; trigger waiting SW and countdown/Reload Now | Save completion or explicit safe deferral precedes activation/reload | T02 |
 | Storage failure | Inject quota/open/put failure | Visible recoverable error; destructive transition is not silently allowed | T02 |
 | Restore B while viewing A | Open B's timeline from History without selecting B, restore a version | Only B changes; B's previous content is backed up | T03 |
-| Shared session | Select local A, open a shared URL, click Edit and save | A stays unchanged; received content has new local identity | T04 |
-| Share transitions | Exercise first-load hash/query, later hashchange and editable share mode | Isolation and saving policy remain consistent, no permanent paused state | T04 |
+| Shared session | Select local A, open a shared URL, click Edit and save | A stays unchanged; received content has new local identity; current code forks before autosave resumes | T04 |
+| Share transitions | Exercise first-load hash/query, later hashchange, hash removal and editable share mode | Isolation and saving policy remain consistent, no permanent paused state; browser acceptance is pending | T04 |
 | Equal-length snapshot | Replace content with different same-length text; also make small edits | Unit policy covers both changes; persistence must prove the defined snapshot protection and forced backups | T05 |
 | Failed restore backup | Force the recovery-snapshot write to fail | Restore aborts or preserves a documented recovery path; no silent overwrite | T03, T05 |
 | Multi-tab | Concurrent edits/metadata changes and DB version upgrade across two tabs | Defined conflict/blocked-upgrade recovery; no silent metadata reversal | T02, T12 |

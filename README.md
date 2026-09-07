@@ -26,7 +26,7 @@ Documentation baseline: source commit `445cc05`, reviewed 2026-09-07 (UTC). Pack
 ## Important limitations
 
 - **Save is not guaranteed:** draft/history/snapshots use inactivity debounces, not fixed periodic checkpoints. Switching documents or auto-reloading for a PWA update does not first flush pending changes. Read mode pauses saving.
-- **Share/save identity is unsafe:** editing a received share may overwrite the previously selected local document, and pending saves still do not flush across transitions. Version restore now passes an explicit target ID and creates a forced recovery snapshot before replacement, but persistence/failure acceptance remains pending (T02–T04).
+- **Share/save identity is partially hardened:** a shared session now pauses local persistence and Edit creates a new local document before autosave resumes. Pending saves still do not flush across transitions, and browser/failure acceptance remains pending (T02–T04).
 - **No complete backup:** history ZIP and share URLs contain text, not local `mdimg://` image bytes or document layout. There is no archive import. Clearing/evicting browser site data may delete all stored work.
 - **Desktop action gap:** Layout, Batch Convert and Insert Image picker are wired only into the mobile More menu. Image paste/drop still has editor handlers. These features need desktop entry points (T11).
 - **Preview is not authorization:** recipients can edit/export shared content. Compression is not encryption, URLs/QR have practical capacity limits, and TinyURL receives the entire content-bearing URL.
@@ -91,7 +91,7 @@ Most converters read `src/styles/templates/`; `wordStyleConfig.js` still duplica
 
 ## Deployment and offline behavior
 
-`.github/workflows/deploy.yml` builds and deploys on pushes to `main`: npm ci -> Vite build -> Pages artifact -> GitHub Pages. Deployment currently has no tests/lint/acceptance gate.
+`.github/workflows/deploy.yml` runs npm ci, the Node contract suite and the Vite build on pull requests and pushes to `main`; only main pushes upload the Pages artifact and deploy to GitHub Pages. Browser/storage/Office acceptance, lint and type checks remain outside CI.
 
 Workbox precaches generated assets, including lazy-loaded libraries. Lazy execution does not mean those bytes are never downloaded in the background. UpdatePrompt explicitly checks for updates hourly and starts a 30-second reload countdown once an update is detected; it does not guarantee discovery within 30 seconds of deployment. Saving before reload is not coordinated yet.
 

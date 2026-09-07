@@ -64,15 +64,15 @@ These modules are separated by responsibility but **not independent failure doma
 
 Current state is distributed:
 
-- App: `markdown`, `previewOnly`, presentation/modal/mobile-tab state, pending draft and `sharedLinkOpenedRef`.
+- App: `markdown`, `previewOnly`, `sharedSession`, presentation/modal/mobile-tab state and pending draft.
 - History hook: `currentDocId`, full `docs` list, `supported` flag and a content-only `lastSavedRef`.
 - Browser persistence: remembered ID, a single draft, documents/snapshots/images and separately stored preferences.
 
-Startup checks a shared hash (or legacy query), otherwise opens the remembered document, otherwise offers the global draft. It does not reconcile document/draft freshness. A missing remembered document does not trigger draft fallback.
+Startup checks a shared hash (or legacy query), establishes a shared session and pauses local persistence; otherwise it opens the remembered document and then offers the global draft. Shared Edit creates a new local document identity before autosave resumes. It does not reconcile document/draft freshness. A missing remembered document does not trigger draft fallback.
 
 Document and snapshot timers are trailing debounces, restarted by editing. Read mode and the shared-link flag pause them. The draft timer has its own delay/enablement. Open/new do not flush pending writes; no max-wait, dirty-state UI or multi-tab coordination exists. The hook skips empty text saves. See SPEC for exact timing.
 
-Shared content does not clear the remembered local document identity. Editing a share can therefore resume saving into an unrelated document; hash-change and first-load handling differ. Version restore now passes an explicit target identity and persists a forced recovery snapshot before replacement, while transition/save coordination remains open.
+Shared content does not clear the remembered local document identity, but the explicit shared session prevents it from receiving shared edits. Editing a share now forks a local document; first-load, later hash changes and hash removal use the same session policy. Version restore passes an explicit target identity and persists a forced recovery snapshot before replacement, while transition/save coordination remains open.
 
 **Proposed (T02–T05):** a document-session service/hook with explicit local/shared identity, revisions, dirty/saving/saved/error state, serialized writes and recovery policy. Transitions must await saving (or explicit discard), and restore operations must take target IDs directly. This service is not implemented in the baseline.
 
