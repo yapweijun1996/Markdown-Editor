@@ -6,7 +6,7 @@ A client-side Markdown editor with HTML preview, Word `.docx` export, browser-pr
 
 > **Current reliability warning:** the baseline review reproduced an HTML-injection path in custom preview output, unsafe save/share/version transitions and incomplete Word conversion. The current code escapes image-loading and Mermaid-error text interpolation and has a focused regression test, but browser-level hostile-input acceptance and the other reliability risks remain open. Avoid untrusted Markdown/share links and keep independent copies of important work. See [review evidence](docs/REVIEW.md) and [open tasks](TASK.md).
 
-Documentation baseline: source commit `d946eab` plus the currently verified working-tree changes, reviewed 2026-09-07 (UTC). Package version is `0.1.0`; historical V1/V2/V3 names refer to feature groups, not current release guarantees. Live deployment was not verified during this review.
+Documentation baseline: source commit `b691ca6`, reviewed 2026-09-07 (UTC). Package version is `0.1.0`; historical V1/V2/V3 names refer to feature groups, not current release guarantees. Live deployment was not verified during this review.
 
 ## What is implemented
 

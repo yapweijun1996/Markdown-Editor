@@ -1,6 +1,6 @@
 # TASK — Implementation and hardening ledger
 
-Source baseline: `d946eab` plus the currently verified working-tree changes. Documentation review: 2026-09-07 (UTC).
+Source baseline: `b691ca6`. Documentation review: 2026-09-07 (UTC).
 
 This is the canonical task-status record. [SPEC.md](SPEC.md) owns requirements; [ROADMAP.md](ROADMAP.md) owns sequencing; [docs/REVIEW.md](docs/REVIEW.md) records evidence. Documentation updates do **not** resolve application defects.
 

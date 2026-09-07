@@ -1,6 +1,6 @@
 # SPEC — Product requirements and implemented behavior
 
-Baseline: `d946eab` plus the currently verified working-tree changes · reviewed 2026-09-07 (UTC). Implementation is the source of truth; a requirement below is **not** a claim of acceptance-test success.
+Baseline: `b691ca6` · reviewed 2026-09-07 (UTC). Implementation is the source of truth; a requirement below is **not** a claim of acceptance-test success.
 
 [DESIGN.md](DESIGN.md) describes architecture. [TASK.md](TASK.md) owns task status and acceptance details. [TESTING.md](TESTING.md) defines verification. [docs/REVIEW.md](docs/REVIEW.md) separates reproduced results from static findings.
 

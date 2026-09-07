@@ -1,6 +1,6 @@
 # Architecture decisions — implemented versus proposed
 
-Baseline: `d946eab` plus the currently verified working-tree changes · reviewed 2026-09-07 (UTC).
+Baseline: `b691ca6` · reviewed 2026-09-07 (UTC).
 
 These records document choices visible in the source; they do not invent historical approval dates. **Implemented** means code evidence exists, not that all consequences are correct. **Proposed** choices need implementation/acceptance and, where stated, owner approval. Requirements and statuses remain in [SPEC](../SPEC.md) and [TASK](../TASK.md).
 

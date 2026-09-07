@@ -1,10 +1,10 @@
 # DESIGN — Current architecture and design boundaries
 
-Baseline: `d946eab` plus the currently verified working-tree changes · reviewed 2026-09-07 (UTC).
+Baseline: `b691ca6` · reviewed 2026-09-07 (UTC).
 
 This replaces the original MVP proposal with the architecture actually present in `src/`. Proposed corrections are labelled explicitly. [SPEC.md](SPEC.md) owns requirements/defaults, [TASK.md](TASK.md) owns work status, and [docs/DECISIONS.md](docs/DECISIONS.md) records implemented choices versus proposals.
 
-Current source note: `d946eab` plus the verified working-tree changes described in TASK and REVIEW; no browser/Office acceptance is implied.
+Current source note: `b691ca6` described in TASK and REVIEW; no browser/Office acceptance is implied.
 
 ## 1. Product model
 

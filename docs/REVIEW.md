@@ -1,6 +1,6 @@
 # Review evidence — source baseline and documentation reconciliation
 
-Reviewed: **2026-09-07 (UTC)**. Historical documentation baseline: **`445cc05bcbc69647c3d08eb17edcd2d2da5ee56a`**. Current implementation baseline: **`d946eab` plus the verified working tree**. Package: `markdown-editor@0.1.0`.
+Reviewed: **2026-09-07 (UTC)**. Historical documentation baseline: **`445cc05bcbc69647c3d08eb17edcd2d2da5ee56a`**. Current implementation baseline: **`b691ca6`**. Package: `markdown-editor@0.1.0`.
 
 This is a point-in-time evidence record, not a declaration that the application is safe or fully tested. [TASK](../TASK.md) owns current remediation status. [TESTING](../TESTING.md) owns acceptance procedures.
 
@@ -145,7 +145,7 @@ The following were traced in source but not executed as complete browser workflo
 | T13 | Current code assigns stable batch IDs, freezes a processing copy, bounds file/total counts, keys progress/errors by ID, retries failed entries and supports cancellation; browser edge acceptance remains | `src/batch/BatchConvertSheet.jsx`, `src/batch/batchProcess.js`, `test/batchProcess.test.js` |
 | T14 | Current code centralizes share/image/diagram/batch limits, normalizes supported image types, rejects active SVG, bounds QR/share work and adds cancellable/stale-safe TinyURL requests; browser large-input/decode acceptance remains | `src/limits/resourceLimits.js`, `src/share/`, `src/images/`, `src/preview/mermaidRenderer.js`, tests |
 | T15 | Current code uses a shared modal focus/Tab/Escape/return hook, removes the nested rename control and suppresses laser canvas animation under reduced motion; browser assistive-technology/contrast/touch-target acceptance remains | `src/accessibility/useModalA11y.js`, modal components, `HistoryPanel.jsx`, `LaserPointer.jsx` |
-| T17 | Node contract suite and test/build PR gate now exist; the current working-tree run passes 35 tests; component/storage/E2E/lint/type checks remain absent | `package.json`, `test/`, workflow and tracked file inventory |
+| T17 | Node contract suite and test/build PR gate now exist; the current committed run passes 35 tests; component/storage/E2E/lint/type checks remain absent | `package.json`, `test/`, workflow and tracked file inventory |
 | T18 | Full synchronous preview, getAll history and broad precache; no browser profiling evidence | Preview/history/Vite config |
 | T19 | Root orchestration and sample/icons combined; duplicate config/settings controls | App/styles/components |
 | T21 | MIT badge previously existed but no tracked license file | Original README and git file inventory |

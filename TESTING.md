@@ -1,6 +1,6 @@
 # TESTING — Evidence, regression plan and manual acceptance
 
-Baseline: `d946eab` plus the currently verified working-tree changes · reviewed 2026-09-07 (UTC).
+Baseline: `b691ca6` · reviewed 2026-09-07 (UTC).
 
 **A checklist is not a test report.** All unchecked items below are pending acceptance, not passed checks. Known-broken scenarios intentionally appear as regression requirements. Actual review results and an exploratory reproduction script are in [docs/REVIEW.md](docs/REVIEW.md).
 

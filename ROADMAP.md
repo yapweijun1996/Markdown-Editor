@@ -1,10 +1,10 @@
 # ROADMAP — Stabilize before expanding
 
-Baseline: `d946eab` plus the currently verified working-tree changes · reviewed 2026-09-07 (UTC).
+Baseline: `b691ca6` · reviewed 2026-09-07 (UTC).
 
 This is an ordered plan, not a release calendar. Package version remains `0.1.0`; V1/V2/V3 are historical feature-group labels, not verified semantic release tags. [TASK.md](TASK.md) is the task-status source of truth; application fixes below are in progress or open until their acceptance evidence is recorded.
 
-Current source note: `d946eab` plus verified working-tree changes; no browser/Office acceptance or local Git commit for the current working-tree batch is implied.
+Current source note: `b691ca6`; no browser/Office acceptance is implied.
 
 ## Current position
 
