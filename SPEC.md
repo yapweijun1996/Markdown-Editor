@@ -17,7 +17,7 @@ No backend, authentication, authorization, collaboration, cloud synchronization 
 | ID | Requirement | Current coverage | Follow-up |
 |---|---|---|---|
 | R01 | Author, upload and navigate Markdown with desktop/mobile controls | Implemented editor, sample, clear/new, file picker and mobile tabs; some actions unreachable on desktop | T02, T11 |
-| R02 | Safe, correct live preview of supported syntax | Partial: markdown-it, tables, links, math, diagrams and local-image resolution exist; unsafe custom HTML and rendering lifecycle gaps remain | T01, T06, T09 |
+| R02 | Safe, correct live preview of supported syntax | Partial: markdown-it, tables, links, math, diagrams and local-image resolution exist; identified image-placeholder and Mermaid-error text interpolation is escaped, but final browser/security and rendering-lifecycle acceptance remains incomplete | T01, T06, T09 |
 | R03 | Share text transparently without damaging local work | Partial: compressed hash/query decoding, copy, QR and opt-in TinyURL exist; local identity isolation, assets and limits incomplete | T04, T07, T14 |
 | R04 | Export supported Markdown structure as editable DOCX without silent content loss | Partial: basic conversion exists; nested/inline omissions and formatting gaps reproduced | T08 |
 | R05 | Display technical math and diagrams with useful failure handling | Partial: KaTeX HTML and Mermaid SVG preview; Mermaid PNG DOCX attempt; no Word math conversion | T09, T14 |
@@ -31,7 +31,7 @@ No backend, authentication, authorization, collaboration, cloud synchronization 
 | R13 | Apply consistent validated preferences with accurate reset semantics | Partial: local settings exist; independent theme hooks and separate keys do not form one state source | T12 |
 | R14 | Convert multiple selected Markdown files with stable progress and failure isolation | Partial: sequential file conversion and ZIP exist; duplicate filename identity/running queue gaps | T13, T14 |
 | R15 | Support accessible editing, reading, dialogs and presentation | Partial: labels/roles, CSS tokens, motion settings and laser controls exist; keyboard/modal/reduced-motion acceptance incomplete | T15 |
-| R16 | Protect untrusted-input boundaries, local data and update transitions | Partial: raw HTML disabled, Mermaid strict mode and scoped SW exist; XSS, limits, save/update and dependency risks remain | T01, T02, T14, T16 |
+| R16 | Protect untrusted-input boundaries, local data and update transitions | Partial: raw HTML disabled, Mermaid strict mode and scoped SW exist; the identified custom preview text paths now escape at construction, while browser-level boundary, limits, save/update and dependency risks remain | T01, T02, T14, T16 |
 | R17 | Provide reproducible dependencies, tests, release gates and truthful documentation | Partial: lockfile/build/deploy workflow, a Node built-in contract suite and CI test/build gate exist; browser/component/Office coverage, lint/type checks and license remain unresolved | T16, T17, T19, T20, T21 |
 | R18 | Keep large-document and offline use responsive within measured budgets | Unverified: chunking/PWA cache exist; no representative browser measurements or enforced budget | T18 |
 
@@ -112,7 +112,7 @@ The configured save delays are **inactivity delays**, not periodic maximum-loss 
 
 ## 7. Security/privacy requirements
 
-Treat Markdown, shared URLs, file content, alt text, formulas and diagrams as untrusted. The existing custom-image fallback violates this boundary (T01). Disablement of raw Markdown HTML alone is insufficient.
+Treat Markdown, shared URLs, file content, alt text, formulas and diagrams as untrusted. The baseline custom-image fallback violated this boundary; its loading-placeholder and Mermaid-error text interpolation now escapes at construction, but browser-level hostile-input fixtures and the remaining math/SVG boundary still require acceptance (T01/T09). Disablement of raw Markdown HTML alone is insufficient.
 
 Plain fragment sharing does not send the fragment as part of the page HTTP request, but it is readable by anyone with the link and by page JavaScript. Compression is not encryption. TinyURL receives the **entire encoded share URL** through its query API, including recoverable content. Remote preview images and clicked links also leave the local-only boundary. Browser site-data clearing/eviction can remove all stored work.
 

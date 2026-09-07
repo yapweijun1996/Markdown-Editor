@@ -1,4 +1,5 @@
 // Lazy-loaded Mermaid diagram renderer.
+import { escapeHtml } from './htmlEscape.js'
 
 let mermaidLib = null
 let pending = null
@@ -47,7 +48,7 @@ export async function hydrateMermaidBlocks(rootEl) {
     const { svg, error } = await renderMermaidToSvg(source)
     if (error) {
       wrapper.innerHTML =
-        `<div class="mermaid-error">Mermaid error: ${error.replace(/</g, '&lt;')}</div>`
+        `<div class="mermaid-error">Mermaid error: ${escapeHtml(error)}</div>`
     } else {
       wrapper.innerHTML = svg
     }

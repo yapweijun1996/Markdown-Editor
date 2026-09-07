@@ -4,7 +4,7 @@ A client-side Markdown editor with HTML preview, Word `.docx` export, browser-pr
 
 [Live site](https://yapweijun1996.github.io/Markdown-Editor/) · [Documentation index](docs/README.md) · [Requirements](SPEC.md) · [Tasks](TASK.md) · [Testing](TESTING.md)
 
-> **Current reliability warning:** the source review identified an HTML-injection path in image preview, unsafe save/share/version transitions and incomplete Word conversion. Avoid untrusted Markdown/share links and keep independent copies of important work. A successful build is not evidence that these issues are fixed. See [review evidence](docs/REVIEW.md) and [open tasks](TASK.md).
+> **Current reliability warning:** the baseline review reproduced an HTML-injection path in custom preview output, unsafe save/share/version transitions and incomplete Word conversion. The current code escapes image-loading and Mermaid-error text interpolation and has a focused regression test, but browser-level hostile-input acceptance and the other reliability risks remain open. Avoid untrusted Markdown/share links and keep independent copies of important work. See [review evidence](docs/REVIEW.md) and [open tasks](TASK.md).
 
 Documentation baseline: source commit `445cc05`, reviewed 2026-09-07 (UTC). Package version is `0.1.0`; historical V1/V2/V3 names refer to feature groups, not current release guarantees. Live deployment was not verified during this review.
 

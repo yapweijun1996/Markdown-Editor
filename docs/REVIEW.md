@@ -123,6 +123,7 @@ The following were traced in source but not executed as complete browser workflo
 
 | Task | Finding | Primary evidence |
 |---|---|---|
+| T01 | Baseline custom preview interpolation could execute HTML; current image-placeholder and Mermaid-error text paths use `escapeHtml`, but browser hostile-input acceptance remains pending | `src/preview/MarkdownPreview.jsx`, `src/preview/mermaidRenderer.js`, `src/preview/htmlEscape.js`, `test/htmlEscape.test.js` |
 | T02 | Trailing saves can be postponed indefinitely; open/new/Read/update do not flush; empty text skipped; newer draft bypassed | `src/history/useHistory.js`, App startup/draft effects, UpdatePrompt |
 | T03 | Restore callback after opening another doc closes over previous document identity/content | `src/history/HistoryPanel.jsx`, `useHistory.js` |
 | T04 | Share Edit resumes autosave with old local ID; initial/hashchange/editable-share states differ | `src/App.jsx` |
@@ -151,8 +152,8 @@ Missing original-plan features (custom templates, Word math, gallery, directory 
 - Updated README/TESTING and added this docs index, decision log and dependency inventory.
 - Corrected schema v2, mdimg references, trailing save timing, snapshot pin/filter behavior, batch files-only scope, TinyURL cutoff direction, preview permissions, math/PDF/template scope and Read/presentation behavior.
 - Removed unverified coverage/Lighthouse/performance/deployment claims and an unsupported project-license badge; recorded the license decision as pending.
-- Added a six-test Node contract layer and made test/build verification run for pull requests and main pushes; richer application coverage remains T17.
-- Kept contributor instructions and application/package/CI files unchanged. No application defect was fixed by writing documentation.
+- Added a seven-test Node contract layer and made test/build verification run for pull requests and main pushes; richer application coverage remains T17.
+- The documentation-only baseline did not fix an application defect; subsequent implementation work is tracked separately below.
 
 Final local documentation validation passed:
 
@@ -165,8 +166,15 @@ Final local documentation validation passed:
 
 These are local consistency checks, not an installed CI documentation gate. The application hardening/test harness remains open.
 
+## 5a. Follow-up implementation evidence (T17/T01)
+
+- T17 added `npm test`, seven Node built-in contract tests and a pull-request/main-push test/build gate.
+- T01 now escapes image-loading alt text and Mermaid error text through `src/preview/htmlEscape.js`; the focused escaping regression test passes.
+- `npm test`, `npm run build` and `git diff --check` pass locally. The build still reports the existing large Mermaid chunk warning; this is tracked under T18.
+- Browser DOM/security fixtures, storage/persistence tests, Office validation, lint/type checks and dependency triage remain incomplete.
+
 ## 6. Remaining evidence gaps and next step
 
 No end-to-end browser reproduction, real storage-failure injection, actual PWA install/update, Office/print visual validation, accessibility certification, first-paint/profile or live deployment check was performed. These are pending acceptance under TESTING, not assumed passes.
 
-Recommended next implementation: minimum T17 harness and T16 dependency triage; fix T01/T02/T05 then T03/T04 using disposable fixtures. Preserve user data before exercising destructive paths, and record new commit-specific evidence before changing task status.
+Recommended next implementation: complete T01 browser/security acceptance and continue T16 dependency triage; then fix T02/T05 and T03/T04 using disposable fixtures. Preserve user data before exercising destructive paths, and record new commit-specific evidence before changing task status.

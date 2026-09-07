@@ -38,7 +38,7 @@ For every result record commit, environment, command/steps, expected/actual, art
 
 | Case | Steps with disposable data | Required outcome after fix | Task |
 |---|---|---|---|
-| Preview injection | Render an internal-image reference with HTML-like alt text before its asset loads | Text remains inert; no executable injected node/attribute | T01 |
+| Preview injection | Render an internal-image reference with HTML-like alt text before its asset loads | Unit escaping contract passes; browser DOM still must prove text remains inert with no executable injected node/attribute | T01 |
 | Continuous typing | Type longer than all configured debounce intervals without pausing | Content checkpoint occurs within the defined maximum wait | T02 |
 | Transition flush | Edit A; immediately open B, create New, upload, load Sample or enter Read | Explicit policy preserves A or obtains discard consent before replacement/pausing | T02 |
 | Empty content | Save A, select all/delete, wait, reload | Intentional empty state persists, not the old text | T02 |

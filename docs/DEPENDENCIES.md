@@ -57,7 +57,7 @@ npm run preview   # vite preview
 
 Use `npm ci` for lockfile-based installs. The review used `npm ci --ignore-scripts --no-audit --no-fund` followed by an explicit build and audit; this was a local inspection choice, not a change to CI's installation policy.
 
-Deployment uses Node 20 through setup-node and runs npm ci/build on main pushes. No engines field, Node-version file, lint/type-check/test scripts, browser test dependency or PR verification workflow exists. Review environment: Windows, Node 25.2.1, npm 11.6.2. Do not mistake this environment difference for a validated compatibility matrix; T16/T17 own a supported/pinned toolchain policy.
+Deployment uses Node 20 through setup-node. Pull requests and main pushes now run `npm ci`, `npm test` and `npm run build`; only main pushes upload/deploy the Pages artifact. No engines field, Node-version file, lint/type-check script or browser test dependency exists. Review environment: Windows, Node 25.2.1, npm 11.6.2. Do not mistake this environment difference for a validated compatibility matrix; T16/T17 own a supported/pinned toolchain policy.
 
 ## Security audit snapshot
 
@@ -73,7 +73,7 @@ The review-time `npm audit --json` reported:
 
 These counts include transitive and build-tool chains; npm may count parent packages because of vulnerable descendants. They are **not** 19 proven application exploit paths. Advisory data changes independently of the repository, so rerun the audit before upgrades or release decisions.
 
-Relevant runtime chains include markdown-it/linkify-it, Mermaid/DOMPurify and nanoid; build chains include Vite, Babel/PostCSS and PWA/Workbox/assets tooling. Applicability depends on used APIs, input paths and advisory conditions. T01's reproduced raw-HTML injection is application code and must be fixed independently of dependency updates.
+Relevant runtime chains include markdown-it/linkify-it, Mermaid/DOMPurify and nanoid; build chains include Vite, Babel/PostCSS and PWA/Workbox/assets tooling. Applicability depends on used APIs, input paths and advisory conditions. T01's reproduced raw-HTML injection was application code and required an independent fix; the current custom text paths are escaped, while browser-level acceptance remains open.
 
 Some suggested remediations span major versions (the review output even suggested a PWA downgrade for a transitive chain). Do not blindly run `npm audit fix --force`. T16 requires exposure triage, compatible upgrades, lockfile changes and regression/build/PWA evidence, or explicit risk acceptance.
 

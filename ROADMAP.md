@@ -21,7 +21,7 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 
 ## Milestone 1 — Protect content and local data
 
-- Fix custom-renderer HTML injection (T01).
+- Complete the custom-renderer HTML-injection fix and browser/security acceptance (T01).
 - Introduce durable, explicit document sessions and save-aware PWA transitions (T02).
 - Correct content comparison/mandatory backups (T05), then restore targeting (T03).
 - Isolate shared documents and handle initial/query/hash transitions consistently (T04).
@@ -29,7 +29,7 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 
 **Exit gate:** hostile Markdown cannot execute script through preview; editing/reading/sharing/restoring/new/open/update flows cannot silently overwrite the wrong document or discard pending edits in tested transitions. Storage failures must be visible and recoverable. Crash-loss bounds and browser limitations must be stated honestly.
 
-**Release blockers identified by this review:** T01–T05 and missing verification infrastructure. This is a recommended release policy; the existing Pages workflow does not yet enforce it.
+**Release blockers identified by this review:** incomplete acceptance for T01–T05 and the remaining verification gaps. This is a recommended release policy; the Pages workflow now runs the minimal Node test/build gate but does not yet enforce browser, storage or Office acceptance.
 
 ## Milestone 2 — Preserve document meaning and assets
 
@@ -89,4 +89,4 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 
 ## Recommended next action
 
-Start T17's minimum harness and T16 triage, then implement T01/T02/T05 and T03/T04. Use the cycle **observe code -> orient with a failing fixture -> decide the smallest coherent design -> act -> evaluate tests and user-visible behavior**. Every implementation change must update the linked requirements, task evidence and affected docs; do not mark an epic accepted because it compiles.
+Complete T01's browser/security acceptance, continue T16 dependency triage, then implement T02/T05 and T03/T04. Use the cycle **observe code -> orient with a failing fixture -> decide the smallest coherent design -> act -> evaluate tests and user-visible behavior**. Every implementation change must update the linked requirements, task evidence and affected docs; do not mark an epic accepted because it compiles.

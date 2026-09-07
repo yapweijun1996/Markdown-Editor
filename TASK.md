@@ -7,7 +7,7 @@ This is the canonical task-status record. [SPEC.md](SPEC.md) owns requirements; 
 ## Status and priority rules
 
 - **Open**: not implemented or an existing implementation needs correction.
-- **In progress**: implementation has actually started; none of the application tasks below is currently in this state.
+- **In progress**: implementation has actually started; acceptance evidence is not complete.
 - **Blocked**: work cannot proceed until a named prerequisite is resolved. A release gate is not automatically an implementation blocker.
 - **Done**: the stated deliverable exists and its completion evidence is recorded.
 - **Deferred**: outside the current hardening scope, not promised for a release.
@@ -19,7 +19,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 | ID | Priority | Task | Status | Dependencies | Requirements |
 |---|---|---|---|---|---|
-| T01 | P0 | Safe preview HTML boundary | Open | T17 | R02, R16 |
+| T01 | P0 | Safe preview HTML boundary | In progress | T17 | R02, R16 |
 | T02 | P0 | Durable document-session lifecycle and save feedback | Open | T17 | R06, R16 |
 | T03 | P0 | Target-safe, atomic version restoration | Open | T02, T05 | R07 |
 | T04 | P0 | Isolated shared-document sessions | Open | T02 | R03, R06 |
@@ -44,8 +44,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T01 — Safe preview HTML boundary
 
-- Evidence: `src/preview/MarkdownPreview.jsx` inserts raw `token.content` into the missing-image span; isolated rendering reproduced an executable HTML attribute. `html: false` does not protect custom renderer output.
-- Escape text at construction; define and test sanitization for the final Markdown/math/diagram output without breaking safe SVG, KaTeX or internal image URLs. Evaluate CSP as defense in depth, not as the sole fix.
+- Baseline evidence: `src/preview/MarkdownPreview.jsx` inserted raw `token.content` into the missing-image span; isolated rendering reproduced an executable HTML attribute. `html: false` does not protect custom renderer output.
+- Current evidence: missing-image alt text and Mermaid error text now pass through `src/preview/htmlEscape.js`; `test/htmlEscape.test.js` covers the escaping contract.
+- Remaining: define and test the final Markdown/math/diagram output boundary without breaking safe SVG, KaTeX or internal image URLs. Evaluate CSP as defense in depth, not as the sole fix.
 - Done when hostile image alt text, links and diagram/math fixtures cannot introduce executable markup, and ordinary rendering remains intact.
 
 ### T02 — Durable document-session lifecycle
@@ -177,6 +178,6 @@ Custom Word template upload, native Word math, image library UI, true directory 
 
 ## Immediate next steps
 
-1. Start T17's minimum harness and T16 triage; reproduce T01–T05 against disposable data.
-2. Fix T01 and implement T02/T05, then T03/T04. Require safety tests before changing real stored data.
+1. Complete T01's browser/security fixture and implementation acceptance, then implement T02/T05 against disposable data.
+2. Implement T03/T04 after T02/T05, with safety tests before changing real stored data.
 3. Complete fidelity, portability and UI work, then measure/refactor. Keep this ledger and linked acceptance evidence updated in the same change.

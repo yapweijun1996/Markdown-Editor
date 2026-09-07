@@ -3,6 +3,7 @@ import MarkdownIt from 'markdown-it'
 import { isInternalImageUri, getObjectUrl, ensureLoaded, imageIdFromUri } from '../images/imageCache.js'
 import { renderMathInHtml, markdownHasMath } from './mathRenderer.js'
 import { hydrateMermaidBlocks } from './mermaidRenderer.js'
+import { escapeHtml } from './htmlEscape.js'
 
 const md = new MarkdownIt({
   html: false,
@@ -47,7 +48,7 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
       token.attrSet('src', '')
       token.attrSet('data-pending', '1')
       const alt = token.content || ''
-      return `<span class="image-loading" aria-label="Loading image">${alt || 'Loading image…'}</span>`
+      return `<span class="image-loading" aria-label="Loading image">${escapeHtml(alt || 'Loading image…')}</span>`
     }
   }
   return self.renderToken(tokens, idx, options)
