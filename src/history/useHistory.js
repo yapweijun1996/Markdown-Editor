@@ -12,6 +12,7 @@ import {
 } from './documentRepo.js'
 import { maybeCreateSnapshot } from './snapshotRepo.js'
 import { getSaveDelay } from './savePolicy.js'
+import { importHistoryZip } from './exportHistory.js'
 
 const CURRENT_DOC_KEY = 'history.currentDocId'
 const SNAPSHOT_AUTOSAVE_MS = 30000
@@ -261,6 +262,13 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     return updated
   }, [flush, refresh])
 
+  const importBackup = useCallback(async (file, { flushPending = true } = {}) => {
+    if (flushPending) await flush()
+    const result = await importHistoryZip(file)
+    await refresh()
+    return result
+  }, [flush, refresh])
+
   const restoreSnapshot = useCallback(async (
     documentId,
     snapshotContent,
@@ -303,6 +311,7 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     togglePin,
     rename,
     updateLayout,
+    importBackup,
     restoreSnapshot,
     DEFAULT_LAYOUT,
   }

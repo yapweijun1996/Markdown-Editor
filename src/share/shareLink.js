@@ -4,6 +4,10 @@ const PARAM_CONTENT = 'content'
 const PARAM_MODE = 'mode'
 const MODE_PREVIEW = 'preview'
 
+export function hasLocalImageReferences(markdown) {
+  return /mdimg:\/\/[A-Za-z0-9_-]+/.test(markdown || '')
+}
+
 export function encodeShareUrl(markdown, previewOnly = false) {
   const compressed = LZString.compressToEncodedURIComponent(markdown || '')
   const params = new URLSearchParams()

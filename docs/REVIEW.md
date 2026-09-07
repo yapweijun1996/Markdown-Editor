@@ -21,10 +21,11 @@ No browser automation/subagent/MCP KB tool was available in this session. No ext
 | `git status --short` before documentation edits | Clean | No pre-existing tracked changes at review baseline |
 | `npm ci --ignore-scripts --no-audit --no-fund` | Completed; 635 packages installed | Local inspection install; does not change CI's npm ci behavior |
 | `npm ls --depth=0` | Resolved direct packages listed successfully | Versions captured in DEPENDENCIES.md |
-| `npm test` | Passed; 12 Node built-in contract tests | Pure contracts only; not browser, storage or Office validation |
+| `npm test` at the review baseline | Passed; 12 Node built-in contract tests | Historical pure-contract baseline; not browser, storage or Office validation |
 | `npm run build` | Passed; Vite 6.4.2 and PWA 1.2.0 generated dist | Build only, not user-flow validation |
 | `npm audit --json` | 19 affected-package vulnerability entries: 12 high, 6 moderate, 1 low, 0 critical | Includes transitive/build chains; exposure still requires triage |
 | Follow-up `npm.cmd run build` | Passed again; the same production chunks and PWA output were generated | Confirms source/build reproducibility in the current Windows workspace |
+| Follow-up `npm.cmd test` | Passed; 17 Node built-in contract tests | Adds save timing, image ownership, local-image share warning and backup manifest/reference contracts; still not browser, storage or Office validation |
 | Follow-up `npm.cmd audit --json` | Not completed; npm advisory endpoint request failed | Do not reinterpret the earlier audit snapshot as a fresh security result |
 | Isolated preview rule evaluation | Raw injected `<img ... onerror=...>` retained in generated placeholder HTML | Confirms unsafe string construction, not browser execution |
 | DOCX XML probe | Strike/nested-code/quoted-heading/inline-image preservation checks false | Concrete export fidelity omissions |
@@ -129,7 +130,7 @@ The following were traced in source but not executed as complete browser workflo
 | T04 | Baseline share Edit resumed autosave with the old local ID; current `sharedSession` pauses local persistence and forks on Edit/hash removal, but browser transition and pending-save acceptance remain | `src/App.jsx`, `src/history/useHistory.js` |
 | T05 | Baseline snapshot filter compared length difference and forced recovery used the same filter; current code records changed content, supports forced recovery and keeps insertion/eviction in one transaction, but persistence/failure tests remain | `src/history/snapshotRepo.js`, `useHistory.js`, `test/snapshot.test.js` |
 | T06 | Baseline preview memo excluded cache revision and orphan attachment was unused; current preview subscribes to cache load/error revisions and local hooks attach only orphan records without reparenting owned assets, but eviction/deletion/reference tests remain | `src/preview/MarkdownPreview.jsx`, `src/images/useImages.js`, `src/images/imageCache.js`, `src/images/imageRepo.js`, `test/imageOwnership.test.js` |
-| T07 | Archives/shares omit assets and metadata; no importer; snapshot title/timestamp collisions | `src/history/exportHistory.js`, `src/share/shareLink.js` |
+| T07 | Baseline archives/shares omitted assets and metadata, had no importer and allowed snapshot path collisions; current code has a versioned asset-bearing import/export path with ID remapping and text-only share warnings, but browser/IndexedDB round-trip and failure evidence remain | `src/history/exportHistory.js`, `src/share/shareLink.js`, `src/history/HistoryPanel.jsx`, `test/backupManifest.test.js` |
 | T08 | List/block/inline conversion lacks full recursion and supported-node diagnostics | `src/converter/` |
 | T09 | Regex math processes arbitrary HTML; async load/hydration error/readiness incomplete | Preview math/Mermaid modules |
 | T10 | App and docx both swap landscape dimensions; cover/body one section; PDF fixed timeout/CSS | `pageLayout.js`, `markdownToDocx.js`, `coverPage.js`, downloadPdf |
@@ -166,17 +167,19 @@ Final local documentation validation passed:
 
 These are local consistency checks, not an installed CI documentation gate. The application hardening/test harness remains open.
 
-## 5a. Follow-up implementation evidence (T17/T01–T06)
+## 5a. Follow-up implementation evidence (T17/T01–T07)
 
-- T17 added `npm test`, now covering twelve Node built-in contract tests, and a pull-request/main-push test/build gate.
+- T17 added `npm test`, now covering seventeen Node built-in contract tests, and a pull-request/main-push test/build gate.
 - T01 now escapes image-loading alt text and Mermaid error text through `src/preview/htmlEscape.js`; the focused escaping regression test passes.
 - T02–T05 now have bounded/serialized save and transition code, explicit shared-session fork behavior, target-ID restoration and content-aware/forced snapshot policy; browser and persistence acceptance remains pending.
 - `npm test`, `npm run build` and `git diff --check` pass locally. The build still reports the existing large Mermaid chunk warning; this is tracked under T18.
 - T06 now has reactive cache/error rendering, orphan-only attachment and pure ownership coverage; eviction and full asset lifecycle acceptance remain pending.
+- T07 now exports/imports a versioned `markdown-editor-backup` v1 manifest with document metadata/layout, snapshots and image assets. Imports validate archive paths/limits/references, remap IDs to avoid collisions and write all three stores transactionally; text-only share URLs warn about local images without uploading them. Pure manifest/reference tests pass, while disposable-profile browser/IndexedDB round-trip and failure evidence remain pending.
+- The follow-up production build passed with 2247 transformed modules and 69 PWA precache entries; the existing large Mermaid chunk warning remains tracked under T18.
 - Browser DOM/security fixtures, storage/persistence tests, Office validation, lint/type checks and dependency triage remain incomplete; T02/T05/T06 still need fake-IndexedDB failure/reference evidence and T02 needs multi-tab checks.
 
 ## 6. Remaining evidence gaps and next step
 
 No end-to-end browser reproduction, real storage-failure injection, actual PWA install/update, Office/print visual validation, accessibility certification, first-paint/profile or live deployment check was performed. These are pending acceptance under TESTING, not assumed passes.
 
-Recommended next implementation: complete T01 browser/security, T04 transition and T05 persistence acceptance, continue T16 dependency triage, then add T02 failure/multi-tab fixtures. Preserve user data before exercising destructive paths, and record new commit-specific evidence before changing task status.
+Recommended next implementation: run T07's disposable-profile backup round trip and failure cases, then complete T01 browser/security, T04 transition and T05 persistence acceptance, continue T16 dependency triage, and add T02 failure/multi-tab fixtures. Preserve user data before exercising destructive paths, and record commit-specific evidence before changing task status.

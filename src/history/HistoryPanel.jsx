@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { formatRelativeTime } from '../preferences/draftStorage.js'
 import VersionsView from './VersionsView.jsx'
 import { exportAllAsZip } from './exportHistory.js'
@@ -72,6 +72,7 @@ export default function HistoryPanel({
   onDelete,
   onPin,
   onRename,
+  onImport,
   onRestoreSnapshot,
   onClose,
 }) {
@@ -80,7 +81,9 @@ export default function HistoryPanel({
   const [renameValue, setRenameValue] = useState('')
   const [versionsDoc, setVersionsDoc] = useState(null)
   const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [storage, setStorage] = useState(null)
+  const importInputRef = useRef(null)
 
   useEffect(() => {
     if (navigator.storage?.estimate) {
@@ -124,6 +127,21 @@ export default function HistoryPanel({
       alert(err.message || 'Export failed')
     } finally {
       setExporting(false)
+    }
+  }
+
+  async function handleImportChange(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !onImport) return
+    setImporting(true)
+    try {
+      const result = await onImport(file)
+      alert(`Imported ${result.docCount} document${result.docCount === 1 ? '' : 's'}.`)
+    } catch (err) {
+      alert(err.message || 'Import failed')
+    } finally {
+      setImporting(false)
     }
   }
 
@@ -264,7 +282,7 @@ export default function HistoryPanel({
           </div>
         )}
 
-        {supported && docs.length > 0 && (
+        {supported && (
           <div className="history-footer">
             {storage && (
               <span className="history-storage-info">
@@ -274,13 +292,31 @@ export default function HistoryPanel({
                 )}
               </span>
             )}
-            <button
-              className="history-export-btn"
-              onClick={handleExport}
-              disabled={exporting}
-            >
-              <ZipIcon /> {exporting ? 'Exporting…' : 'Export All as ZIP'}
-            </button>
+            <div className="history-footer-actions">
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".zip,application/zip"
+                className="history-import-input"
+                onChange={handleImportChange}
+              />
+              <button
+                className="history-export-btn"
+                onClick={() => importInputRef.current?.click()}
+                disabled={importing}
+              >
+                <ZipIcon /> {importing ? 'Importing…' : 'Import Backup'}
+              </button>
+              {docs.length > 0 && (
+                <button
+                  className="history-export-btn"
+                  onClick={handleExport}
+                  disabled={exporting}
+                >
+                  <ZipIcon /> {exporting ? 'Exporting…' : 'Export All as ZIP'}
+                </button>
+              )}
+            </div>
           </div>
         )}
 

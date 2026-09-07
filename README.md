@@ -18,7 +18,7 @@ Documentation baseline: source commit `445cc05`, reviewed 2026-09-07 (UTC). Pack
 - PDF through the browser print dialog, using the HTML preview and separate print CSS, not Word layout settings.
 - Sequential conversion of multiple selected/dropped `.md` **files** into a DOCX ZIP. Folder traversal is not implemented.
 - Compressed-text share links, QR canvas/PNG download and opt-in TinyURL shortening.
-- Draft/history/snapshot storage, search, document pin/rename/delete and text-only history ZIP export.
+- Draft/history/snapshot storage, search, document pin/rename/delete and versioned history backup export/import with document metadata, layouts, snapshots and local image assets.
 - Responsive mobile tabs/sheets, light/dark/system themes, editor and presentation preferences.
 - Read mode with zoom/width-lock/scroll toolbar controls; desktop presentation laser with configurable color/size/trail/fullscreen.
 - Generated PWA manifest/service worker and update prompt. Offline use depends on successful cache installation and browser storage retention.
@@ -27,7 +27,7 @@ Documentation baseline: source commit `445cc05`, reviewed 2026-09-07 (UTC). Pack
 
 - **Save has explicit bounds but is not crash-proof:** document saves use an 8-second inactivity delay with a 30-second maximum wait; open/new/upload/sample/clear/Read and PWA reload attempt a flush, with visible errors. Browser crashes, eviction and untested multi-tab conflicts can still lose work.
 - **Share/save identity is partially hardened:** a shared session now pauses local persistence and Edit creates a new local document before autosave resumes. Pending saves still do not flush across transitions, and browser/failure acceptance remains pending (T02–T04).
-- **No complete backup:** history ZIP and share URLs contain text, not local `mdimg://` image bytes or document layout. There is no archive import. Clearing/evicting browser site data may delete all stored work.
+- **Backup acceptance is still pending:** versioned history backup export/import now carries document metadata, layouts, snapshots and local image assets with bounded validation and ID remapping, but browser/IndexedDB round-trip evidence is not recorded yet. Share URLs remain text-only and warn when local `mdimg://` images are present. Clearing/evicting browser site data may delete all stored work.
 - **Desktop action gap:** Layout, Batch Convert and Insert Image picker are wired only into the mobile More menu. Image paste/drop still has editor handlers. These features need desktop entry points (T11).
 - **Preview is not authorization:** recipients can edit/export shared content. Compression is not encryption, URLs/QR have practical capacity limits, and TinyURL receives the entire content-bearing URL.
 - **No claim of comprehensive validation:** a small `node:test` suite and CI test/build gate now exist, but there is no browser/component/IndexedDB E2E suite, measured Lighthouse report or recorded full browser/Office acceptance. The sample's illustrative coverage percentages are not real test coverage.
@@ -98,7 +98,7 @@ Workbox precaches generated assets, including lazy-loaded libraries. Lazy execut
 ## Development direction
 
 1. **Safety first:** automated regression harness, safe preview, durable saves and correct share/restore identity.
-2. **Then correctness:** complete asset backups, recursive DOCX fidelity, math/layout/print fixes and action parity.
+2. **Then correctness:** verify asset-backup round trips, complete recursive DOCX fidelity, math/layout/print fixes and action parity.
 3. **Then optimization/extensions:** measured performance, configuration consolidation and separately scoped future features.
 
 See [ROADMAP.md](ROADMAP.md) for gates and [TASK.md](TASK.md) for dependencies, acceptance criteria and current status. Documentation maintenance is complete; application remediation remains open.

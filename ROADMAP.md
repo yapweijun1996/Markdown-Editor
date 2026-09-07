@@ -2,11 +2,11 @@
 
 Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
 
-This is an ordered plan, not a release calendar. Package version remains `0.1.0`; V1/V2/V3 are historical feature-group labels, not verified semantic release tags. [TASK.md](TASK.md) is the task-status source of truth; all application fixes below remain Open.
+This is an ordered plan, not a release calendar. Package version remains `0.1.0`; V1/V2/V3 are historical feature-group labels, not verified semantic release tags. [TASK.md](TASK.md) is the task-status source of truth; application fixes below are in progress or open until their acceptance evidence is recorded.
 
 ## Current position
 
-Core editor/DOCX, PWA/history/preferences, rich-output components and Read/presentation code exist. The latest source commits add zoom/width-lock/scroll toolbar behavior, configurable laser presentation and saturated laser styling. Build and a small Node contract suite succeed, but security, data lifecycle and output correctness defects remain. No full browser/Office acceptance results exist.
+Core editor/DOCX, PWA/history/preferences, rich-output components and Read/presentation code exist. Follow-up source commits now cover preview interpolation escaping, bounded/serialized saves, shared-session isolation, target-safe restore, content-aware snapshots, reactive image ownership and a versioned asset-bearing backup path. Build and a Node contract suite succeed, but security, data lifecycle, backup round-trip and output correctness acceptance remains incomplete. No full browser/Office acceptance results exist.
 
 See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich-output scope corrections, and [docs/REVIEW.md](docs/REVIEW.md) for evidence.
 
@@ -34,14 +34,14 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 ## Milestone 2 — Preserve document meaning and assets
 
 - Complete image reactivity, ownership, references and lifecycle acceptance (T06).
-- Specify and implement complete backup/import with collision-safe assets/metadata (T07).
+- Verify the versioned backup/import implementation with collision-safe assets/metadata and failure cases (T07).
 - Correct recursive DOCX conversion, unsupported-feature reporting and formatting/list semantics (T08).
 - Make math/diagram processing structure-aware and lifecycle-safe (T09).
 - Fix landscape XML, validate cover/TOC behavior, image sizing and print readiness (T10).
 
 **Exit gate:** supported syntax survives export; unsupported syntax is visible rather than silently dropped; complete backups round-trip into an empty browser profile; portrait/landscape and representative TOC/cover files pass Word and LibreOffice checks; PDF does not race unfinished renderers.
 
-**Dependencies:** T07 follows T06; T10 requires protected conversion/preview behavior from T08/T09. Asset import format and reference ownership need explicit decisions before implementation.
+**Dependencies:** T07 follows T06; T10 requires protected conversion/preview behavior from T08/T09. The T07 asset-import format is selected and implemented; reference retention and browser/IndexedDB acceptance remain coupled to T06/T07.
 
 ## Milestone 3 — Reliable interaction across devices
 
@@ -89,4 +89,4 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 
 ## Recommended next action
 
-Complete T01 browser/security, T04 transition and T05 persistence acceptance, continue T16 dependency triage, then add T02's IndexedDB failure/multi-tab fixtures. Use the cycle **observe code -> orient with a failing fixture -> decide the smallest coherent design -> act -> evaluate tests and user-visible behavior**. Every implementation change must update the linked requirements, task evidence and affected docs; do not mark an epic accepted because it compiles.
+Complete T07's disposable-profile backup round trip alongside T01 browser/security, T04 transition and T05 persistence acceptance; continue T16 dependency triage, then add T02's IndexedDB failure/multi-tab fixtures. Use the cycle **observe code -> orient with a failing fixture -> decide the smallest coherent design -> act -> evaluate tests and user-visible behavior**. Every implementation change must update the linked requirements, task evidence and affected docs; do not mark an epic accepted because it compiles.

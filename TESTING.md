@@ -7,7 +7,7 @@ Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
 ## 1. Current verification infrastructure
 
 - `npm run build` exists and passed in this review.
-- A small committed `node:test` suite covers pure DB helpers, Markdown AST parsing, share URL round trips, preview escaping and snapshot policy. It is not a browser, component, IndexedDB or Office suite.
+- A small committed `node:test` suite covers pure DB helpers, Markdown AST parsing, share URL round trips and local-image warnings, preview escaping, save timing, snapshot policy, image ownership and backup manifest/reference validation. It is not a browser, component, IndexedDB or Office suite.
 - GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes; lint/type-check and richer fixtures remain T17 work. The UI sample's percentage coverage table is illustrative content, not measured coverage.
 - No live-site, browser installation/offline update, Lighthouse, real-device, screen-reader or Word/LibreOffice/Google Docs acceptance was performed during the review.
 
@@ -57,7 +57,7 @@ Known baseline defects are described in TASK and REVIEW. These cases have not be
 
 ## 4. Automated suite expansion (T17; partially installed)
 
-- **Current:** Node built-in `node:test` runs pure DB helper, Markdown AST, share URL, preview escaping and snapshot-policy tests through `npm test`.
+- **Current:** Node built-in `node:test` runs 17 pure-contract tests through `npm test`, including DB helpers, Markdown AST, share URL/local-image warnings, preview escaping, save timing, snapshot policy, image ownership and backup manifest/reference validation.
 - **Unit/component:** candidate Vitest + React Testing Library; preference/schema/URL limits and renderer fixtures.
 - **Persistence:** candidate fake-indexeddb with explicit IDs, delayed/failing transactions, concurrent operations, snapshot retention and image references.
 - **DOCX integration:** generate Blob, unzip with JSZip, assert XML text/styles/relationships/page dimensions/media content and unsupported-node warnings. Check semantics, not unstable byte-for-byte ZIP equality.
@@ -98,8 +98,8 @@ Each fix must carry a focused regression fixture. Complete browser/Office checks
 - [ ] Confirm standalone/inline asset embedding, reader compatibility and page-aware dimensions; compare aspect ratio.
 - [ ] Delete a document while another document/snapshot references its image; enforce defined ownership/retention policy.
 - [ ] Bound cache growth and revoke only unused object URLs on removal/switches; replacement revocation exists, eviction/removal is still pending.
-- [ ] For current history ZIP, inspect text entries only; do not claim asset/layout recovery or import.
-- [ ] After T07, export/import into a fresh profile and compare document IDs/remapping, content, images, settings and snapshots; test duplicate titles/timestamps, corrupt entries, missing assets and oversized archives.
+- [ ] Inspect a current history ZIP and verify `manifest.json`, `INDEX.md`, document/snapshot paths and image assets match the manifest; pure path/reference validation is covered by `test/backupManifest.test.js`.
+- [ ] Export/import into a fresh profile and compare document IDs/remapping, content, images, layouts, metadata and snapshots; test duplicate titles/timestamps, corrupt entries, missing assets, mismatched asset sizes, too many entries and oversized archives.
 
 ## 8. Math and Mermaid
 

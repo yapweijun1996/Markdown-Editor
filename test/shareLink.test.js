@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { decodeShareUrl, encodeShareUrl } from '../src/share/shareLink.js'
+import { decodeShareUrl, encodeShareUrl, hasLocalImageReferences } from '../src/share/shareLink.js'
 
 function setLocation({ hash = '', search = '' } = {}) {
   globalThis.window = {
@@ -26,4 +26,9 @@ test('share links round-trip Unicode Markdown and preview mode', () => {
 test('share decoder accepts the legacy query form', () => {
   setLocation({ search: '?content=invalid' })
   assert.equal(decodeShareUrl(), null)
+})
+
+test('share links identify local image references without uploading them', () => {
+  assert.equal(hasLocalImageReferences('![local](mdimg://image-1)'), true)
+  assert.equal(hasLocalImageReferences('![remote](https://example.test/image.png)'), false)
 })

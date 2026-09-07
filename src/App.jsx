@@ -960,6 +960,7 @@ export default function App() {
           onDelete={history.deleteDoc}
           onPin={history.togglePin}
           onRename={history.rename}
+          onImport={(file) => history.importBackup(file, { flushPending: !sharedSession })}
           onRestoreSnapshot={(id, content) => (
             history.restoreSnapshot(id, content, { flushPending: !sharedSession })
           )}

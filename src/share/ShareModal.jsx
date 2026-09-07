@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
-import { encodeShareUrl, copyToClipboard } from './shareLink.js'
+import { encodeShareUrl, copyToClipboard, hasLocalImageReferences } from './shareLink.js'
 import QRCodeView from './QRCodeView.jsx'
 import { shortenUrl } from './shortenerService.js'
 
@@ -44,6 +44,7 @@ export default function ShareModal({ markdown, onClose }) {
   const displayUrl = shortUrl || longUrl
   const tooLong = longUrl.length > 50000
   const tooLongForShortener = longUrl.length > 6000
+  const hasLocalImages = hasLocalImageReferences(markdown)
 
   async function handleCopy() {
     const ok = await copyToClipboard(displayUrl)
@@ -105,6 +106,12 @@ export default function ShareModal({ markdown, onClose }) {
             <div className="modal-warn">
               ⚠ URL is very long ({longUrl.length} chars). Some messaging apps may
               truncate it when pasted. Consider shortening your Markdown.
+            </div>
+          )}
+
+          {hasLocalImages && (
+            <div className="modal-warn">
+              ⚠ This text-only link does not include local images. Use History → Import Backup for a portable copy with assets.
             </div>
           )}
 

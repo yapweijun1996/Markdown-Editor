@@ -1724,6 +1724,15 @@ body {
   color: var(--text-tertiary);
 }
 
+.history-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+
+.history-import-input { display: none; }
+
 .history-export-btn {
   display: inline-flex;
   align-items: center;

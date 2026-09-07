@@ -51,7 +51,7 @@ These modules are separated by responsibility but **not independent failure doma
 | `src/styles/theme.css` | Light/dark design tokens, safe areas and reduced-duration CSS motion |
 | `src/styles/app.css` | Layout/components/responsiveness/preview/presentation; contains values beyond theme tokens |
 | `src/styles/print.css` | Separate static print layout; not driven by document layout |
-| `src/history/` | DB opening, document/snapshot repositories, hook, history UI, text ZIP |
+| `src/history/` | DB opening, document/snapshot repositories, hook, history UI, versioned backup export/import |
 | `src/images/` | Blob repository, downscale, URI helpers, process-wide object URL cache and insertion helpers |
 | `src/preferences/` | Version-1 defaults, storage merge, hook, Settings sheet, draft storage/prompt |
 | `src/theme/` | Each hook instance owns mode state and writes document theme/localStorage |
@@ -72,7 +72,7 @@ Startup checks a shared hash (or legacy query), establishes a shared session and
 
 Document saves use an 8-second inactivity debounce with a 30-second maximum wait; snapshots use a 30-second trailing debounce. Read mode and the shared-link flag pause automatic writes after transition barriers. The draft timer has its own delay/enablement. Open/new/upload/sample/clear, Read and PWA reload call an explicit flush; save state is surfaced as pending/saving/error. Multi-tab conflict policy and browser crash guarantees remain open. Empty edits update an existing document intentionally.
 
-Shared content does not clear the remembered local document identity, but the explicit shared session prevents it from receiving shared edits. Editing a share now forks a local document; first-load, later hash changes and hash removal use the same session policy. Version restore passes an explicit target identity and persists a forced recovery snapshot before replacement, while transition/save coordination remains open.
+Shared content detaches the remembered local document identity and pauses local persistence, preventing shared edits from entering it. Editing a share now forks a local document; first-load, later hash changes and hash removal use the same session policy. Version restore passes an explicit target identity and persists a forced recovery snapshot before replacement, while transition/save coordination remains open.
 
 **Current direction (T02–T05):** `useHistory` is the current document-session boundary with explicit local/shared identity at App level, dirty/saving/saved/error state, serialized writes, transition flushes and target-ID restoration. IndexedDB failure injection, conflict policy and full transactional recovery remain to be verified.
 
@@ -144,9 +144,9 @@ Insertion stores a Blob, optionally downscales it, caches a temporary object URL
 
 `imageCache.js` has cache/pending/failed maps and subscribers. Preview subscribes to revisions, and loading failures settle to an inert error placeholder. It revokes a URL when replacing the same entry, but has no bounded eviction or deletion invalidation. Orphan attachment runs when a local document ID becomes available and refuses to transfer an image already owned by another document.
 
-History export writes `INDEX.md`, deduplicated `documents/*.md`, and optional `snapshots/<sanitized-title>/<second-resolution-time>.md`. It does not include image bytes, document metadata/layout or an import manifest. Duplicate titles/timestamps can collide in snapshot paths and the index can disagree with deduplicated filenames.
+History export writes a versioned `markdown-editor-backup` v1 archive with `manifest.json`, `INDEX.md`, collision-safe document/snapshot paths and image asset bytes. The manifest preserves document IDs, title/timestamps, pin/template/layout metadata, snapshot identity/timestamps and asset ownership metadata. Import validates relative paths, duplicate identities, missing files, UTF-8/content references, archive entry/count limits and image sizes, remaps IDs to avoid collisions and commits documents/snapshots/images in one IndexedDB transaction. Browser/IndexedDB round-trip and failure evidence remains pending.
 
-Share URLs similarly carry text only. A portable versioned bundle is proposed under T07; storage schema and share serialization should not be confused with such a bundle.
+Share URLs similarly carry text only and warn when local `mdimg://` references are present; they do not upload assets. The backup manifest is intentionally separate from share serialization and the storage schema.
 
 ## 9. UX, preferences and presentation
 

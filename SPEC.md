@@ -18,13 +18,13 @@ No backend, authentication, authorization, collaboration, cloud synchronization 
 |---|---|---|---|
 | R01 | Author, upload and navigate Markdown with desktop/mobile controls | Implemented editor, sample, clear/new, file picker and mobile tabs; some actions unreachable on desktop | T02, T11 |
 | R02 | Safe, correct live preview of supported syntax | Partial: markdown-it, tables, links, math, diagrams and local-image resolution exist; identified image-placeholder and Mermaid-error text interpolation is escaped, but final browser/security and rendering-lifecycle acceptance remains incomplete | T01, T06, T09 |
-| R03 | Share text transparently without damaging local work | Partial: compressed hash/query decoding, copy, QR and opt-in TinyURL exist; shared sessions now fork on Edit, but pending-transition, assets and limits remain incomplete | T04, T07, T14 |
+| R03 | Share text transparently without damaging local work | Partial: compressed hash/query decoding, copy, QR and opt-in TinyURL exist; shared sessions now fork on Edit and text-only links warn when local images are not portable, but pending-transition, assets and limits remain incomplete | T04, T07, T14 |
 | R04 | Export supported Markdown structure as editable DOCX without silent content loss | Partial: basic conversion exists; nested/inline omissions and formatting gaps reproduced | T08 |
 | R05 | Display technical math and diagrams with useful failure handling | Partial: KaTeX HTML and Mermaid SVG preview; Mermaid PNG DOCX attempt; no Word math conversion | T09, T14 |
 | R06 | Save/recover documents and metadata reliably, with visible failure states | Partial: bounded/serialized document saves, explicit transition flushes, empty-edit persistence, save feedback and newer-draft recovery now exist; IndexedDB failure, crash and multi-tab policy remain incomplete | T02, T04, T12 |
 | R07 | Restore the correct version with a guaranteed pre-restore recovery point | Partial: changed-content snapshots and forced recovery backup logic now exist; browser/persistence failure and target-transaction acceptance remain incomplete | T03, T05 |
-| R08 | Persist, display, embed and safely manage images | Partial: Blob storage/insertion/export exist; reactivity, ownership, format normalization and cleanup incomplete | T06, T14 |
-| R09 | Export/import portable history including assets and settings | Partial: text ZIP export only; no import | T07 |
+| R08 | Persist, display, embed and safely manage images | Partial: Blob storage/insertion, reactive preview, orphan-only ownership attachment and backup asset export/import code exist; cache retention, reference cleanup, format normalization and browser acceptance remain incomplete | T06, T07, T14 |
+| R09 | Export/import portable history including assets and settings | Partial: versioned `markdown-editor-backup` v1 export/import code carries document metadata/layout, snapshots and image assets with ID remapping and bounded validation; disposable-profile IndexedDB/browser round-trip acceptance remains incomplete | T07 |
 | R10 | Apply per-document templates, page layout, cover and TOC correctly | Partial: four templates/layout UI/converters exist; landscape XML is wrong and cover does not suppress header/footer; reader validation pending | T08, T10, T11 |
 | R11 | Print complete preview content to PDF | Partial: print CSS and dialog exist; no readiness barrier or Word-layout synchronization | T10 |
 | R12 | Make feature actions available across supported viewport sizes | Partial: responsive split/tabs/read modes exist; desktop secondary actions missing | T11, T15 |
@@ -107,7 +107,7 @@ The configured save delays are **inactivity delays**, not periodic maximum-loss 
 - Editor font/line/wrap preferences drive the textarea, not Word styles or general preview typography. Read zoom controls preview text independently.
 - Reset All Settings currently resets only the `prefs.v1` object. It does not reset theme/share/read/history keys or delete history/images.
 - IndexedDB version 2 holds documents, snapshots and images. Document layout defaults are merged on read for older records.
-- Only documents have a pin field (numeric 0/1). No snapshot pinning, automatic document eviction, complete backup import, cloud copy or Clear History settings action exists.
+- Only documents have a pin field (numeric 0/1). No snapshot pinning, automatic document eviction, backup merge/conflict policy, cloud copy or Clear History settings action exists. Versioned backup import is implemented, but its browser/IndexedDB acceptance is pending.
 - Startup priority is shared URL, then saved current document; a newer different draft is offered after load. A missing remembered ID is cleared and draft fallback is attempted.
 
 ## 7. Security/privacy requirements
@@ -122,4 +122,4 @@ There is no CSP meta tag in `index.html`. No deployment response-header audit wa
 
 The current code can build successfully while failing R02/R04/R06/R07/R10 safety/correctness checks. Release acceptance must follow [TESTING.md](TESTING.md) and [ROADMAP.md](ROADMAP.md), not historical checkmarks.
 
-Deferred rather than implemented: custom `.docx` template extraction, native Word math, PDF parity with Word templates/layout, full directory traversal, asset-aware share packaging, custom page dimensions, image management UI, native Web Share integration, swipe/haptic interactions, accent customization, preference import/export, cloud/auth/collaboration, encryption and localization. T07 owns portable backup work; other extensions need separate scope decisions before implementation.
+Deferred rather than implemented: custom `.docx` template extraction, native Word math, PDF parity with Word templates/layout, full directory traversal, asset-aware share packaging, custom page dimensions, image management UI, native Web Share integration, swipe/haptic interactions, accent customization, preference import/export, cloud/auth/collaboration, encryption and localization. T07 now owns the local portable backup implementation; browser acceptance and future share-asset packaging need separate evidence/scope.

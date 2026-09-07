@@ -14,7 +14,7 @@ Parent inventory: [EPIC.md](EPIC.md). Exact behavior/defaults: [SPEC.md](SPEC.md
 - Insertion uses textarea cursor/selection and optional raster downscale at a 2,400 px longest dimension; SVG/GIF bypass resizing.
 - DOCX conversion handles standalone local/data images with a fixed width ceiling; remote/relative URLs become fallback text rather than downloaded bytes.
 
-**Gaps:** loading-placeholder alt text is escaped and cache completion now invalidates preview HTML; missing assets settle to an inert error placeholder and orphan attachment preserves existing ownership. Browser/IndexedDB acceptance, bounded cache cleanup, inline image export, reference analysis and WebP/SVG end-to-end support remain incomplete. Desktop file-picker action is inaccessible through the current toolbar.
+**Gaps:** loading-placeholder alt text is escaped and cache completion now invalidates preview HTML; missing assets settle to an inert error placeholder and orphan attachment preserves existing ownership. Versioned backup export/import now carries image bytes and ownership metadata, while browser/IndexedDB acceptance, bounded cache cleanup, reference analysis and WebP/SVG end-to-end support remain incomplete. Desktop file-picker action is inaccessible through the current toolbar.
 
 **Not implemented:** ImageGallery/ImageDropZone components, image library/replace/delete UI, orphan cleanup tool, size-warning threshold, remote image fetching/embedding or Safari Blob fallback.
 
@@ -86,7 +86,7 @@ Template choice is stored per document, not globally. Fonts are named in DOCX, n
 - QR uses the `qrcode` library on a canvas and can download PNG. QR capacity is finite; not every share URL can encode.
 - TinyURL is user-triggered and sends the full content-bearing URL to `https://tinyurl.com/api-create.php`. Requests longer than 6,000 characters are **rejected**, not enabled for shortening.
 
-**Tasks:** T04/T11/T13/T14. Sharing local image bytes is not implemented; T07 owns portable bundles.
+**Tasks:** T04/T07/T11/T13/T14. Sharing local image bytes remains intentionally unimplemented; T07 now owns the local portable backup bundle and its pending browser acceptance.
 
 ## V3.6 and original stretch scope
 
@@ -97,7 +97,7 @@ Actual dependencies are listed in [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). 
 ## Acceptance still required
 
 - Security fixtures for image/math/diagram boundaries and malformed/oversized input.
-- Asset insertion -> persistence -> reload -> DOCX and full-backup round trips.
+- Asset insertion -> persistence -> reload -> DOCX and full-backup round trips; the backup code exists, but the disposable-profile browser acceptance is still pending.
 - Supported recursive syntax preserved in XML and actual Word/LibreOffice rendering.
 - All four templates, landscape sizes, cover/header/footer, TOC field behavior and PDF readiness.
 - Desktop/mobile feature access, file queue edge cases, QR capacity and explicit shortener data egress.

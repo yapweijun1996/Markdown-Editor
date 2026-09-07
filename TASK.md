@@ -25,7 +25,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 | T04 | P0 | Isolated shared-document sessions | In progress | T02 | R03, R06 |
 | T05 | P0 | Content-aware snapshots and mandatory recovery snapshots | In progress | T17 | R07 |
 | T06 | P1 | Reactive images, ownership and cache lifecycle | In progress | T02, T17 | R08 |
-| T07 | P1 | Portable, importable document/history backups | Open | T06 | R03, R09 |
+| T07 | P1 | Portable, importable document/history backups | In progress | T06 | R03, R09 |
 | T08 | P1 | Recursive, loss-aware DOCX conversion | Open | T17 | R04 |
 | T09 | P1 | Token-aware math and asynchronous preview lifecycle | Open | T01, T17 | R02, R05 |
 | T10 | P1 | Correct page layout, cover, TOC and print readiness | Open | T08, T09 | R10, R11 |
@@ -86,8 +86,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T07 — Portable backups
 
-- Evidence: history ZIP contains Markdown only; share compression includes only text. `mdimg://` IDs cannot resolve on another browser. Snapshot directories use sanitized titles and second-resolution timestamps, allowing collisions; `INDEX.md` does not use deduplicated document filenames.
-- Specify a versioned manifest, document IDs, metadata, snapshots and assets; implement validated import and collision-safe names. Decide how text-only URLs warn about unavailable assets; do not silently upload images to a service.
+- Baseline evidence: history ZIP contained Markdown only; share compression included only text. `mdimg://` IDs could not resolve on another browser. Snapshot directories used sanitized titles and second-resolution timestamps, allowing collisions; `INDEX.md` did not use deduplicated document filenames.
+- Current evidence: `src/history/exportHistory.js` now writes and validates `markdown-editor-backup` v1 manifests containing document metadata/layout, snapshots and image assets. Import remaps document/image/snapshot IDs, rejects unsafe paths, missing references, corrupt UTF-8, size/count overages and asset size mismatches, then commits all records in one IndexedDB transaction. History exposes Import Backup even for an empty profile. Text-only share URLs now warn when local `mdimg://` references are present without uploading them. Pure manifest/reference tests pass.
+- Remaining: run real browser/IndexedDB round trips in a disposable profile, verify duplicate-title/timestamp and failure behavior, and confirm the user-visible archive contains every manifest path. Cache/reference retention remains T06 work.
 - Done when export/import into an empty profile restores content, images and layout, duplicate titles/timestamps cannot overwrite entries, and missing/corrupt/oversized inputs produce clear errors.
 
 ### T08 — DOCX fidelity

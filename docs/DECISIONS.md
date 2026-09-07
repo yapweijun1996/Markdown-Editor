@@ -36,9 +36,9 @@ These records document choices visible in the source; they do not invent histori
 
 **Status: Implemented with lifecycle gaps.** IndexedDB stores Blob records; Markdown stores IDs; in-memory cache creates temporary object URLs for display, publishes load/error revisions and preserves ownership when attaching orphans. DOCX embeds local/data images and deliberately does not download remote URLs.
 
-**Consequences:** text can remain small, but sharing/copying the text alone is not portable. Cache eviction, deletion invalidation, reference analysis across documents/snapshots and asset-bearing backups remain incomplete.
+**Consequences:** text can remain small, but sharing/copying the text alone is not portable. Cache eviction, deletion invalidation and reference analysis across documents/snapshots remain incomplete. The local backup path now packages assets separately; text-only share URLs warn rather than uploading them.
 
-**Proposed refinement:** reference-aware ownership/retention across documents and snapshots (T06), followed by a versioned asset-bearing backup/import format (T07). Decide manifest, identity/remapping, integrity validation, limits and conflict policy before implementing import. Neither a shared-library nor strict single-owner model has been selected as the final design.
+**Proposed refinement:** reference-aware ownership/retention across documents and snapshots (T06). The T07 backup schema and ID-remapping policy are selected below; browser/IndexedDB round-trip and failure evidence remain open.
 
 ## D05 — Browser print for PDF
 
@@ -88,16 +88,24 @@ These records document choices visible in the source; they do not invent histori
 
 **Status: In progress.** A small Node built-in contract suite and CI test/build gate are implemented; a failing fixture should precede application fixes, and CI should enforce security/data-integrity and output contracts before deploy.
 
-**Candidates, not installed:** Vitest, React Testing Library, fake-indexeddb, Playwright and ESLint. Node's built-in `node:test` is installed through the runtime and currently covers pure helpers/parser/share/preview-escaping/snapshot-policy contracts. Select additional versions and runner/browser scope under T17, with dependency risk review under T16.
+**Candidates, not installed:** Vitest, React Testing Library, fake-indexeddb, Playwright and ESLint. Node's built-in `node:test` is installed through the runtime and currently covers pure helpers/parser/share/local-image warnings/preview escaping/save timing/snapshot policy/image ownership/backup-manifest contracts. Select additional versions and runner/browser scope under T17, with dependency risk review under T16.
 
 **Required artifacts:** unit/component fixtures, explicit IndexedDB transaction/recovery tests, DOCX XML assertions, real browser/PWA tests, manual Office evidence, dependency reports and source-aligned docs. The committed Node suite is a first contract layer, not complete application coverage.
 
 **Trade-offs to resolve:** supported Node/browser matrix and performance budgets; avoid broad orchestration/parser rewrites before protective tests (T19).
 
+## D11 — Versioned local backup with remapped identities
+
+**Status: Implemented in code; acceptance in progress.** T07 uses a `markdown-editor-backup` v1 ZIP containing `manifest.json`, `INDEX.md`, document Markdown, snapshot Markdown and image asset bytes. The manifest preserves document metadata/layout, snapshot timestamps/identities and image ownership metadata.
+
+**Decision:** imports always generate new document, snapshot and image IDs, then remap `mdimg://` references before a single IndexedDB transaction. Duplicate titles/timestamps therefore cannot overwrite existing records. Relative archive paths, duplicate identities, missing files/references, invalid UTF-8, image size mismatches, 100 MB ZIP input, 200 MB expanded content, 25 MB per-image content and 10,000-entry limits are rejected with explicit errors. Text-only share links remain text-only and warn about local image references; no automatic upload is introduced.
+
+**Trade-off:** backup files are portable and collision-safe but do not merge records by identity, and browser/IndexedDB round-trip plus storage-failure behavior still need disposable-profile evidence.
+
 ## Decisions awaiting owner/product input
 
 - Intended repository license (T21); no authoritative LICENSE file exists.
-- Asset bundle/import schema and reference ownership (T06/T07).
+- Reference retention across documents/snapshots and cache eviction (T06); T07's backup schema is selected, with browser round-trip acceptance still pending.
 - Supported runtime/browser/Office versions and measured performance targets (T16–T18).
 - Word math editability versus image output, custom-template subset, directory assets and programmatic PDF value (deferred scope).
 - Cloud/auth/collaboration/encryption/platform plans require independent privacy, cost and operational decisions.
