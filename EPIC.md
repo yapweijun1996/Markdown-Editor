@@ -14,7 +14,7 @@ Canonical references: [SPEC.md](SPEC.md) (requirements), [TASK.md](TASK.md) (tas
 | E02 — Local/PWA experience (V2 group) | Generated SW/manifest/icons, responsive UI, themes, preferences, draft/history/snapshot/text ZIP, lazy heavy dependencies | Save/restore/share safety, theme consistency, accessibility and browser/PWA validation incomplete |
 | E03 — Rich output (V3 group) | Images, four built-in templates, page/cover/TOC modules, print PDF, KaTeX/Mermaid, file batch ZIP, QR/TinyURL | Partial against original ambitions; see EPIC-V3 for omissions and defects |
 | E04 — Read and presentation | Read width/zoom/toolbar controls, laser color/size/trail/fullscreen and Exit/ESC behavior | Code present in recent commits; device/fullscreen/a11y acceptance not performed |
-| E05 — Safety and fidelity hardening | Review and source-aligned docs completed (T20) | Application remediation not started; T01–T19/T21 Open |
+| E05 — Safety and fidelity hardening | Review and source-aligned docs completed (T20); minimal Node test/CI gate started (T17) | Application remediation remains open; T01–T16/T18–T19/T21 Open and T17 In progress |
 
 ## E01 — Core authoring and compiler
 
@@ -22,7 +22,7 @@ Canonical references: [SPEC.md](SPEC.md) (requirements), [TASK.md](TASK.md) (tas
 
 **Not complete:** generic recursive conversion, inline images, strike formatting, reference-link/task/list semantics and warnings for unsupported content. PDF is not this compiler's second packed format; it prints HTML separately.
 
-**Remaining work:** T08/T10/T17. Acceptance requires content/XML fixtures plus real Word/LibreOffice checks, not just a downloadable Blob.
+**Remaining work:** T08/T10 and completion of T17. Acceptance requires content/XML fixtures plus real Word/LibreOffice checks, not just a downloadable Blob.
 
 ## E02 — Experience layer, reconciled V2 scope
 
