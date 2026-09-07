@@ -1,691 +1,77 @@
-# EPIC.md — V2 Mobile-First, Offline-Capable Markdown Editor
+# EPIC — Implemented capabilities and active stabilization scope
 
-> **Status: ✅ Shipped** — All 6 sub-epics + bonus V2.5 perf release shipped between 2026-04-27 releases.
-> See [Release Summary](#release-summary) for what landed in each version.
+Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
 
----
+This replaces the old blanket “V2 shipped/all checks passed” record. Code presence is not proof of deployment, browser compatibility, performance or acceptance. Package version is still `0.1.0`. V1/V2/V3 labels describe historical feature groups only.
 
-## Overview
+Canonical references: [SPEC.md](SPEC.md) (requirements), [TASK.md](TASK.md) (task status), [ROADMAP.md](ROADMAP.md) (ordering), [docs/REVIEW.md](docs/REVIEW.md) (verification).
 
-This epic upgrades the Markdown to Word Converter from a desktop-only web tool into a **mobile-first, offline-capable, Apple-style Progressive Web App (PWA)** with a rich preference system, document history, and forced-update support.
+## Epic inventory
 
-The current MVP was a static React app deployed on GitHub Pages. The V2 epic does **not** rebuild the converter — it adds an experience layer on top.
-
----
-
-## Release Summary
-
-| Release | Status | Theme | Key Deliverables |
-|---|---|---|---|
-| **V2.0** | ✅ Shipped | PWA infra | `vite-plugin-pwa`, manifest, SW with NetworkFirst+SWR+CacheFirst, UpdatePrompt with 30 s auto-reload, full icon set generated from SVG, viewport-fit=cover, env(safe-area-inset-*), apple-mobile-web-app-* meta |
-| **V2.1** | ✅ Shipped | Apple design + responsive | `theme.css` with full HIG token system, useTheme hook (light/dark/auto), refactored `app.css` zero-hardcoded-colors, translucent toolbar with backdrop-filter, mobile tab switcher (Editor/Preview), modal → bottom sheet on mobile, 44px tap targets |
-| **V2.2** | ✅ Shipped | Prefs + draft + mobile UX | Versioned `prefs.v1` schema with deep-merge migration, SettingsSheet with iOS segmented controls + toggle switches, font size/family/line-height/word-wrap, draft auto-save (configurable interval), DraftRestorePrompt, **iOS-style Action Sheet (MoreMenu)** redesigning the mobile toolbar |
-| **V2.3** | ✅ Shipped | IndexedDB history | `idb` wrapper, documents + snapshots stores with indexes, useHistory hook with debounced auto-save (8 s docs / 30 s snapshots), HistoryPanel with search + open + rename + pin + delete, currentDocId persisted to localStorage, cascade-delete, graceful unsupported fallback |
-| **V2.4** | ✅ Shipped | Snapshot timeline + ZIP | VersionsView timeline UI, restore-with-safety-snapshot, individual snapshot delete, **Export All as ZIP** (`documents/` + `snapshots/<title>/<timestamp>.md` + `INDEX.md`) via JSZip, storage-usage indicator (`navigator.storage.estimate`), header doc count + total size |
-| **V2.5** | ✅ Shipped (bonus) | Bundle perf | manualChunks split (react, docx, jszip, markdown-it, remark, utils, workbox), lazy-loaded `docx` + `jszip` dynamic imports, **first paint 290 KB → 140 KB gzip (52 % smaller)**, vendor cache decoupled from app cache, `chunkSizeWarningLimit: 600` |
-| **Polish** | ✅ Shipped | Mobile preview overflow | Tables wrapped in `<div class="table-wrap">` via markdown-it renderer rule for independent horizontal scroll, `overflow-wrap: anywhere` for long identifiers, `pre` blocks scroll, external links auto `target=_blank rel=noopener` |
-
-### Performance Snapshot (post V2.5)
-
-```
-Asset                       Size (gzip)    Loaded When
-──────────────────────────────────────────────────────────
-index.js (app code)         ~12 KB         Always
-vendor-react                  46 KB         Always
-vendor-markdown-it            46 KB         Always (preview)
-vendor-utils                   4 KB         Always
-vendor-workbox                 2 KB         Always
-─────────────────────────  ──────────       ──────────────
-First paint subtotal         ~140 KB        ↓ 52 % vs V2.4
-─────────────────────────  ──────────       ──────────────
-vendor-remark                 32 KB         First export click
-vendor-docx                  102 KB         First export click
-vendor-jszip                  30 KB         First "Export ZIP" click
-```
-
-Vendor chunks now cache independently — pure code changes invalidate only `index.js` (~12 KB gzip).
-
-### Module Footprint (post V2)
-
-```
-src/
-├── App.jsx                    # Main app — routing + toolbar
-├── main.jsx                   # React entry
-├── editor/                    # MarkdownEditor + useFileUpload hook
-├── preview/                   # MarkdownPreview (with table-wrap rule)
-├── parser/                    # remark/unified
-├── converter/                 # Markdown AST → DOCX (8 files, untouched in V2)
-├── share/                     # URL hash share + ShareModal
-├── pwa/                       # UpdatePrompt with auto-reload
-├── theme/                     # useTheme + ThemeToggle
-├── components/                # MoreMenu (iOS Action Sheet)
-├── preferences/               # Schema + storage + SettingsSheet + draft
-├── history/                   # db + repos + useHistory + Panel + Versions + ZIP export
-├── download/                  # Lazy-load docx and trigger save
-└── styles/
-    ├── theme.css              # Apple HIG design tokens
-    ├── app.css                # Layout + responsive + components
-    └── wordStyleConfig.js     # SSOT for .docx output styling
-```
-
----
-
-## Epic Goals
-
-### Primary Goals
-
-- Run as an installable PWA on iOS, Android, and desktop.
-- Work offline after first visit (core editor + preview + export).
-- Force users onto the latest version when a new release ships.
-- Render correctly inside iPhone notch / Dynamic Island / home indicator areas.
-- Be usable on a 320px-wide phone screen with a single thumb.
-- Follow Apple Human Interface Guidelines for visual hierarchy, typography, and motion.
-- Auto-save drafts so users never lose work.
-- Persist a searchable document history in IndexedDB.
-- Expose user preferences for font size, theme color, draft auto-save, etc.
-
-### Secondary Goals
-
-- Support installation from browser without an app store.
-- Reduce time-to-interactive on repeat visits to under 500 ms.
-- Allow exporting / importing the entire history archive.
-- Enable keyboard shortcuts for power users on desktop.
-
----
-
-## Non-Goals
-
-- Native iOS / Android app store submissions.
-- Cloud sync (cross-device history requires a backend, out of scope).
-- Multi-user collaboration / real-time editing.
-- E2E encryption of stored documents.
-- Custom font uploads.
-- Advanced PWA push notifications.
-
----
-
-## Sub-Epics (Scope Breakdown)
-
-| # | Sub-Epic | Priority | Estimated Effort | Status | Shipped In |
-|---|---|---|---|---|---|
-| 1 | PWA + Service Worker with Forced Update | P0 | M | ✅ | V2.0 |
-| 2 | iOS Safe Area Support | P0 | S | ✅ | V2.0 |
-| 3 | Mobile Responsive Layout | P0 | M | ✅ | V2.1 + V2.2 (Action Sheet) + Polish (overflow) |
-| 4 | Apple-Style Design System | P1 | L | ✅ | V2.1 |
-| 5 | Expanded Preferences (font, theme, auto-save) | P1 | M | ✅ | V2.2 |
-| 6 | Document History via IndexedDB | P1 | L | ✅ | V2.3 + V2.4 (timeline + ZIP) |
-| 7 | **Bonus**: Bundle Performance | (added) | M | ✅ | V2.5 |
-
-> **P0** = Must ship in V2.
-> **P1** = Should ship in V2, can be split across releases.
-> Effort: S (≤1 day), M (2–3 days), L (4–7 days).
-
----
-
-## 1. Sub-Epic — PWA + Service Worker + Forced Update
-
-### 1.1 Goal
-
-Make the app installable, offline-capable, and able to force users onto the latest version when a deploy goes out.
-
-### 1.2 Deliverables
-
-- `public/manifest.webmanifest` — name, icons, theme color, display mode.
-- `public/sw.js` — service worker with cache strategy.
-- `src/pwa/registerSW.js` — registration + update detection module.
-- `src/pwa/UpdatePrompt.jsx` — toast UI when new version detected.
-- App icons at 192×192, 512×512, maskable variants.
-- iOS-specific apple-touch-icon and splash screens.
-
-### 1.3 Cache Strategy
-
-```text
-HTML (index.html)              → Network-first, fallback to cache
-JS / CSS / fonts               → Cache-first, revalidate in background
-Markdown sample docs           → Cache-first
-External CDN (if any)          → Network-only
-```
-
-This guarantees users always get the latest HTML when online (which references the latest hashed assets), but the app still loads instantly when offline.
-
-### 1.4 Forced Update Flow
-
-```text
-New version pushed to main
-  ↓
-GitHub Actions builds with new asset hashes
-  ↓
-User reloads page → fetches new sw.js
-  ↓
-sw.js detects version mismatch → install + skipWaiting
-  ↓
-App posts message to all clients
-  ↓
-UpdatePrompt shows: "New version available — Reload now"
-  ↓
-User clicks → window.location.reload(true)
-```
-
-### 1.5 Versioning
-
-- `BUILD_VERSION` constant injected at build time via Vite `define`.
-- Service worker compares stored version to fetched version.
-- Mismatch → trigger update flow.
-
-### 1.6 Acceptance Criteria
-
-- [x] App installs to iOS home screen with custom icon.
-- [x] App installs to Android home screen with custom icon.
-- [x] App installs to desktop Chrome / Edge.
-- [x] After installation, app opens in standalone mode (no browser UI).
-- [x] Editor + preview + export work fully offline.
-- [x] When a new version is deployed, user sees update prompt within 30 seconds of opening the app.
-- [x] User can dismiss prompt or click "Reload now" to apply update.
-- [x] No stale assets are served after an update.
-
-### 1.7 Risks
-
-- iOS Safari has historically limited PWA storage / lifecycle — must test on real iOS device.
-- Service worker bugs can permanently break the app — include kill-switch (unregister via URL flag).
-
----
-
-## 2. Sub-Epic — iOS Safe Area Support
-
-### 2.1 Goal
-
-Render the app correctly on iPhones with notch, Dynamic Island, and home indicator — never under or behind system UI.
-
-### 2.2 Deliverables
-
-- Update `<meta name="viewport">` to include `viewport-fit=cover`.
-- Add `env(safe-area-inset-*)` CSS variables to all fixed layout boundaries.
-- Add `--safe-top`, `--safe-bottom`, `--safe-left`, `--safe-right` CSS custom properties.
-
-### 2.3 Layout Targets
-
-```text
-Top toolbar       → padding-top: env(safe-area-inset-top)
-Bottom action bar → padding-bottom: env(safe-area-inset-bottom)
-Modal backdrop    → full bleed but content respects safe area
-Workspace         → side padding respects safe-area-inset-left/right (landscape)
-```
-
-### 2.4 Acceptance Criteria
-
-- [x] Toolbar title not clipped by Dynamic Island on iPhone 14/15/16 Pro.
-- [x] Bottom buttons not covered by home indicator.
-- [x] Landscape mode respects left/right safe areas.
-- [x] App in standalone PWA mode looks identical to in-browser mode.
-- [x] No content hidden behind status bar.
-
-### 2.5 Reference
-
-```css
-:root {
-  --safe-top:    env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left:   env(safe-area-inset-left, 0px);
-  --safe-right:  env(safe-area-inset-right, 0px);
-}
-
-.toolbar {
-  padding-top: calc(10px + var(--safe-top));
-  padding-left: calc(16px + var(--safe-left));
-  padding-right: calc(16px + var(--safe-right));
-}
-```
-
----
-
-## 3. Sub-Epic — Mobile Responsive Layout
-
-### 3.1 Goal
-
-Make the app fully usable on a phone screen as small as 320px wide, with one thumb.
-
-### 3.2 Breakpoints
-
-| Range | Layout |
-|---|---|
-| < 768 px (mobile) | Single panel, tab-switched between Editor / Preview |
-| 768–1024 px (tablet) | Side-by-side, smaller toolbar |
-| > 1024 px (desktop) | Current layout |
-
-### 3.3 Mobile-Specific UI Changes
-
-```text
-Toolbar collapses → hamburger menu for secondary actions
-Editor / Preview → swipeable tabs at top
-Buttons → minimum 44×44 px touch targets (Apple HIG)
-Modals → full-screen sheets on mobile, centered on desktop
-File upload → uses native file picker
-Share modal → native Web Share API where supported
-```
-
-### 3.4 Touch Interactions
-
-- Swipe left/right between Editor and Preview tabs.
-- Pull-to-refresh disabled on editor (interferes with text selection).
-- Long-press on Share button copies link directly.
-- Haptic feedback on key actions where supported (`navigator.vibrate`).
-
-### 3.5 Acceptance Criteria
-
-- [x] Lighthouse mobile score ≥ 90.
-- [x] All buttons ≥ 44×44 px on mobile.
-- [x] No horizontal scroll on any screen ≥ 320 px wide.
-- [x] Editor and preview both reachable on mobile via tabs.
-- [x] Share modal opens as full-screen sheet on mobile.
-- [x] Web Share API used when available (single tap to share via system).
-
----
-
-## 4. Sub-Epic — Apple-Style Design System
-
-### 4.1 Design Principles (Apple HIG)
-
-```text
-Clarity     — Text is legible, icons precise, content prioritized.
-Deference   — UI helps people understand and interact with content.
-Depth       — Distinct layers convey hierarchy and motion.
-```
-
-### 4.2 Typography
-
-- Use system font stack: `-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif`.
-- Type scale based on Apple's Dynamic Type:
-
-```text
-Caption     11 px / 13 px line
-Footnote    13 px / 18 px
-Subhead     15 px / 20 px
-Body        17 px / 22 px        ← default
-Title 3     20 px / 25 px
-Title 2     22 px / 28 px
-Title 1     28 px / 34 px
-Large Title 34 px / 41 px
-```
-
-### 4.3 Color System
-
-```text
-Light Mode
-─────────────
-Background     #FFFFFF
-Secondary BG   #F2F2F7
-Tertiary BG    #FFFFFF (on grouped)
-Label          #000000
-Secondary      #3C3C4399
-Separator      #3C3C432F
-Tint (accent)  #007AFF (iOS Blue, configurable)
-
-Dark Mode
-─────────────
-Background     #000000
-Secondary BG   #1C1C1E
-Tertiary BG    #2C2C2E
-Label          #FFFFFF
-Secondary      #EBEBF599
-Separator      #54545899
-Tint           #0A84FF
-```
-
-### 4.4 Materials & Effects
-
-```text
-Translucent toolbar    backdrop-filter: blur(20px) saturate(180%)
-Cards                  rounded 12 px, soft shadow, subtle border
-Modals                 16 px corner radius, blur backdrop
-Buttons                rounded 8 px (small) / 12 px (large)
-Active states          0.96 scale + opacity 0.7 on tap
-```
-
-### 4.5 Motion
-
-```text
-Standard ease    cubic-bezier(0.4, 0, 0.2, 1) over 200 ms
-Spring           cubic-bezier(0.32, 0.72, 0, 1) over 350 ms (modal open)
-Tap response     scale + opacity, 150 ms
-Page transition  fade + slide, 250 ms
-```
-
-### 4.6 Theming Implementation
-
-- All design tokens in `src/styles/theme.js`.
-- Light / dark / system-auto modes.
-- Accent color configurable (Blue, Indigo, Pink, Green, Orange, Red).
-- Theme synced to `prefers-color-scheme` by default.
-
-### 4.7 Acceptance Criteria
-
-- [x] All UI uses tokens from `theme.js` — no hardcoded colors.
-- [x] Light and dark modes both fully styled.
-- [x] Accent color changes propagate everywhere within 1 frame.
-- [x] All transitions use defined motion curves.
-- [x] Toolbar uses backdrop blur where supported.
-- [x] Tap feedback (scale + opacity) on every interactive element.
-- [x] Looks at home next to native iOS / macOS apps.
-
----
-
-## 5. Sub-Epic — Expanded Preferences
-
-### 5.1 Goal
-
-Give users fine-grained control over their editing experience, all persisted locally.
-
-### 5.2 Preference Schema
-
-```js
-{
-  editor: {
-    fontSize: 'sm' | 'md' | 'lg' | 'xl',     // 13/15/17/19 px
-    fontFamily: 'system' | 'mono' | 'serif',
-    lineHeight: 'compact' | 'normal' | 'relaxed',
-    wordWrap: boolean,
-    autoSave: boolean,
-    autoSaveInterval: number,                 // milliseconds
-  },
-  appearance: {
-    theme: 'light' | 'dark' | 'system',
-    accent: 'blue' | 'indigo' | 'pink' | 'green' | 'orange' | 'red',
-    reducedMotion: boolean,
-  },
-  share: {
-    previewOnly: boolean,                     // already exists
-  },
-  export: {
-    defaultFilename: string,
-    template: 'default' | 'business' | 'technical' | 'minimal',
-  },
-}
-```
-
-### 5.3 Storage
-
-- All preferences stored in `localStorage` under key `prefs.v1`.
-- Versioned schema — `v1`, `v2` migrations explicitly handled.
-- Single React context `PreferencesProvider` exposes read + update.
-- Default values defined in `src/preferences/defaults.js`.
-
-### 5.4 UI
-
-- Settings sheet accessible from toolbar gear icon.
-- Grouped sections matching schema (Editor / Appearance / Share / Export).
-- Live preview — changes apply immediately.
-- "Reset to defaults" button at bottom.
-- "Export preferences as JSON" / "Import" for power users.
-
-### 5.5 Auto-Save Draft
-
-- Draft saved to `localStorage` under `draft.current` every N seconds (default 3).
-- On app load, if a draft exists, prompt: "Restore unsaved draft?"
-- Draft cleared when user explicitly Clears or Loads Sample.
-
-### 5.6 Acceptance Criteria
-
-- [x] Font size change reflects instantly in editor + preview.
-- [x] Theme change reflects instantly across entire app.
-- [x] Accent color change reflects instantly.
-- [x] Auto-save draft survives accidental tab close and browser crash.
-- [x] Settings persist across browser sessions.
-- [x] "Reset to defaults" restores everything.
-- [x] Schema migrations work when upgrading from v1 to future v2.
-
----
-
-## 6. Sub-Epic — Document History via IndexedDB
-
-### 6.1 Goal
-
-Persist a versioned history of every document the user works on, with search, restore, and export.
-
-### 6.2 Why IndexedDB (not localStorage)
-
-| Feature | localStorage | IndexedDB |
+| Epic | Implementation present | Acceptance position |
 |---|---|---|
-| Storage limit | 5–10 MB | 50% of free disk (often GB) |
-| Data type | strings only | structured objects, blobs |
-| Indexing / search | none | indexed queries |
-| Async | sync (blocks UI) | async (non-blocking) |
-| Suitable for history | ❌ | ✅ |
+| E01 — Core authoring/compiler (V1 group) | Textarea, `.md` upload, sample, HTML preview, basic AST-to-DOCX modules and download | Basic code paths exist; nested/inline fidelity gaps reproduced; no Office acceptance evidence |
+| E02 — Local/PWA experience (V2 group) | Generated SW/manifest/icons, responsive UI, themes, preferences, draft/history/snapshot/text ZIP, lazy heavy dependencies | Save/restore/share safety, theme consistency, accessibility and browser/PWA validation incomplete |
+| E03 — Rich output (V3 group) | Images, four built-in templates, page/cover/TOC modules, print PDF, KaTeX/Mermaid, file batch ZIP, QR/TinyURL | Partial against original ambitions; see EPIC-V3 for omissions and defects |
+| E04 — Read and presentation | Read width/zoom/toolbar controls, laser color/size/trail/fullscreen and Exit/ESC behavior | Code present in recent commits; device/fullscreen/a11y acceptance not performed |
+| E05 — Safety and fidelity hardening | Review and source-aligned docs completed (T20) | Application remediation not started; T01–T19/T21 Open |
 
-### 6.3 Schema
+## E01 — Core authoring and compiler
 
-```js
-// IndexedDB: markdown-editor-db, version 1
+**Delivered code:** React-controlled Markdown input; file size/extension checks; basic headings, paragraphs, inline formatting, direct links, tables, lists, code and paragraph blockquotes; `.docx` Blob generation.
 
-ObjectStore: documents {
-  keyPath: 'id',                        // UUID
-  indexes: {
-    updatedAt: { unique: false },
-    title:     { unique: false },
-  },
-  record: {
-    id: string,                         // UUID
-    title: string,                      // first H1 or first 60 chars
-    content: string,                    // raw markdown
-    createdAt: number,                  // epoch ms
-    updatedAt: number,
-    wordCount: number,
-    sizeBytes: number,
-    pinned: boolean,
-  },
-}
+**Not complete:** generic recursive conversion, inline images, strike formatting, reference-link/task/list semantics and warnings for unsupported content. PDF is not this compiler's second packed format; it prints HTML separately.
 
-ObjectStore: snapshots {
-  keyPath: 'id',                        // UUID
-  indexes: {
-    documentId: { unique: false },
-    createdAt:  { unique: false },
-  },
-  record: {
-    id: string,
-    documentId: string,                 // foreign key
-    content: string,                    // markdown at this point
-    createdAt: number,
-  },
-}
-```
+**Remaining work:** T08/T10/T17. Acceptance requires content/XML fixtures plus real Word/LibreOffice checks, not just a downloadable Blob.
 
-### 6.4 Module
+## E02 — Experience layer, reconciled V2 scope
 
-```text
-src/history/
-├── db.js                     # IndexedDB wrapper (open, transaction helpers)
-├── documentRepo.js           # CRUD on documents
-├── snapshotRepo.js           # CRUD on snapshots
-├── HistoryProvider.jsx       # React context + hooks
-├── HistoryPanel.jsx          # List view UI
-└── HistoryItem.jsx           # Row UI with preview
-```
-
-### 6.5 Auto-Snapshot Strategy
-
-- On every meaningful change (debounced 5 seconds), check if content differs from last snapshot.
-- If yes, create a snapshot.
-- Cap at 50 snapshots per document — oldest deleted first (FIFO).
-- "Pinned" snapshots are exempt from FIFO eviction.
-
-### 6.6 UI
-
-- "History" button in toolbar opens panel.
-- Panel shows list of documents (most recent first).
-- Each row shows: title, preview snippet, last updated, word count.
-- Click a row → opens the document.
-- Long-press / right-click → context menu: Pin, Rename, Delete, Export.
-- Top-of-panel search box filters by title or content.
-- "Export all as ZIP" button (uses `JSZip`) downloads entire history.
-
-### 6.7 Privacy & Data Lifecycle
-
-- All data stored locally in browser, never sent to a server.
-- "Clear History" button in Settings wipes the database.
-- Browser clearing site data also clears history (expected behavior).
-
-### 6.8 Acceptance Criteria
-
-- [x] Every document edit auto-saves a snapshot within 5 seconds.
-- [x] History panel lists all documents sorted by `updatedAt`.
-- [x] Search returns results within 100 ms for ≤ 1000 documents.
-- [x] Pinned documents survive snapshot cap eviction.
-- [x] Export all as ZIP produces a valid archive of `.md` files.
-- [x] Clearing browser data correctly empties IndexedDB.
-- [x] No UI jank during snapshot writes (async transactions).
-
----
-
-## Cross-Cutting Concerns
-
-### Performance
-
-- Service worker precaches critical assets at install.
-- React lazy-load Settings panel and History panel.
-- Debounce all auto-save / snapshot operations.
-- Use `requestIdleCallback` for non-critical work.
-- Lighthouse target: Performance ≥ 90, PWA ≥ 100, Accessibility ≥ 95.
-
-### Accessibility
-
-- All interactive elements have `aria-label`.
-- Keyboard navigation works in all modes.
-- Color contrast ratio ≥ 4.5:1 (WCAG AA).
-- `prefers-reduced-motion` respected for all animations.
-- Focus rings clearly visible in both light and dark modes.
-
-### Internationalization (Future)
-
-- All UI strings centralized in `src/i18n/strings.js`.
-- Default English; placeholder for `zh-CN` and `ja-JP`.
-- Date / time formatting via `Intl.DateTimeFormat`.
-
-### Testing
-
-- Unit tests for `shareLink.js`, `documentRepo.js`, `snapshotRepo.js`.
-- Component tests for `ShareModal`, `HistoryPanel`, `UpdatePrompt`.
-- E2E test on real iOS Safari + Android Chrome.
-- PWA install + offline + force update test on each platform.
-
-### Security
-
-- `Content-Security-Policy` meta tag forbids inline scripts.
-- Service worker scope limited to app origin.
-- No external resources loaded in offline mode.
-- Markdown rendered with `html: false` (already in place).
-
----
-
-## Dependencies
-
-### New Libraries
-
-| Library | Purpose | Approx Size |
+| Historical label | Present implementation | Corrections to previous claims |
 |---|---|---|
-| `idb` | IndexedDB Promise wrapper | 1 KB |
-| `nanoid` | UUID generation | 0.5 KB |
-| `jszip` | History export | 30 KB |
-| `vite-plugin-pwa` | Service worker + manifest tooling | dev only |
+| V2.0 PWA | VitePWA-generated manifest/SW, icons/safe areas, prompt registration, update countdown | No custom source SW/register module, BUILD_VERSION comparison, URL unregister kill-switch or guaranteed update detection within 30 seconds |
+| V2.1 Responsive/design | theme.css tokens, light/dark/system, translucent toolbar, mobile tabs/sheets, table overflow | No verified Lighthouse/HIG/contrast certification; no swipe tabs, Web Share or haptics; not every value is tokenized |
+| V2.2 Preferences/draft | prefs.v1 editor/draft/presentation defaults, settings and global draft prompt | No PreferencesProvider, accent selector, preferences import/export or complete reset; editor preferences do not globally restyle preview/Word |
+| V2.3 History | IndexedDB v2 documents/snapshots/images, save hook, title/content search, pin/rename/delete/open | 8-second trailing document save; not every edit saved; no full-text index, automatic document eviction or Clear History settings action |
+| V2.4 Versions/ZIP | Timeline, delete/restore, attempted pre-restore snapshot, text archive and storage estimate | 30-second trailing snapshot, defective length filter; no pinned snapshots; safety backup/target correctness not guaranteed; no archive import/assets |
+| V2.5 Chunking | Manual vendor chunks, lazy DOCX/ZIP/math/diagram/QR imports | Modals are statically imported; SW precaches lazy assets too; historical bundle/performance claims are not current browser measurements |
 
-### No Backend Required
+**Remaining work:** T01–T07/T11/T12/T14–T19. Offline/install/update must be verified on target browsers and storage failures must not be hidden.
 
-All sub-epics are pure-frontend. GitHub Pages remains the only deployment target.
+## E03 — Rich output
 
----
+The main V3 code paths are implemented, but the original proposal included work that never landed: custom Word template upload/store, Word math conversion, image gallery/cleanup, directory traversal, preview TOC generation and PDF/Word layout parity.
 
-## Roadmap — Actual Sequence Shipped
+Landscape dimensions and cover/header behavior also differ from the promised output. See [EPIC-V3.md](EPIC-V3.md) for the source-level scope matrix. Do not restore a blanket “V3 complete” label until narrowed requirements and their acceptance tests pass.
 
-```text
-Release V2.0  ✅  PWA + Forced Update + iOS Safe Area
-Release V2.1  ✅  Apple Design System + Mobile Responsive (tab switcher + bottom-sheet modal)
-Release V2.2  ✅  Settings Sheet + Auto-Save Draft + Mobile Action Sheet redesign
-Release V2.3  ✅  IndexedDB Document History (auto-save + auto-snapshot)
-Release V2.4  ✅  Snapshot Timeline + ZIP Export + Storage Indicator
-Release V2.5  ✅  Bundle Splitting + Lazy Loading (52 % first-paint reduction)
-Polish        ✅  Mobile preview overflow fix (table-wrap, code, long words)
-```
+## E04 — Read/presentation (latest source work)
 
-Each release shipped to production independently — no big-bang releases, every release was a working app.
+Recent source history includes:
 
----
+- `93c0a09`: Read mode with zoom and scroll-driven auto-hide toolbar.
+- `8d57688`: visible zoom glyphs and width lock.
+- `f7ad49b`: configurable presentation laser/trail/fullscreen behavior.
+- `445cc05`: saturated laser dot on light/dark themes.
 
-## Risks & Open Questions
+Read uses a centered 820 px base maximum column, 70–300% scale, persisted width lock, and scroll-driven toolbar visibility. It does not itself call the browser Fullscreen API. Presentation is a desktop Read action; it hides the toolbar, optionally requests fullscreen, follows the mouse and exits through Escape/Exit/fullscreen lifecycle.
 
-### Risks
+**Remaining work:** T02 (Read pauses saving), T12 (preference state), T15 (focus/motion/device access), T18 (measurement). Commit existence is not evidence of live deployment/device testing.
 
-- **iOS PWA limitations** — Safari frequently changes PWA behavior. Mitigation: test on every iOS major release.
-- **Service worker corruption** — A buggy SW can permanently break the app. Mitigation: implement `?unregister-sw=1` URL flag.
-- **IndexedDB quota** — User can hit storage limit. Mitigation: monitor `navigator.storage.estimate()`, warn at 80%.
-- **Browser fragmentation** — `backdrop-filter`, `env()`, IndexedDB versioning differ across browsers. Mitigation: feature-detect, graceful fallback.
+## E05 — Active planning focus: trustworthy editing/export
 
-### Open Questions
-
-- Should history be searchable by full-text content, or only by title?
-- Should we offer encrypted history (passphrase-protected)?
-- Should auto-save draft be enabled by default, or opt-in?
-- Should installable app prompt show automatically, or only behind a button?
-
----
-
-## Success Metrics
-
-| Target | Goal | Actual (post V2.5) |
+| Workstream | Tasks | Completion gate |
 |---|---|---|
-| Installation rate | ≥ 5 % of returning visitors | not yet measured |
-| PWA Lighthouse score | = 100 | manifest + SW + icons all in place ✅ |
-| Mobile Lighthouse Performance | ≥ 90 | first paint 140 KB gzip — likely ✅ |
-| Time to Interactive (mobile) | < 1.5 s on 4G | not yet measured |
-| Offline session success rate | ≥ 99 % | full app cached via Workbox ✅ |
-| History snapshot reliability | 100 % (no lost edits within debounce window) | restore-with-safety-snapshot guarantees zero loss ✅ |
-| Update adoption rate | ≥ 80 % within 24 h | 30 s auto-reload countdown — likely ≥ 95 % |
+| Prevent script execution/data overwrite | T01–T05 | Safe render boundary, explicit local/shared identity, durable transitions and correct mandatory recovery snapshots |
+| Preserve content/assets | T06–T10 | Reactive owned assets, portable import/export, recursive loss-aware DOCX, correct math/layout/print |
+| Reliable interactions | T11–T15 | Action parity, shared/validated preferences, stable batch identity, bounded input and accessibility |
+| Engineering assurance | T16–T19/T21 | Advisory triage, automated tests/CI, measured performance, tested SSOT refactoring and explicit license |
+| Documentation baseline | T20 | Completed source/status reconciliation; application tasks remain open |
 
-### Bundle Numbers (V2.5)
+No application subtask has been marked completed merely because its review or documentation exists. Owners and release dates remain unassigned. Milestones and release blockers are in ROADMAP.md; exact task evidence and acceptance are in TASK.md.
 
-```
-First paint:   140 KB gzip   (down 52 % from 290 KB pre-V2.5)
-Largest route: 244 KB gzip   (after first .docx export — vendor-docx + vendor-remark loaded)
-Largest cold load: 372 KB gzip (after .docx + ZIP both used in same session)
-Cache turnover on new release:  ~12 KB gzip (just index.js, vendors stay cached)
-```
+## Definition of epic acceptance
 
----
-
-## Attention Point
-
-Do not treat this epic as a single monolithic release.
-
-```text
-Each sub-epic must ship independently.
-Each release must be reverible — feature flags or kill switches.
-Each release must keep the existing converter pipeline untouched.
-```
-
-The current MVP works. The V2 epic adds polish and depth, but the core
-`Markdown → AST → DOCX` compiler stays the load-bearing center of the project.
-
----
-
-## Deep Reasoning with Reflection (DRR)
-
-This epic separates concerns by lifecycle layer:
-
-```text
-Service Worker layer    →  app delivery & freshness
-Layout layer            →  device-shape adaptation
-Design layer            →  visual identity & motion
-Preferences layer       →  user-controlled state
-Persistence layer       →  long-lived data (IndexedDB)
-```
-
-Each layer is independently buildable and testable. None of them touches
-the converter (`src/converter/`), which means the V2 epic carries minimal
-risk of regressing the existing export functionality — the highest-value
-asset of the project.
-
-The architecture goal of V2 is the same as V1:
-
-```text
-Markdown → AST → DOCX
-```
-
-V2 simply wraps this compiler in a better delivery vehicle.
+1. Agreed scope is implemented, with deferred features stated explicitly.
+2. Linked task acceptance tests and security/data-integrity regressions pass.
+3. Actual browser/PWA/Word checks are recorded where relevant; measurements are not inferred from bundle size.
+4. Dependency changes and storage migrations have rollback/recovery plans.
+5. Documentation describes the new source behavior and known limits without claiming universal zero-loss or zero-regression guarantees.

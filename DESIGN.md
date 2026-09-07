@@ -1,990 +1,180 @@
-# DESIGN.md — Markdown to Microsoft Word Converter
+# DESIGN — Current architecture and design boundaries
 
-## 1. Product Overview
+Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
 
-This project is a web-based Markdown to Microsoft Word converter.
+This replaces the original MVP proposal with the architecture actually present in `src/`. Proposed corrections are labelled explicitly. [SPEC.md](SPEC.md) owns requirements/defaults, [TASK.md](TASK.md) owns work status, and [docs/DECISIONS.md](docs/DECISIONS.md) records implemented choices versus proposals.
 
-The application allows users to:
+## 1. Product model
 
-1. Write Markdown content.
-2. Upload an existing `.md` file.
-3. Preview the Markdown in real time.
-4. Export the Markdown content as a Microsoft Word `.docx` file.
+A browser-resident document editor/compiler: Markdown is source text; HTML preview and DOCX are separate rendering targets. PDF is a print of HTML preview, not a DOCX conversion. IndexedDB/localStorage provide local persistence, not synchronization or backup guarantees.
 
-The main goal is to convert Markdown into a clean, editable, professional Word document.
+React 18 and plain JavaScript/JSX run under Vite. There is no router library, backend, authentication, application API, TypeScript configuration, global preferences provider, worker-based converter or committed automated test suite.
 
-This project should prioritize:
-
-- Correct document structure
-- Clean Word formatting
-- Editable `.docx` output
-- Simple user experience
-- Stable export behavior
-
-Pixel-perfect matching between browser preview and Word output is not the main goal.
-
----
-
-## 2. Product Goals
-
-### Primary Goals
-
-- Provide a simple Markdown editor.
-- Provide live Markdown preview.
-- Convert Markdown into `.docx`.
-- Allow users to download the generated Word file.
-- Preserve important Markdown structure such as headings, paragraphs, lists, tables, and code blocks.
-
-### Secondary Goals
-
-- Support reusable Word style templates.
-- Support business report formatting.
-- Support technical documentation formatting.
-- Support future extension for images, table of contents, page numbers, and company templates.
-
----
-
-## 3. Non-Goals
-
-The MVP does not aim to support:
-
-- Perfect visual matching between browser preview and Microsoft Word.
-- Complex Word layout features.
-- Track changes.
-- Comments.
-- Advanced citations.
-- Footnotes.
-- Mathematical equation rendering.
-- Complex nested tables.
-- Remote image downloading.
-- Full Pandoc-level document conversion.
-
----
-
-## 4. Target Users
-
-### Main Users
-
-- Developers
-- Technical writers
-- Product managers
-- Business users
-- Students
-- Internal documentation teams
-
-### Common Use Cases
-
-- Convert README files to Word documents.
-- Convert technical specs to Word documents.
-- Convert PRD documents to Word documents.
-- Convert meeting notes to Word documents.
-- Convert AI-generated Markdown reports into editable Word files.
-- Convert internal documentation into business-friendly `.docx` format.
-
----
-
-## 5. Core User Flow
+## 2. Runtime architecture
 
 ```text
-User opens app
-  ↓
-User writes Markdown or uploads .md file
-  ↓
-App renders live preview
-  ↓
-User clicks Export DOCX
-  ↓
-App converts Markdown into Word document
-  ↓
-User downloads .docx file
+src/main.jsx (React.StrictMode; theme -> app -> print CSS)
+  |
+  +-- App.jsx: Markdown state, current mode, toolbar, modal visibility,
+  |            startup/hash routing, draft timer, export orchestration
+  |
+  +-- editor/ --------------------------> setMarkdown
+  +-- history/useHistory ---------------> current ID, docs, restore -> setMarkdown
+  +-- images/useImages -----------------> IndexedDB blobs + in-memory URL cache
+  +-- preferences/usePreferences -------> prefs.v1
+  +-- theme/useTheme --------------------> theme.mode + document data-theme
+  +-- preview/usePreviewControls -------> zoom, width, scroll-driven toolbar
+  |
+  +-- MarkdownPreview: markdown-it -> HTML -> async KaTeX -> DOM -> Mermaid SVG
+  +-- downloadDocx: remark/GFM AST -> converter modules -> docx Blob -> file-saver
+  +-- downloadPdf: delayed window.print() -> print.css -> browser Save as PDF
+  +-- ShareModal: LZ compression -> URL fragment -> clipboard / QR / TinyURL opt-in
+  +-- BatchConvertSheet: selected .md files -> sequential DOCX -> JSZip
+  +-- HistoryPanel/VersionsView: repositories -> list/search/restore/text ZIP
+  +-- UpdatePrompt: generated Workbox SW registration -> update countdown
 ```
 
----
+These modules are separated by responsibility but **not independent failure domains**. Export reads document layout/history and image storage, and Mermaid export imports the preview renderer. Mode changes pause saving. PWA reload can discard pending edits. Changes across these boundaries require integration tests.
 
-## 6. High-Level Architecture
+## 3. Module ownership
 
-```text
-Markdown Input
-  ↓
-Markdown Parser
-  ↓
-Markdown AST
-  ↓
-DOCX Converter
-  ↓
-DOCX Document Object
-  ↓
-Blob Download
-  ↓
-Microsoft Word File
-```
-
-The system has two separate pipelines:
-
-### Preview Pipeline
-
-```text
-Markdown Text
-  ↓
-Markdown Parser
-  ↓
-HTML
-  ↓
-Preview Panel
-```
-
-### Export Pipeline
-
-```text
-Markdown Text
-  ↓
-Markdown AST
-  ↓
-DOCX Element Mapping
-  ↓
-DOCX Package
-  ↓
-Download .docx
-```
-
-The preview pipeline is optimized for browser display.
-
-The export pipeline is optimized for Microsoft Word document generation.
-
----
-
-## 7. Recommended Tech Stack
-
-### Frontend
-
-- Vite
-- React
-- TypeScript (optional for future version)
-- CSS modules or plain CSS
-
-### Markdown Preview
-
-Recommended libraries:
-
-- `markdown-it`
-- `marked`
-
-### Markdown AST Parsing
-
-Recommended libraries:
-
-- `unified`
-- `remark-parse`
-- `remark-gfm`
-
-### DOCX Generation
-
-Recommended library:
-
-- `docx`
-
-### File Download
-
-Recommended options:
-
-- Native `Blob`
-- `URL.createObjectURL`
-- `file-saver`
-
----
-
-## 8. Suggested Project Structure
-
-```text
-md-to-word/
-├── package.json
-├── index.html
-├── README.md
-├── DESIGN.md
-├── src/
-│   ├── main.js
-│   ├── app.js
-│   │
-│   ├── editor/
-│   │   ├── MarkdownEditor.js
-│   │   └── FileUploader.js
-│   │
-│   ├── preview/
-│   │   └── MarkdownPreview.js
-│   │
-│   ├── parser/
-│   │   └── parseMarkdown.js
-│   │
-│   ├── converter/
-│   │   ├── markdownToDocx.js
-│   │   ├── convertHeading.js
-│   │   ├── convertParagraph.js
-│   │   ├── convertInline.js
-│   │   ├── convertList.js
-│   │   ├── convertTable.js
-│   │   ├── convertCodeBlock.js
-│   │   └── convertBlockquote.js
-│   │
-│   ├── styles/
-│   │   ├── wordStyleConfig.js
-│   │   └── app.css
-│   │
-│   └── download/
-│       └── downloadDocx.js
-```
-
----
-
-## 9. Main Modules
-
-### 9.1 Editor Module
-
-Responsible for Markdown input.
-
-Features:
-
-- Text input area
-- Markdown typing
-- `.md` file upload
-- Clear content
-- Optional sample document loading
-
-Responsibilities:
-
-```text
-Receive user input
-Store Markdown text
-Update preview state
-Pass Markdown text to export pipeline
-```
-
----
-
-### 9.2 Preview Module
-
-Responsible for rendering Markdown into preview HTML.
-
-Features:
-
-- Live preview
-- Heading rendering
-- List rendering
-- Code block rendering
-- Table rendering
-- Link rendering
-
-Security rule:
-
-```text
-Do not allow unsafe raw HTML by default.
-```
-
-Preview should avoid dangerous HTML injection.
-
----
-
-### 9.3 Parser Module
-
-Responsible for converting Markdown text into a structured AST.
-
-Input:
-
-```text
-Markdown string
-```
-
-Output:
-
-```text
-Markdown AST
-```
-
-Example:
-
-```text
-# Title
-
-Hello **world**
-```
-
-Should become structured nodes like:
-
-```text
-heading
-paragraph
-strong
-text
-```
-
-The parser is important because the DOCX exporter should not depend only on rendered HTML.
-
----
-
-### 9.4 Converter Module
-
-Responsible for converting Markdown AST nodes into DOCX document elements.
-
-This is the core module of the project.
-
-Main responsibility:
-
-```text
-Markdown AST Node → DOCX Element
-```
-
-Example mapping:
-
-```text
-heading → Word heading paragraph
-paragraph → Word paragraph
-strong → bold text run
-emphasis → italic text run
-list → Word bullet or numbered list
-table → Word table
-code → Word code block
-```
-
----
-
-### 9.5 Style Module
-
-Responsible for controlling Word document appearance.
-
-The style system should define:
-
-- Default font
-- Default font size
-- Paragraph spacing
-- Heading styles
-- Code block style
-- Table style
-- Blockquote style
-- Link style
-
-Example:
-
-```js
-export const wordStyleConfig = {
-  document: {
-    font: "Arial",
-    fontSize: 22
-  },
-
-  heading1: {
-    fontSize: 36,
-    bold: true,
-    spacingAfter: 240
-  },
-
-  heading2: {
-    fontSize: 30,
-    bold: true,
-    spacingAfter: 200
-  },
-
-  paragraph: {
-    fontSize: 22,
-    spacingAfter: 160,
-    lineSpacing: 276
-  },
-
-  codeBlock: {
-    font: "Consolas",
-    fontSize: 20,
-    shading: "F5F5F5"
-  }
-};
-```
-
-All styles should be configurable.
-
-Do not hardcode styles directly inside conversion logic.
-
----
-
-### 9.6 Download Module
-
-Responsible for generating and downloading the `.docx` file.
-
-Flow:
-
-```text
-DOCX document object
-  ↓
-Pack into Blob
-  ↓
-Create object URL
-  ↓
-Trigger browser download
-```
-
-Expected output:
-
-```text
-document.docx
-```
-
----
-
-## 10. Markdown to DOCX Mapping
-
-| Markdown Element    | DOCX Output                |
-| ------------------- | -------------------------- |
-| `# Heading 1`       | Heading 1 paragraph        |
-| `## Heading 2`      | Heading 2 paragraph        |
-| `### Heading 3`     | Heading 3 paragraph        |
-| Normal text         | Paragraph                  |
-| `**bold**`          | Bold TextRun               |
-| `*italic*`          | Italic TextRun             |
-| `` `inline code` `` | Monospace TextRun          |
-| Code block          | Shaded monospace paragraph |
-| `- item`            | Bullet list                |
-| `1. item`           | Numbered list              |
-| `> quote`           | Indented quote paragraph   |
-| Markdown table      | DOCX table                 |
-| `---`               | Horizontal separator       |
-| `[link](url)`       | Hyperlink text             |
-| Image               | Future support             |
-
----
-
-## 11. MVP Supported Markdown
-
-The first version should support:
-
-```text
-Heading 1 to Heading 6
-Paragraph
-Bold
-Italic
-Inline code
-Code block
-Bullet list
-Numbered list
-Blockquote
-Horizontal rule
-Basic table
-Links
-```
-
----
-
-## 12. Future Supported Markdown
-
-Future versions may support:
-
-```text
-Images
-Nested lists
-Nested blockquotes
-Task lists
-Footnotes
-Table of contents
-Page breaks
-Header and footer
-Page number
-Custom Word template
-Company logo
-Cover page
-Metadata
-Front matter
-```
-
----
-
-## 13. Export Rules
-
-### 13.1 Heading Rules
-
-Markdown headings should map to Word heading levels.
-
-```md
-# Title
-## Section
-### Subsection
-```
-
-Should become:
-
-```text
-Heading 1
-Heading 2
-Heading 3
-```
-
-The heading hierarchy should be preserved.
-
----
-
-### 13.2 Paragraph Rules
-
-Normal Markdown text should become Word paragraphs.
-
-Paragraphs should have:
-
-- Consistent font
-- Consistent size
-- Proper spacing after paragraph
-- Editable text
-
----
-
-### 13.3 Inline Formatting Rules
-
-Markdown inline formatting should be preserved.
-
-Examples:
-
-```md
-This is **bold** text.
-This is *italic* text.
-This is `inline code`.
-```
-
-Should become:
-
-```text
-Normal text + bold run
-Normal text + italic run
-Normal text + monospace run
-```
-
----
-
-### 13.4 List Rules
-
-Bullet list:
-
-```md
-- Item A
-- Item B
-```
-
-Should become a Word bullet list.
-
-Numbered list:
-
-```md
-1. First
-2. Second
-```
-
-Should become a Word numbered list.
-
-Nested list support can be added later.
-
----
-
-### 13.5 Code Block Rules
-
-Markdown code block:
-
-````md
-```js
-console.log("hello");
-```
-````
-
-Should become a Word paragraph or block with:
-
-- Monospace font
-- Light background shading
-- Preserved line breaks
-- Optional language label in future version
-
----
-
-### 13.6 Table Rules
-
-Markdown table:
-
-```md
-| Name | Role |
+| Directory/file | Actual responsibility and important coupling |
 |---|---|
-| Wei Jun | Developer |
-```
+| `src/App.jsx` | Root orchestration plus sample Markdown and inline SVG icons; no explicit session object |
+| `src/editor/` | Controlled textarea, cursor insertion, image paste/drop and `.md` picker hook; `FileUploader.jsx` is not used by App |
+| `src/parser/parseMarkdown.js` | Reused unified + remark-parse + remark-gfm processor returning MDAST |
+| `src/preview/` | markdown-it renderer, lazy math/diagrams, read controls, laser DOM/canvas |
+| `src/converter/` | AST-to-DOCX mapping, template application, image/diagram embedding, page/cover/TOC assembly |
+| `src/download/` | Lazy DOCX orchestration/download and print trigger |
+| `src/styles/templates/` | Four built-in template objects and lookup with default fallback |
+| `src/styles/wordStyleConfig.js` | Legacy duplicate baseline; still imported by image fallback conversion, not the universal style source |
+| `src/styles/theme.css` | Light/dark design tokens, safe areas and reduced-duration CSS motion |
+| `src/styles/app.css` | Layout/components/responsiveness/preview/presentation; contains values beyond theme tokens |
+| `src/styles/print.css` | Separate static print layout; not driven by document layout |
+| `src/history/` | DB opening, document/snapshot repositories, hook, history UI, text ZIP |
+| `src/images/` | Blob repository, downscale, URI helpers, process-wide object URL cache and insertion helpers |
+| `src/preferences/` | Version-1 defaults, storage merge, hook, Settings sheet, draft storage/prompt |
+| `src/theme/` | Each hook instance owns mode state and writes document theme/localStorage |
+| `src/components/` | Mobile More sheet and per-document Layout sheet |
+| `src/share/` | Hash compression/decoding, copy fallback, QR canvas, optional TinyURL request |
+| `src/batch/` | File collection/progress UI and sequential DOCX ZIP generation |
+| `src/pwa/UpdatePrompt.jsx` | SW registration via virtual module, hourly checks and 30-second countdown |
 
-Should become a Word table.
+## 4. Document/session state and lifecycle
 
-Table export should preserve:
+Current state is distributed:
 
-- Header row
-- Cell text
-- Row count
-- Column count
-- Basic border
-- Basic padding
+- App: `markdown`, `previewOnly`, presentation/modal/mobile-tab state, pending draft and `sharedLinkOpenedRef`.
+- History hook: `currentDocId`, full `docs` list, `supported` flag and a content-only `lastSavedRef`.
+- Browser persistence: remembered ID, a single draft, documents/snapshots/images and separately stored preferences.
 
-Complex table layout is not required in MVP.
+Startup checks a shared hash (or legacy query), otherwise opens the remembered document, otherwise offers the global draft. It does not reconcile document/draft freshness. A missing remembered document does not trigger draft fallback.
 
----
+Document and snapshot timers are trailing debounces, restarted by editing. Read mode and the shared-link flag pause them. The draft timer has its own delay/enablement. Open/new do not flush pending writes; no max-wait, dirty-state UI or multi-tab coordination exists. The hook skips empty text saves. See SPEC for exact timing.
 
-### 13.7 Link Rules
+Shared content does not clear the remembered local document identity. Editing a share can therefore resume saving into an unrelated document; hash-change and first-load handling differ. Cross-document version restore can reuse a callback closing over the old identity.
 
-Markdown link:
+**Proposed (T02–T05):** a document-session service/hook with explicit local/shared identity, revisions, dirty/saving/saved/error state, serialized writes and recovery policy. Transitions must await saving (or explicit discard), and restore operations must take target IDs directly. This service is not implemented in the baseline.
 
-```md
-[OpenAI](https://openai.com)
-```
+## 5. Persistence schema
 
-Should become readable link text in Word.
+Source: `src/history/db.js` and repositories. DB: `markdown-editor-db`, version **2**. All stores use key path `id` with nanoid-generated strings (not UUID semantics).
 
-MVP may export link as normal blue underlined text.
+| Store | Indexes | Record fields |
+|---|---|---|
+| `documents` | `updatedAt`, `pinned` | `id`, `title`, `content`, `createdAt`, `updatedAt`, `wordCount`, `sizeBytes`, `pinned` (0/1), `templateId`, `layout` |
+| `snapshots` | `documentId`, `createdAt` | `id`, `documentId`, `content`, `createdAt` |
+| `images` | `documentId`, `createdAt` | `id`, nullable `documentId`, `filename`, `mimeType`, `blob`, `width`, `height`, `sizeBytes`, `createdAt` |
 
-Future version may export actual Word hyperlink relationship.
+- `layout` contains pageSize/orientation/header/footer/pageNumbers and coverPage enabled/title/subtitle/author/date. Defaults are merged on reads; no separate template store exists.
+- `listDocuments()` loads all records, then sorts pins first and updated time descending. Search scans title/content in React memory; no full-text index or pagination exists.
+- Titles derive from the first Markdown heading of any level or first nonblank line, strip selected formatting characters and cap at 80 characters. Word count splits on whitespace, not language-aware segmentation.
+- Metadata/content updates use separate get/put transactions and can race. Each content save re-derives title, overriding manual rename.
+- Deleting a document uses a multi-store transaction to cascade snapshots and images indexed to that ID. Unowned images are not included. Shared-reference safety is not modeled.
+- Snapshots contain content only: no layout, title, pin or image copy. Automatic retention caps them at 50, with no pinned-snapshot exception. Its length-difference filter is not a content diff.
+- DB open failure resets the cached open promise. Blocked upgrade only logs a warning; no user-assisted multi-tab upgrade recovery is implemented.
 
----
+### localStorage keys
 
-### 13.8 Image Rules
+| Key | Owner / data |
+|---|---|
+| `prefs.v1` | version 1: editor, draft, presentation preferences |
+| `theme.mode` | light/dark/system |
+| `share.previewOnly` | default checked state for share modal |
+| `md.previewZoom` | persisted read scale |
+| `md.previewLockWidth` | persisted width-lock boolean |
+| `history.currentDocId` | last selected document ID |
+| `draft.current` | `{ content, savedAt }`, single global recovery draft |
 
-Image support is not required for MVP.
+No local data is encrypted. Storage can fail or be cleared/evicted. Most localStorage helpers swallow errors. There is no app-level full backup import or persistent-storage request guaranteeing retention.
 
-Future image support should handle:
+## 6. Preview pipeline and trust boundary
 
-- Local uploaded images
-- Base64 images
-- Image width
-- Image height
-- Aspect ratio
-- Missing image fallback
+`markdown-it` uses `html: false`, `linkify: true`, `typographer: true`, `breaks: false`. Custom rules wrap tables, set HTTP(S) link attributes, resolve `mdimg://` images and mark Mermaid fences.
 
----
+`useMemo` renders HTML synchronously on text change. An effect optionally replaces math in that HTML string and commits it through `dangerouslySetInnerHTML`. Another effect replaces Mermaid code blocks with asynchronously rendered SVG (`securityLevel: strict`, neutral theme).
 
-## 14. UI Design
+Known boundary violations:
 
-### Main Layout
+- Missing-image alt text is interpolated without escaping; disabling raw HTML does not protect this path (T01).
+- Cache notifications rerender App but do not invalidate Markdown-only HTML memoization (T06).
+- Math regexes operate on tags, attributes and code as well as intended text; HTML escaping precedes formula parsing (T09).
+- Async import/render work lacks a complete cancellation/readiness/error contract; diagram work is not viewport-deferred (T09/T18).
 
-```text
-┌─────────────────────────────────────────────┐
-│ Markdown to Word Converter                  │
-│ [Upload .md] [Export .docx] [Template ▼]    │
-├───────────────────────┬─────────────────────┤
-│ Markdown Editor       │ Preview             │
-│                       │                     │
-│ # Title               │ Title               │
-│ Hello **world**       │ Hello world         │
-│                       │                     │
-└───────────────────────┴─────────────────────┘
-```
+Remote images may be fetched by the browser. No final common sanitizer or CSP meta is configured. Proposed safety changes must preserve legitimate KaTeX/SVG/image rendering and be verified with hostile-input fixtures.
 
-### UI Sections
+## 7. DOCX and PDF pipelines
 
-1. Top toolbar
-2. Markdown editor panel
-3. Preview panel
-4. Export status area
-5. Error message area
+`downloadDocx` imports the converter and file-saver on demand. The converter parses Markdown, converts top-level nodes concurrently with `Promise.all`, flattens output, prepends cover paragraphs, applies page properties/header/footer, and packs one section to Blob.
 
----
+- Most converter modules receive the selected template `cfg`; the default is `defaultTemplate`.
+- List conversion is recursive only for nested list/paragraph children, not generic blocks; blockquote conversion accepts only paragraphs. Inline handling lacks image/delete/reference-link semantics.
+- Numbering defines six bullet/ordered levels. Both list depth limits and numbering/layout/style values remain partially hardcoded.
+- Images resolve cached/stored `mdimg://` Blobs or data URIs. Remote fetching is deliberately absent from DOCX conversion. Image format normalization and SVG fallback are incomplete.
+- Mermaid export uses DOM/Image/canvas to rasterize SVG, so the full converter is not a headless Node-only API even though simple text export can run in Node.
+- Cover content is part of the same section as the body, ending in a page break. Different-first-page headers/footers are not configured.
+- Landscape dimensions are swapped twice between app and docx library; generated XML proves incorrect width/height (T10).
+- TOC is a generated Word field, not computed page numbers. Office compatibility/field update behavior needs real-reader validation.
 
-## 15. Toolbar Actions
+PDF calls `window.print()` after 30 ms. It prints the preview with static A4 CSS; Word templates/layout/cover/TOC do not drive it. No image/math/diagram/font completion barrier exists.
 
-The toolbar should include:
+## 8. Asset and archive boundaries
 
-```text
-Upload .md
-Export .docx
-Clear
-Load Sample
-Template Selector
-```
+Insertion stores a Blob, optionally downscales it, caches a temporary object URL and inserts `![alt](mdimg://id)` at the textarea selection. `mdimg://` is the persistent reference; `blob:` URLs are temporary browser resources, not stored Markdown identity.
 
-### Upload `.md`
+`imageCache.js` has cache/pending maps and subscribers. It revokes a URL when replacing the same entry, but has no bounded eviction or deletion invalidation. The orphan attachment callback is unused.
 
-Allows user to select a local Markdown file.
+History export writes `INDEX.md`, deduplicated `documents/*.md`, and optional `snapshots/<sanitized-title>/<second-resolution-time>.md`. It does not include image bytes, document metadata/layout or an import manifest. Duplicate titles/timestamps can collide in snapshot paths and the index can disagree with deduplicated filenames.
 
-### Export `.docx`
+Share URLs similarly carry text only. A portable versioned bundle is proposed under T07; storage schema and share serialization should not be confused with such a bundle.
 
-Converts current Markdown into Word document and downloads it.
+## 9. UX, preferences and presentation
 
-### Clear
+The main responsive breakpoint is 767/768 px. Mobile tabs are click-driven, not swipe gestures. Settings/History/Share/Layout/Batch are statically imported and rendered conditionally, not React.lazy modals.
 
-Clears the current editor content.
+Theme tokens support light/dark/system and safe-area padding. CSS reduced-motion shortens token durations; it does not suppress the laser canvas loop. `useTheme` instances do not subscribe to shared state changes. Duplicated settings controls and independent keys weaken reset/synchronization semantics.
 
-### Load Sample
+Read mode uses an 820 px base maximum width, persisted zoom/width-lock and scroll-driven toolbar hiding. Presentation uses mouse events, a saturated DOM laser dot and optional fading canvas trail; color/size/trail/fullscreen are configurable. It is not a touch presentation implementation. Modal focus trapping, consistent Escape/focus return and keyboard navigation are pending (T15).
 
-Loads sample Markdown content for testing.
+## 10. Delivery and cache architecture
 
-### Template Selector
+`vite.config.js` uses base/scope/start URL `/Markdown-Editor/`. Manifest and service worker are generated into `dist/`; there are no source `public/sw.js`, custom registration file, BUILD_VERSION comparison or unregister URL kill-switch.
 
-Allows user to choose Word output style.
+- `registerType: prompt`; React virtual registration exposes offlineReady/needRefresh.
+- Workbox precaches matching JS/CSS/HTML/icons/images/SVG/WOFF assets with a 5 MiB per-file ceiling, including lazy chunks. Deferred JS execution is not the same as deferred background download.
+- Runtime document requests: NetworkFirst, 3-second timeout; script/style/worker: StaleWhileRevalidate; image/font: CacheFirst with 60-entry / 30-day expiration. These runtime bounds do not cap the whole precache.
+- Cleanup of outdated precaches is enabled. New hashes may affect multiple chunks; vendor cache reuse is not guaranteed on every application change.
+- UpdatePrompt polls `registration.update()` hourly and counts down 30 seconds **after** a waiting update is detected. No 30-second deployment-detection guarantee exists. Reload is not save-aware.
+- `.github/workflows/deploy.yml`: main push -> Node 20 -> npm ci -> build -> Pages artifact -> deploy. No PR test/lint job or acceptance gate exists.
 
-MVP templates:
+See [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) for exact packages and [docs/REVIEW.md](docs/REVIEW.md) for build evidence. Browser install/offline/update behavior remains unverified in this review.
 
-```text
-Default
-Business Report
-Technical Document
-Minimal
-```
+## 11. Target architecture — proposed, not delivered
 
----
+1. Explicit document sessions and transactions for save/restore/share transitions (T02–T05).
+2. Safe, structure-aware rendering boundaries and shared syntax fixtures; choose parser convergence based on compatibility evidence rather than a wholesale rewrite (T01/T08/T09).
+3. Reactive asset repository/cache with reference-safe retention and versioned portable bundles (T06/T07).
+4. Shared action/dialog/preferences primitives and authoritative style/page configuration (T11/T12/T15/T19).
+5. Test harness, dependency triage and CI gates before performance-driven refactoring (T16–T19).
 
-## 16. Error Handling
-
-The app should handle:
-
-- Empty Markdown content
-- Invalid file type
-- Large file warning
-- Export failure
-- Unsupported Markdown node
-- Browser download failure
-
-Example error messages:
-
-```text
-Please enter Markdown content before exporting.
-Only .md files are supported.
-Export failed. Please try again.
-Some Markdown features are not supported yet.
-```
-
----
-
-## 17. Performance Considerations
-
-The app should support normal Markdown files smoothly.
-
-MVP target:
-
-```text
-Small document: < 50 KB
-Medium document: 50 KB - 500 KB
-Large document: 500 KB - 2 MB
-```
-
-For large files:
-
-- Debounce preview rendering.
-- Avoid re-parsing on every keystroke immediately.
-- Show loading status during export.
-- Consider web worker in future version.
-
----
-
-## 18. Security Considerations
-
-Preview rendering should be safe.
-
-Rules:
-
-```text
-Do not execute user-provided scripts.
-Disable raw HTML by default.
-Sanitize rendered HTML if raw HTML is enabled.
-Do not automatically fetch remote resources during export.
-```
-
-Potential risks:
-
-- XSS from Markdown preview
-- Unsafe remote image loading
-- Malicious HTML inside Markdown
-- Large file memory usage
-
----
-
-## 19. Accessibility Requirements
-
-The app should be usable with keyboard and screen readers.
-
-Requirements:
-
-- Buttons must have clear labels.
-- Editor must be focusable.
-- Preview area should have clear heading.
-- Error messages should be readable by assistive technology.
-- Color contrast should be sufficient.
-- Keyboard navigation should work.
-
----
-
-## 20. Testing Strategy
-
-### Unit Tests
-
-Test converter functions:
-
-```text
-convertHeading
-convertParagraph
-convertInline
-convertList
-convertTable
-convertCodeBlock
-```
-
-### Integration Tests
-
-Test full conversion flow:
-
-```text
-Markdown input
-  ↓
-AST parse
-  ↓
-DOCX generation
-  ↓
-Blob output
-```
-
-### Manual Tests
-
-Open exported `.docx` in:
-
-```text
-Microsoft Word
-Google Docs
-LibreOffice Writer
-Apple Pages
-```
-
-### Test Documents
-
-Create test Markdown files for:
-
-```text
-Basic document
-Long document
-Lists
-Tables
-Code blocks
-Mixed formatting
-Unsupported elements
-```
-
----
-
-## 21. Acceptance Criteria
-
-MVP is complete when:
-
-- User can type Markdown.
-- User can preview Markdown.
-- User can upload `.md` file.
-- User can export `.docx`.
-- Exported `.docx` opens in Microsoft Word.
-- Headings are preserved.
-- Paragraphs are preserved.
-- Bold and italic text are preserved.
-- Bullet lists are preserved.
-- Numbered lists are preserved.
-- Code blocks are visually distinguishable.
-- Basic tables are exported as Word tables.
-- Empty input is handled gracefully.
-- Invalid file type is handled gracefully.
-
----
-
-## 22. Known Limitations
-
-Markdown preview and Word output will not look exactly the same.
-
-Reasons:
-
-- Browser uses HTML/CSS layout.
-- Microsoft Word uses Word layout engine.
-- DOCX has different spacing and style rules.
-- Some Markdown features do not map directly to Word features.
-
-The correct expectation is:
-
-```text
-Preview shows content meaning.
-DOCX export preserves document structure.
-```
-
-Not:
-
-```text
-Preview and Word are pixel-perfect identical.
-```
-
----
-
-## 23. Future Roadmap
-
-### Version 1
-
-- Markdown editor
-- Live preview
-- Basic `.docx` export
-- Basic style config
-
-### Version 2
-
-- Table improvements
-- Nested list support
-- Link support improvement
-- Template selector
-- Better code block style
-
-### Version 3
-
-- Image support
-- Header and footer
-- Page number
-- Cover page
-- Table of contents
-
-### Version 4
-
-- Custom Word template upload
-- Enterprise branding
-- Batch conversion
-- Markdown folder conversion
-- API mode
-- Desktop app mode
-
----
-
-## 24. Design Principle
-
-This project should behave like a small document compiler.
-
-```text
-Markdown is the source language.
-DOCX is the target format.
-The converter is the compiler.
-```
-
-The most important part of the system is not the UI.
-
-The most important part is:
-
-```text
-Markdown AST → DOCX mapping
-```
-
-If this layer is clean, the project can grow into a serious document export engine.
-
----
-
-## 25. Attention Point
-
-Do not build the converter by copying preview HTML directly into Word.
-
-That approach looks easy at first, but it becomes hard to control when handling:
-
-- Tables
-- Lists
-- Nested formatting
-- Code blocks
-- Word styles
-- Templates
-- Page layout
-
-The better long-term approach is:
-
-```text
-Markdown
-  ↓
-AST
-  ↓
-DOCX object model
-  ↓
-.docx
-```
-
-This gives the project better control, cleaner architecture, and easier future extension.
+The architecture goal remains a small document compiler, but reliability requires testing its session, asset, rendering and delivery dependencies together. Module separation alone is not evidence of zero regression.
