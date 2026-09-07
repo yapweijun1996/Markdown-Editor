@@ -60,9 +60,9 @@ These records document choices visible in the source; they do not invent histori
 
 ## D07 — PWA prompt registration and broad precache
 
-**Status: Implemented with unsafe update coordination.** VitePWA generates SW/manifest; Workbox precaches matching assets including lazy chunks; UpdatePrompt uses a 30-second countdown after detection and hourly explicit checks.
+**Status: Implemented with acceptance gaps.** VitePWA generates SW/manifest; Workbox precaches matching assets including lazy chunks; UpdatePrompt displays the `package.json` version, offers an explicit **Update now** action, uses a 30-second countdown after detection and performs hourly explicit checks.
 
-**Consequences:** offline-ready depends on successful installation/cache/storage; lazy execution does not imply zero initial background download. Update activation now attempts the history flush and keeps the prompt open when saving fails, but no guaranteed update-adoption rate or deploy-to-detection delay exists.
+**Consequences:** offline-ready depends on successful installation/cache/storage; lazy execution does not imply zero initial background download. Update activation attempts the history flush and pauses the countdown when saving fails, but no guaranteed update-adoption rate or deploy-to-detection delay exists.
 
 **Remaining refinement:** real multi-tab/offline upgrade tests and stronger dirty-state recovery (T02/T17). Select any change to countdown policy explicitly; docs alone do not change runtime behavior.
 

@@ -32,7 +32,7 @@ No backend, authentication, authorization, collaboration, cloud synchronization 
 | R14 | Convert multiple selected Markdown files with stable progress and failure isolation | Partial: sequential file conversion uses stable entry IDs, immutable batches, unique ZIP names, bounded inputs, failed-entry retry and cancellation; browser failure checks remain | T13, T14 |
 | R15 | Support accessible editing, reading, dialogs and presentation | Partial: shared modal focus/Tab/Escape/return behavior, labels/roles and reduced-motion laser suppression exist; keyboard/screen-reader/contrast/touch-target acceptance remains incomplete | T15 |
 | R16 | Protect untrusted-input boundaries, local data and update transitions | Partial: raw HTML disabled, Mermaid strict mode and scoped SW exist; custom preview text paths escape at construction, resource/network limits and stale shortener protection now exist, while browser boundary, save/update and dependency risks remain | T01, T02, T14, T16 |
-| R17 | Provide reproducible dependencies, tests, release gates and truthful documentation | Partial: lockfile/build/deploy workflow, a 34-test Node contract suite and CI test/build gate exist; browser/component/Office coverage, lint/type checks and license remain unresolved | T16, T17, T19, T20, T21 |
+| R17 | Provide reproducible dependencies, tests, release gates and truthful documentation | Partial: lockfile/build/deploy workflow, a 35-test Node contract suite and CI test/build gate exist; browser/component/Office coverage, lint/type checks and license remain unresolved | T16, T17, T19, T20, T21 |
 | R18 | Keep large-document and offline use responsive within measured budgets | Unverified: chunking/PWA cache exist; no representative browser measurements or enforced budget | T18 |
 
 ## 3. User modes and controls
@@ -100,7 +100,7 @@ These are existing constants, not recommended permanent limits. Their code locat
 | QR | 240 px canvas, error correction M; Share disables QR above 2,953 URL characters | `src/limits/resourceLimits.js`, `src/share/QRCodeView.jsx` |
 | Image boundary | 25 MiB per image, 40,000,000 decoded pixels; PNG/JPEG/GIF/BMP/SVG only; active SVG content rejected | `src/limits/resourceLimits.js`, `src/images/imageRepo.js` |
 | Diagram/batch boundary | Mermaid code up to 100,000 characters; 100 batch files, 2 MiB per Markdown file and 50 MiB total input | `src/limits/resourceLimits.js`, `src/preview/mermaidRenderer.js`, `src/batch/batchProcess.js` |
-| PWA update | 30-second countdown after detection; explicit polling every hour | `src/pwa/UpdatePrompt.jsx` |
+| PWA update | Displays the package version, offers an explicit `Update now` action, polls hourly and auto-updates after a 30-second countdown; save failure pauses the countdown | `src/pwa/UpdatePrompt.jsx`, `package.json` |
 
 The configured save delays are **inactivity delays**, not periodic maximum-loss guarantees. Draft auto-save can be disabled without disabling IndexedDB history saving. Typed editor content has no separate hard limit, while shared-link, batch, image, diagram and decoded-share boundaries are enforced as listed above.
 

@@ -1232,6 +1232,7 @@ body {
 
 .pwa-toast button:hover { background: var(--fill-primary); }
 .pwa-toast button:active { transform: scale(0.96); }
+.pwa-toast button:disabled { opacity: 0.6; cursor: wait; }
 
 .pwa-toast .pwa-btn-primary {
   background: var(--accent);

@@ -8,7 +8,7 @@ Current source note: `b691ca6`; no browser/Office acceptance is implied.
 
 ## Current position
 
-Core editor/DOCX, PWA/history/preferences, rich-output components and Read/presentation code exist. Follow-up source changes now cover preview interpolation escaping, bounded/serialized saves, shared-session isolation, target-safe restore, content-aware snapshots, reactive image ownership, a versioned asset-bearing backup path, page/print readiness contracts, validated/shared preferences, stable batch identities, resource/network bounds and shared modal accessibility behavior. Build and a 34-test Node contract suite succeed, but security, data lifecycle, backup round-trip and browser/Office output acceptance remain incomplete. No full browser/Office acceptance results exist.
+Core editor/DOCX, PWA/history/preferences, rich-output components and Read/presentation code exist. Follow-up source changes now cover preview interpolation escaping, bounded/serialized saves, shared-session isolation, target-safe restore, content-aware snapshots, reactive image ownership, a versioned asset-bearing backup path, page/print readiness contracts, validated/shared preferences, stable batch identities, resource/network bounds and shared modal accessibility behavior. Build and a 35-test Node contract suite succeed, but security, data lifecycle, backup round-trip and browser/Office output acceptance remain incomplete. No full browser/Office acceptance results exist.
 
 See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich-output scope corrections, and [docs/REVIEW.md](docs/REVIEW.md) for evidence.
 

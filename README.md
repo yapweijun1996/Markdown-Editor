@@ -31,7 +31,7 @@ Documentation baseline: source commit `b691ca6`, reviewed 2026-09-07 (UTC). Pack
 - **Action parity is in progress:** Layout, Batch Convert and Insert Image picker use the shared More action registry, whose overflow trigger is now visible across Edit-mode viewport sizes. Keyboard/focus and representative browser acceptance remain pending (T11).
 - **Preview is not authorization:** recipients can edit/export shared content. Compression is not encryption, resource/URL/QR capacity limits are enforced but browser large-input acceptance remains pending, and TinyURL receives the entire content-bearing URL.
 - **Accessibility hardening is source-complete but not certified:** modal focus/Tab/Escape/return behavior is shared, history rename controls are not nested, and reduced-motion stops the laser trail loop. Browser screen-reader, contrast and touch-target checks remain pending.
-- **No claim of comprehensive validation:** a 34-test `node:test` suite and CI test/build gate now exist, but there is no browser/component/IndexedDB E2E suite, measured Lighthouse report or recorded full browser/Office acceptance. The sample's illustrative coverage percentages are not real test coverage.
+- **No claim of comprehensive validation:** a 35-test `node:test` suite and CI test/build gate now exist, but there is no browser/component/IndexedDB E2E suite, measured Lighthouse report or recorded full browser/Office acceptance. The sample's illustrative coverage percentages are not real test coverage.
 
 ## Getting started
 
@@ -96,7 +96,7 @@ Most converters read `src/styles/templates/`; `wordStyleConfig.js` still duplica
 
 `.github/workflows/deploy.yml` runs npm ci, the Node contract suite and the Vite build on pull requests and pushes to `main`; only main pushes upload the Pages artifact and deploy to GitHub Pages. Browser/storage/Office acceptance, lint and type checks remain outside CI.
 
-Workbox precaches generated assets, including lazy-loaded libraries. Lazy execution does not mean those bytes are never downloaded in the background. UpdatePrompt explicitly checks for updates hourly and starts a 30-second reload countdown once an update is detected; it does not guarantee discovery within 30 seconds of deployment. Before reload it attempts the history flush and keeps the prompt open when saving fails; browser crash and multi-tab behavior remain unverified.
+Workbox precaches generated assets, including lazy-loaded libraries. Lazy execution does not mean those bytes are never downloaded in the background. UpdatePrompt displays the current package version, offers an explicit **Update now** action, checks for updates hourly and starts a 30-second update countdown once an update is detected; it does not guarantee discovery within 30 seconds of deployment. Before activation it attempts the history flush and pauses the countdown when saving fails; browser crash and multi-tab behavior remain unverified.
 
 ## Development direction
 

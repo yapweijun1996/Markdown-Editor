@@ -35,7 +35,7 @@ src/main.jsx (React.StrictMode; theme -> app -> print CSS)
   +-- ShareModal: LZ compression -> URL fragment -> clipboard / QR / TinyURL opt-in
   +-- BatchConvertSheet: selected .md files -> sequential DOCX -> JSZip
   +-- HistoryPanel/VersionsView: repositories -> list/search/restore/text ZIP
-  +-- UpdatePrompt: generated Workbox SW registration -> update countdown
+  +-- UpdatePrompt: generated Workbox SW registration -> versioned update prompt/countdown
 ```
 
 These modules are separated by responsibility but **not independent failure domains**. Export reads document layout/history and image storage, and Mermaid export imports the preview renderer. Mode changes pause saving. PWA reload can discard pending edits. Changes across these boundaries require integration tests.
@@ -64,7 +64,7 @@ These modules are separated by responsibility but **not independent failure doma
 | `src/batch/` | File collection with stable entry IDs, immutable processing batches and sequential DOCX ZIP generation |
 | `src/limits/` | Central resource and supported-image MIME limits used by share, image, diagram and batch paths |
 | `src/accessibility/` | Shared modal focus/Tab/Escape/focus-return behavior |
-| `src/pwa/UpdatePrompt.jsx` | SW registration via virtual module, hourly checks and 30-second countdown |
+| `src/pwa/UpdatePrompt.jsx` | SW registration via virtual module, package-version display, explicit update action, hourly checks and 30-second countdown |
 
 ## 4. Document/session state and lifecycle
 
@@ -169,7 +169,7 @@ Read mode uses an 820 px base maximum width, persisted zoom/width-lock and scrol
 - Workbox precaches matching JS/CSS/HTML/icons/images/SVG/WOFF assets with a 5 MiB per-file ceiling, including lazy chunks. Deferred JS execution is not the same as deferred background download.
 - Runtime document requests: NetworkFirst, 3-second timeout; script/style/worker: StaleWhileRevalidate; image/font: CacheFirst with 60-entry / 30-day expiration. These runtime bounds do not cap the whole precache.
 - Cleanup of outdated precaches is enabled. New hashes may affect multiple chunks; vendor cache reuse is not guaranteed on every application change.
-- UpdatePrompt polls `registration.update()` hourly and counts down 30 seconds **after** a waiting update is detected. No 30-second deployment-detection guarantee exists. Reload is not save-aware.
+- UpdatePrompt displays `package.json`'s version, offers an explicit **Update now** action, polls `registration.update()` hourly and counts down 30 seconds **after** a waiting update is detected. Save failure pauses the countdown; no 30-second deployment-detection guarantee exists.
 - `.github/workflows/deploy.yml`: pull requests and main pushes -> Node 20 -> npm ci -> test -> build; main pushes then upload the Pages artifact and deploy. Browser/storage/Office acceptance, lint and type checks are not enforced.
 
 See [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) for exact packages and [docs/REVIEW.md](docs/REVIEW.md) for build evidence. Browser install/offline/update behavior remains unverified in this review.

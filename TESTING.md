@@ -44,7 +44,7 @@ For every result record commit, environment, command/steps, expected/actual, art
 | Empty content | Save A, select all/delete, wait, reload | Existing document intentionally persists empty content, not the old text | T02 |
 | Draft freshness | Make recovery draft newer than the stored current doc; reload | Newer recovery content is offered after load, not silently ignored/overwritten | T02 |
 | Stale current ID | Remember a deleted document with a recoverable draft; reload | Missing ID is cleared/recovered and draft fallback works | T02 |
-| PWA update | Make unsaved edits; trigger waiting SW and countdown/Reload Now | Flush completes before activation, or failure leaves reload paused | T02 |
+| PWA update | Make unsaved edits; trigger waiting SW and verify the package version and `Update now` button | Flush completes before activation, or failure leaves the update countdown paused | T02 |
 | Storage failure | Inject quota/open/put failure | Visible recoverable error; destructive transition is not silently allowed | T02 |
 | Restore B while viewing A | Open B's timeline from History without selecting B, restore a version | Only B changes; B's previous content is backed up | T03 |
 | Shared session | Select local A, open a shared URL, click Edit and save | A stays unchanged; received content has new local identity; current code forks before autosave resumes | T04 |
