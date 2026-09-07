@@ -7,12 +7,13 @@ Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
 ## 1. Current verification infrastructure
 
 - `npm run build` exists and passed in this review.
-- No committed unit/component/E2E suite, fixtures, coverage report, lint/type-check command or PR test gate exists. T17 owns this work.
-- Deployment currently runs npm ci/build only. The UI sample's percentage coverage table is illustrative content, not measured coverage.
+- A small committed `node:test` suite covers pure DB helpers, Markdown AST parsing and share URL round trips. It is not a browser, component, IndexedDB or Office suite.
+- GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes; lint/type-check and richer fixtures remain T17 work. The UI sample's percentage coverage table is illustrative content, not measured coverage.
 - No live-site, browser installation/offline update, Lighthouse, real-device, screen-reader or Word/LibreOffice/Google Docs acceptance was performed during the review.
 
 ```sh
 npm ci
+npm test
 npm run build
 npm run preview
 ```
@@ -54,8 +55,9 @@ For every result record commit, environment, command/steps, expected/actual, art
 
 Known baseline defects are described in TASK and REVIEW. These cases have not been run as browser E2E in this review.
 
-## 4. Proposed automated suite (T17; not yet installed)
+## 4. Automated suite expansion (T17; partially installed)
 
+- **Current:** Node built-in `node:test` runs pure DB helper, Markdown AST and share URL tests through `npm test`.
 - **Unit/component:** candidate Vitest + React Testing Library; preference/schema/URL limits and renderer fixtures.
 - **Persistence:** candidate fake-indexeddb with explicit IDs, delayed/failing transactions, concurrent operations, snapshot retention and image references.
 - **DOCX integration:** generate Blob, unzip with JSZip, assert XML text/styles/relationships/page dimensions/media content and unsupported-node warnings. Check semantics, not unstable byte-for-byte ZIP equality.

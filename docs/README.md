@@ -37,7 +37,7 @@ Source baseline: `445cc05` · reviewed 2026-09-07 (UTC).
 5. Refresh dependency/build evidence when packages change; do not copy old bundle or audit numbers as current measurements.
 6. Check Markdown links, file references and task IDs; avoid claiming manual checks were executed when they were only listed.
 
-This is the intended OODAE/harness workflow: observe -> orient -> decide -> act -> evaluate, with source and test artifacts as the feedback loop. The application test/CI harness itself is still pending T17.
+This is the intended OODAE/harness workflow: observe -> orient -> decide -> act -> evaluate, with source and test artifacts as the feedback loop. A minimal Node test/CI harness exists; richer application coverage remains T17.
 
 ## External knowledge base
 

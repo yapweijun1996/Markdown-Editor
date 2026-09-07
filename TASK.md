@@ -35,7 +35,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 | T14 | P1 | Resource limits and sharing/network resilience | Open | T17 | R03, R08, R14, R16 |
 | T15 | P1 | Keyboard, modal and presentation accessibility | Open | T11, T17 | R12, R15 |
 | T16 | P0 | Dependency advisory triage and safe upgrades | Open | Initial triage has no prerequisite; upgrades need T17 | R16, R17 |
-| T17 | P0 | Automated test harness and CI quality gates | Open | None | R17 |
+| T17 | P0 | Automated test harness and CI quality gates | In progress | None | R17 |
 | T18 | P2 | Measured preview, history, batch and PWA performance | Open | T06, T09, T13, T17 | R18 |
 | T19 | P2 | Refactor orchestration and consolidate configuration | Open | T02, T08, T11, T12, T17 | R17, R18 |
 | T21 | P1 | Confirm project license and add authoritative license file | Open | Repository owner decision | R17 |
@@ -142,9 +142,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T17 — Harness and CI
 
-- Evidence: `package.json` has only dev/build/preview scripts; deploy CI runs install/build, not tests, lint or type checks. No committed automated test suite exists.
-- Select and add a unit/component runner (proposed: Vitest + React Testing Library), IndexedDB fixtures (proposed: fake-indexeddb), and browser E2E runner (proposed: Playwright); these are not current dependencies.
-- Add failure-first regression fixtures for T01–T16, DOCX XML assertions, linting and PR checks. Keep real-browser/Word validation distinct from unit results.
+- Evidence: `package.json` now has a `test` script using Node's built-in `node:test`; `test/` covers pure DB helpers, Markdown AST parsing and share URL round trips. GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes before deployment.
+- Remaining: add component/persistence fixtures, DOCX XML assertions, failure-first regression fixtures for T01–T16, lint/type checks and browser E2E. Vitest/React Testing Library/fake-indexeddb/Playwright remain candidates, not current dependencies.
+- Keep real-browser/Word validation distinct from unit results.
 - Done when documented commands run in a clean checkout, failing critical regressions block deployment, and test artifacts/limitations are recorded. Large refactors must follow, not precede, this foundation.
 
 ### T18 — Performance

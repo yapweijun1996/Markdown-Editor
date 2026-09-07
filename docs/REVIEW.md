@@ -21,6 +21,7 @@ No browser automation/subagent/MCP KB tool was available in this session. No ext
 | `git status --short` before documentation edits | Clean | No pre-existing tracked changes at review baseline |
 | `npm ci --ignore-scripts --no-audit --no-fund` | Completed; 635 packages installed | Local inspection install; does not change CI's npm ci behavior |
 | `npm ls --depth=0` | Resolved direct packages listed successfully | Versions captured in DEPENDENCIES.md |
+| `npm test` | Passed; 6 Node built-in contract tests | Pure helpers/parser/share only; not browser, storage or Office validation |
 | `npm run build` | Passed; Vite 6.4.2 and PWA 1.2.0 generated dist | Build only, not user-flow validation |
 | `npm audit --json` | 19 affected-package vulnerability entries: 12 high, 6 moderate, 1 low, 0 critical | Includes transitive/build chains; exposure still requires triage |
 | Follow-up `npm.cmd run build` | Passed again; the same production chunks and PWA output were generated | Confirms source/build reproducibility in the current Windows workspace |
@@ -136,7 +137,7 @@ The following were traced in source but not executed as complete browser workflo
 | T13 | Batch identity maps use filenames; selection mutable during processing; no traversal | Batch sheet/processor |
 | T14 | Typed/shared/batch/image limits incomplete, format normalization gaps, shortener lacks timeout/stale-result guard | File/image/share/batch modules |
 | T15 | No common modal focus/escape contract, nested rename input/button, laser ignores reduced-motion preference | Modal components, HistoryPanel, LaserPointer |
-| T17 | No automated suite/lint/type-check/PR gate committed | package.json, workflow and tracked file inventory |
+| T17 | Minimal Node contract suite and test/build PR gate now exist; component/storage/E2E/lint/type checks remain absent | `package.json`, `test/`, workflow and tracked file inventory |
 | T18 | Full synchronous preview, getAll history and broad precache; no browser profiling evidence | Preview/history/Vite config |
 | T19 | Root orchestration and sample/icons combined; duplicate config/settings controls | App/styles/components |
 | T21 | MIT badge previously existed but no tracked license file | Original README and git file inventory |
@@ -150,6 +151,7 @@ Missing original-plan features (custom templates, Word math, gallery, directory 
 - Updated README/TESTING and added this docs index, decision log and dependency inventory.
 - Corrected schema v2, mdimg references, trailing save timing, snapshot pin/filter behavior, batch files-only scope, TinyURL cutoff direction, preview permissions, math/PDF/template scope and Read/presentation behavior.
 - Removed unverified coverage/Lighthouse/performance/deployment claims and an unsupported project-license badge; recorded the license decision as pending.
+- Added a six-test Node contract layer and made test/build verification run for pull requests and main pushes; richer application coverage remains T17.
 - Kept contributor instructions and application/package/CI files unchanged. No application defect was fixed by writing documentation.
 
 Final local documentation validation passed:

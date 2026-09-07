@@ -30,7 +30,7 @@ Documentation baseline: source commit `445cc05`, reviewed 2026-09-07 (UTC). Pack
 - **No complete backup:** history ZIP and share URLs contain text, not local `mdimg://` image bytes or document layout. There is no archive import. Clearing/evicting browser site data may delete all stored work.
 - **Desktop action gap:** Layout, Batch Convert and Insert Image picker are wired only into the mobile More menu. Image paste/drop still has editor handlers. These features need desktop entry points (T11).
 - **Preview is not authorization:** recipients can edit/export shared content. Compression is not encryption, URLs/QR have practical capacity limits, and TinyURL receives the entire content-bearing URL.
-- **No claim of comprehensive validation:** there is no committed automated test suite, measured Lighthouse report or recorded full browser/Office acceptance. The sample's illustrative coverage percentages are not real test coverage.
+- **No claim of comprehensive validation:** a small `node:test` suite and CI test/build gate now exist, but there is no browser/component/IndexedDB E2E suite, measured Lighthouse report or recorded full browser/Office acceptance. The sample's illustrative coverage percentages are not real test coverage.
 
 ## Getting started
 
@@ -47,7 +47,7 @@ The Vite base path is `/Markdown-Editor/`; use the URL printed by Vite with that
 
 CI currently uses Node 20; no `engines` field or Node-version file is committed. The review build ran on Node 25.2.1/npm 11.6.2 on Windows. A supported/pinned CI/local toolchain policy is pending T16. Exact packages and security-audit caveats: [Dependencies](docs/DEPENDENCIES.md).
 
-Only `dev`, `build` and `preview` scripts currently exist. `npm test`, lint and type-check commands are not configured; their addition is T17.
+`dev`, `test`, `build` and `preview` scripts exist. The current `npm test` command covers pure JavaScript contracts only; lint, type-check, browser E2E and Office validation remain T17 work.
 
 ## Modes
 

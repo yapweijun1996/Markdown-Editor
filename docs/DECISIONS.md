@@ -86,11 +86,11 @@ These records document choices visible in the source; they do not invent histori
 
 ## D10 — Verification-first engineering harness
 
-**Status: Proposed for application code; documentation workflow adopted.** A failing fixture should precede a fix; CI should enforce security/data-integrity and output contracts before deploy.
+**Status: In progress.** A small Node built-in contract suite and CI test/build gate are implemented; a failing fixture should precede application fixes, and CI should enforce security/data-integrity and output contracts before deploy.
 
-**Candidates, not installed:** Vitest, React Testing Library, fake-indexeddb, Playwright and ESLint. Select versions and runner/browser scope under T17, with dependency risk review under T16.
+**Candidates, not installed:** Vitest, React Testing Library, fake-indexeddb, Playwright and ESLint. Node's built-in `node:test` is installed through the runtime and currently covers pure helpers/parser/share contracts. Select additional versions and runner/browser scope under T17, with dependency risk review under T16.
 
-**Required artifacts:** unit/component fixtures, explicit IndexedDB transaction/recovery tests, DOCX XML assertions, real browser/PWA tests, manual Office evidence, dependency reports and source-aligned docs. Isolated scripts in REVIEW are exploratory checks, not a committed automated suite.
+**Required artifacts:** unit/component fixtures, explicit IndexedDB transaction/recovery tests, DOCX XML assertions, real browser/PWA tests, manual Office evidence, dependency reports and source-aligned docs. The committed Node suite is a first contract layer, not complete application coverage.
 
 **Trade-offs to resolve:** supported Node/browser matrix and performance budgets; avoid broad orchestration/parser rewrites before protective tests (T19).
 

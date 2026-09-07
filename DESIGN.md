@@ -8,7 +8,7 @@ This replaces the original MVP proposal with the architecture actually present i
 
 A browser-resident document editor/compiler: Markdown is source text; HTML preview and DOCX are separate rendering targets. PDF is a print of HTML preview, not a DOCX conversion. IndexedDB/localStorage provide local persistence, not synchronization or backup guarantees.
 
-React 18 and plain JavaScript/JSX run under Vite. There is no router library, backend, authentication, application API, TypeScript configuration, global preferences provider, worker-based converter or committed automated test suite.
+React 18 and plain JavaScript/JSX run under Vite. There is no router library, backend, authentication, application API, TypeScript configuration, global preferences provider or worker-based converter. A small Node built-in test suite now covers pure contracts; browser/component/IndexedDB integration coverage is still pending.
 
 ## 2. Runtime architecture
 

@@ -32,7 +32,7 @@ No backend, authentication, authorization, collaboration, cloud synchronization 
 | R14 | Convert multiple selected Markdown files with stable progress and failure isolation | Partial: sequential file conversion and ZIP exist; duplicate filename identity/running queue gaps | T13, T14 |
 | R15 | Support accessible editing, reading, dialogs and presentation | Partial: labels/roles, CSS tokens, motion settings and laser controls exist; keyboard/modal/reduced-motion acceptance incomplete | T15 |
 | R16 | Protect untrusted-input boundaries, local data and update transitions | Partial: raw HTML disabled, Mermaid strict mode and scoped SW exist; XSS, limits, save/update and dependency risks remain | T01, T02, T14, T16 |
-| R17 | Provide reproducible dependencies, tests, release gates and truthful documentation | Partial: lockfile/build/deploy workflow exist; no automated suite or lint gate; license unresolved | T16, T17, T19, T20, T21 |
+| R17 | Provide reproducible dependencies, tests, release gates and truthful documentation | Partial: lockfile/build/deploy workflow, a Node built-in contract suite and CI test/build gate exist; browser/component/Office coverage, lint/type checks and license remain unresolved | T16, T17, T19, T20, T21 |
 | R18 | Keep large-document and offline use responsive within measured budgets | Unverified: chunking/PWA cache exist; no representative browser measurements or enforced budget | T18 |
 
 ## 3. User modes and controls

@@ -6,13 +6,13 @@ This is an ordered plan, not a release calendar. Package version remains `0.1.0`
 
 ## Current position
 
-Core editor/DOCX, PWA/history/preferences, rich-output components and Read/presentation code exist. The latest source commits add zoom/width-lock/scroll toolbar behavior, configurable laser presentation and saturated laser styling. Build succeeds, but security, data lifecycle and output correctness defects remain. No automated suite or full browser/Office acceptance results exist.
+Core editor/DOCX, PWA/history/preferences, rich-output components and Read/presentation code exist. The latest source commits add zoom/width-lock/scroll toolbar behavior, configurable laser presentation and saturated laser styling. Build and a small Node contract suite succeed, but security, data lifecycle and output correctness defects remain. No full browser/Office acceptance results exist.
 
 See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich-output scope corrections, and [docs/REVIEW.md](docs/REVIEW.md) for evidence.
 
 ## Milestone 0 — Make changes verifiable
 
-- Establish the minimum automated harness and PR checks (T17).
+- Extend the initial Node contract harness into the minimum application harness and PR checks (T17).
 - Triage dependency advisories and select a supported Node/toolchain policy (T16).
 - Capture failure-first tests for XSS, shared-session overwrite, cross-document restore, lost/empty edits and snapshot filtering (T01–T05).
 - Documentation reconciliation is completed as T20, not as an application release.

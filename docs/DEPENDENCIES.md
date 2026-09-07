@@ -50,6 +50,7 @@ Only these scripts are configured:
 
 ```sh
 npm run dev       # vite
+npm test          # node --test "test/*.test.js"
 npm run build     # vite build (includes PWA generation)
 npm run preview   # vite preview
 ```
@@ -89,7 +90,7 @@ Audit commands can exit nonzero when advisories exist. The full audit ran in the
 
 ## Not installed
 
-No TypeScript, ESLint, Vitest, Jest, React Testing Library, fake-indexeddb or Playwright setup is committed. Vitest/RTL/fake-indexeddb/Playwright are candidates for T17, not current dependencies.
+No TypeScript, ESLint, Vitest, Jest, React Testing Library, fake-indexeddb or Playwright setup is committed. The repository uses Node's built-in `node:test` for a small pure-logic suite; Vitest/RTL/fake-indexeddb/Playwright are candidates for T17, not current dependencies.
 
 No remark-math, markdown-it-katex, mammoth, pdf-lib, jsPDF or html2canvas exists in package.json. Custom Word template extraction, Word math and programmatic PDF must not be documented as delivered because they appeared in historical plans.
 
