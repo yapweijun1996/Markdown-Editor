@@ -1,6 +1,6 @@
 # EPIC-V3 — Rich output scope reconciliation
 
-Baseline: `b691ca6` · reviewed 2026-09-07 (UTC).
+Baseline: `edd7906` · reviewed 2026-09-07 (UTC).
 
 **Position: partially implemented against the original proposal; not blanket “planned” or “complete.”** V3 is a historical feature-group name, not a current package version or proof of release acceptance. The former proposal listed several nonexistent modules and dependencies; this document records what actually landed and what remains.
 

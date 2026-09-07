@@ -1,6 +1,6 @@
 # Review evidence — source baseline and documentation reconciliation
 
-Reviewed: **2026-09-07 (UTC)**. Historical documentation baseline: **`445cc05bcbc69647c3d08eb17edcd2d2da5ee56a`**. Current implementation baseline: **`b691ca6`**. Package: `markdown-editor@0.1.0`.
+Reviewed: **2026-09-07 (UTC)**. Historical documentation baseline: **`445cc05bcbc69647c3d08eb17edcd2d2da5ee56a`**. Current implementation baseline: **`edd7906`**. Package: `markdown-editor@0.1.0`.
 
 This is a point-in-time evidence record, not a declaration that the application is safe or fully tested. [TASK](../TASK.md) owns current remediation status. [TESTING](../TESTING.md) owns acceptance procedures.
 

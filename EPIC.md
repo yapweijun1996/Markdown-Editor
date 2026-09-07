@@ -1,6 +1,6 @@
 # EPIC — Implemented capabilities and active stabilization scope
 
-Baseline: `b691ca6` · reviewed 2026-09-07 (UTC).
+Baseline: `edd7906` · reviewed 2026-09-07 (UTC).
 
 This replaces the old blanket “V2 shipped/all checks passed” record. Code presence is not proof of deployment, browser compatibility, performance or acceptance. Package version is still `0.1.0`. V1/V2/V3 labels describe historical feature groups only.
 

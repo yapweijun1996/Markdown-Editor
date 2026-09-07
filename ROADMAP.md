@@ -1,10 +1,10 @@
 # ROADMAP — Stabilize before expanding
 
-Baseline: `b691ca6` · reviewed 2026-09-07 (UTC).
+Baseline: `edd7906` · reviewed 2026-09-07 (UTC).
 
 This is an ordered plan, not a release calendar. Package version remains `0.1.0`; V1/V2/V3 are historical feature-group labels, not verified semantic release tags. [TASK.md](TASK.md) is the task-status source of truth; application fixes below are in progress or open until their acceptance evidence is recorded.
 
-Current source note: `b691ca6`; no browser/Office acceptance is implied.
+Current source note: `edd7906`; no browser/Office acceptance is implied.
 
 ## Current position
 

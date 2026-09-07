@@ -1,6 +1,6 @@
 # Dependencies and tooling
 
-Baseline: `b691ca6` · inspected 2026-09-07 (UTC).
+Baseline: `edd7906` · inspected 2026-09-07 (UTC).
 
 `package.json` is authoritative for declared ranges; `package-lock.json` is authoritative for resolved versions. The following snapshot was checked using `npm ls --depth=0` and a successful production build on 2026-09-07 (UTC). It is not an upgrade proposal or claim that installed versions have no advisories.
 

@@ -1,6 +1,6 @@
 # Documentation index and maintenance contract
 
-Source baseline: `b691ca6` · reviewed 2026-09-07 (UTC).
+Source baseline: `edd7906` · reviewed 2026-09-07 (UTC).
 
 ## Ownership: one authoritative home per concern
 

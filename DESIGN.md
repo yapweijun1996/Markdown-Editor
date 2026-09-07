@@ -1,10 +1,10 @@
 # DESIGN — Current architecture and design boundaries
 
-Baseline: `b691ca6` · reviewed 2026-09-07 (UTC).
+Baseline: `edd7906` · reviewed 2026-09-07 (UTC).
 
 This replaces the original MVP proposal with the architecture actually present in `src/`. Proposed corrections are labelled explicitly. [SPEC.md](SPEC.md) owns requirements/defaults, [TASK.md](TASK.md) owns work status, and [docs/DECISIONS.md](docs/DECISIONS.md) records implemented choices versus proposals.
 
-Current source note: `b691ca6` described in TASK and REVIEW; no browser/Office acceptance is implied.
+Current source note: `edd7906` described in TASK and REVIEW; no browser/Office acceptance is implied.
 
 ## 1. Product model
 
