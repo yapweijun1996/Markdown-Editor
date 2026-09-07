@@ -35,7 +35,7 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 
 - Complete image reactivity, ownership, references and lifecycle acceptance (T06).
 - Verify the versioned backup/import implementation with collision-safe assets/metadata and failure cases (T07).
-- Correct recursive DOCX conversion, unsupported-feature reporting and formatting/list semantics (T08).
+- Complete recursive DOCX conversion, unsupported-feature reporting and formatting/list semantics, then run reader checks (T08).
 - Make math/diagram processing structure-aware and lifecycle-safe (T09).
 - Fix landscape XML, validate cover/TOC behavior, image sizing and print readiness (T10).
 

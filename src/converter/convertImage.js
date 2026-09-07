@@ -45,6 +45,15 @@ function detectImageType(mime) {
 
 function readDimensions(buffer, mime) {
   return new Promise((resolve) => {
+    if (
+      typeof Blob === 'undefined' ||
+      typeof URL === 'undefined' ||
+      typeof URL.createObjectURL !== 'function' ||
+      typeof Image === 'undefined'
+    ) {
+      resolve({ width: 320, height: 240 })
+      return
+    }
     const blob = new Blob([buffer], { type: mime })
     const url = URL.createObjectURL(blob)
     const img = new Image()
@@ -69,7 +78,23 @@ function readDimensions(buffer, mime) {
   })
 }
 
-export async function convertImage(node) {
+function createImageRun(data) {
+  const type = detectImageType(data.mime)
+  return new ImageRun({
+    data: data.buffer,
+    transformation: { width: data.width, height: data.height },
+    type,
+    altText: data.alt
+      ? { name: data.alt, description: data.alt, title: data.alt }
+      : undefined,
+  })
+}
+
+function unavailableImageText(alt) {
+  return alt ? `[Image: ${alt}]` : '[Image not available]'
+}
+
+export async function loadImageData(node) {
   const url = node.url || ''
   const alt = (node.alt || node.title || '').trim()
 
@@ -88,7 +113,12 @@ export async function convertImage(node) {
       buffer = await blobToArrayBuffer(blob)
     }
   } else if (url.startsWith('data:')) {
-    const decoded = await decodeDataUri(url)
+    let decoded = null
+    try {
+      decoded = await decodeDataUri(url)
+    } catch {
+      decoded = null
+    }
     if (decoded) {
       buffer = decoded.buffer
       mime = decoded.mime
@@ -96,12 +126,33 @@ export async function convertImage(node) {
   }
   // Remote http(s) images are out of scope (V3 non-goal: remote image downloading)
 
-  if (!buffer) {
+  if (!buffer) return null
+
+  const { width, height } = await readDimensions(buffer, mime)
+  return { buffer, mime, alt, width, height }
+}
+
+export async function convertInlineImage(node, inherited = {}) {
+  const data = await loadImageData(node)
+  if (!data) {
+    return new TextRun({
+      ...inherited,
+      text: unavailableImageText((node.alt || node.title || '').trim()),
+      italics: true,
+      color: '888888',
+    })
+  }
+  return createImageRun(data)
+}
+
+export async function convertImage(node) {
+  const data = await loadImageData(node)
+  if (!data) {
     const cfg = wordStyleConfig.paragraph
     return new Paragraph({
       children: [
         new TextRun({
-          text: alt ? `[Image: ${alt}]` : '[Image not available]',
+          text: unavailableImageText((node.alt || node.title || '').trim()),
           italics: true,
           color: '888888',
         }),
@@ -110,20 +161,8 @@ export async function convertImage(node) {
     })
   }
 
-  const { width, height } = await readDimensions(buffer, mime)
-  const type = detectImageType(mime)
-
   return new Paragraph({
-    children: [
-      new ImageRun({
-        data: buffer,
-        transformation: { width, height },
-        type,
-        altText: alt
-          ? { name: alt, description: alt, title: alt }
-          : undefined,
-      }),
-    ],
+    children: [createImageRun(data)],
     spacing: { after: 160 },
   })
 }

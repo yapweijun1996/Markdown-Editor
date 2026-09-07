@@ -10,12 +10,14 @@ const ALIGN_MAP = {
   justify: AlignmentType.JUSTIFIED,
 }
 
-export function convertParagraph(node, cfg = defaultTemplate) {
+export async function convertParagraph(node, cfg = defaultTemplate, overrides = {}) {
   const c = cfg.paragraph
-  const runs = convertInlineNodes(node.children, {}, cfg)
+  const runs = await convertInlineNodes(node.children, {}, cfg)
+  const { prefixRuns = [], ...paragraphOverrides } = overrides
 
   return new Paragraph({
-    children: runs,
+    ...paragraphOverrides,
+    children: [...prefixRuns, ...runs],
     spacing: { after: c.spacingAfter, line: c.lineSpacing },
     alignment: c.alignment ? (ALIGN_MAP[c.alignment] || undefined) : undefined,
   })

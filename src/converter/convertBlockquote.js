@@ -1,8 +1,8 @@
-import { Paragraph, BorderStyle } from 'docx'
+import { Paragraph, BorderStyle, TextRun } from 'docx'
 import { defaultTemplate } from '../styles/templates/default.js'
 import { convertInlineNodes } from './convertInline.js'
 
-export function convertBlockquote(node, cfg = defaultTemplate) {
+export async function convertBlockquote(node, cfg = defaultTemplate, convertBlock) {
   const c = cfg.blockquote
   const paragraphs = []
 
@@ -14,10 +14,21 @@ export function convertBlockquote(node, cfg = defaultTemplate) {
         size: c.fontSize,
       }
       paragraphs.push(new Paragraph({
-        children: convertInlineNodes(child.children, inheritedRun, cfg),
+        children: await convertInlineNodes(child.children, inheritedRun, cfg),
         indent: { left: c.indentLeft },
         border: { left: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC', space: 8 } },
         spacing: { after: c.spacingAfter },
+      }))
+    } else if (convertBlock) {
+      const blocks = await convertBlock(child)
+      paragraphs.push(...blocks)
+    } else {
+      paragraphs.push(new Paragraph({
+        children: [new TextRun({
+          text: `[Unsupported Markdown node: ${child.type}]`,
+          italics: true,
+          color: '888888',
+        })],
       }))
     }
   }

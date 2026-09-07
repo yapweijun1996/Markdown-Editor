@@ -7,7 +7,7 @@ Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
 ## 1. Current verification infrastructure
 
 - `npm run build` exists and passed in this review.
-- A small committed `node:test` suite covers pure DB helpers, Markdown AST parsing, share URL round trips and local-image warnings, preview escaping, save timing, snapshot policy, image ownership and backup manifest/reference validation. It is not a browser, component, IndexedDB or Office suite.
+- A small committed `node:test` suite covers DB helpers, Markdown AST parsing, share URL round trips and local-image warnings, preview escaping, save timing, snapshot policy, image ownership, backup manifest/reference validation and DOCX XML/media contracts. It is not a browser, component, IndexedDB or Office suite.
 - GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes; lint/type-check and richer fixtures remain T17 work. The UI sample's percentage coverage table is illustrative content, not measured coverage.
 - No live-site, browser installation/offline update, Lighthouse, real-device, screen-reader or Word/LibreOffice/Google Docs acceptance was performed during the review.
 
@@ -57,10 +57,10 @@ Known baseline defects are described in TASK and REVIEW. These cases have not be
 
 ## 4. Automated suite expansion (T17; partially installed)
 
-- **Current:** Node built-in `node:test` runs 17 pure-contract tests through `npm test`, including DB helpers, Markdown AST, share URL/local-image warnings, preview escaping, save timing, snapshot policy, image ownership and backup manifest/reference validation.
+- **Current:** Node built-in `node:test` runs 21 contract tests through `npm test`, including DB helpers, Markdown AST, share URL/local-image warnings, preview escaping, save timing, snapshot policy, image ownership, backup manifest/reference validation and DOCX XML/media contracts.
 - **Unit/component:** candidate Vitest + React Testing Library; preference/schema/URL limits and renderer fixtures.
 - **Persistence:** candidate fake-indexeddb with explicit IDs, delayed/failing transactions, concurrent operations, snapshot retention and image references.
-- **DOCX integration:** generate Blob, unzip with JSZip, assert XML text/styles/relationships/page dimensions/media content and unsupported-node warnings. Check semantics, not unstable byte-for-byte ZIP equality.
+- **DOCX integration:** the current Node suite generates Blob, unzips with JSZip and asserts XML text/styles/list starts/relationships/media content and unsupported-node warnings. It remains a focused contract layer; reader interoperability and browser-only image paths still require manual acceptance.
 - **Browser:** candidate Playwright for actual IndexedDB, clipboard/drop workflows where supported, mode transitions, DOM injection safety, PWA update/offline, print readiness and focus.
 - **CI:** PR lint/tests/build with retained reports; deploy depends on successful gates. Choose supported browsers/Node versions explicitly.
 
@@ -74,7 +74,7 @@ Each fix must carry a focused regression fixture. Complete browser/Office checks
 - [ ] Confirm HTTP(S) preview links have target `_blank` and `noopener noreferrer`.
 - [ ] Tables/code/long identifiers remain readable at narrow widths; no whole-page overflow.
 - [ ] Test Sample/upload/new/clear under the transition policy (T02); current handlers have a save barrier, but browser failure evidence is pending.
-- [ ] Deliberately unsupported Markdown produces explicit export warnings/fallbacks after T08, not disappearance.
+- [ ] Expand the explicit unsupported Markdown export warnings/fallbacks beyond the current T08 fixtures; unsupported content must not disappear.
 
 ## 6. DOCX fidelity and layout
 

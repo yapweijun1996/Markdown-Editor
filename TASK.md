@@ -26,7 +26,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 | T05 | P0 | Content-aware snapshots and mandatory recovery snapshots | In progress | T17 | R07 |
 | T06 | P1 | Reactive images, ownership and cache lifecycle | In progress | T02, T17 | R08 |
 | T07 | P1 | Portable, importable document/history backups | In progress | T06 | R03, R09 |
-| T08 | P1 | Recursive, loss-aware DOCX conversion | Open | T17 | R04 |
+| T08 | P1 | Recursive, loss-aware DOCX conversion | In progress | T17 | R04 |
 | T09 | P1 | Token-aware math and asynchronous preview lifecycle | Open | T01, T17 | R02, R05 |
 | T10 | P1 | Correct page layout, cover, TOC and print readiness | Open | T08, T09 | R10, R11 |
 | T11 | P1 | Desktop/mobile action parity | Open | T17 | R01, R12 |
@@ -93,8 +93,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T08 — DOCX fidelity
 
-- Evidence: isolated DOCX XML checks show missing nested list code, quoted headings, inline images and deletion formatting. Inline reference links, task-list state and list start/restart semantics also lack explicit handling.
-- Use recursive block/inline conversion with an explicit supported-node contract and warnings or readable fallbacks for unsupported nodes. Preserve list-item continuation paragraphs and template behavior; validate table-header styling rather than assuming config mutation reaches XML.
+- Baseline evidence: isolated DOCX XML checks showed missing nested list code, quoted headings, inline images and deletion formatting. Inline reference links, task-list state and list start/restart semantics also lacked explicit handling.
+- Current evidence: the converter now awaits recursive block/inline conversion, preserves list-item continuation blocks, GFM task markers, deletion runs, inline/data/internal images, quoted child blocks and ordered-list starts. Table header styling is inherited into nested runs, and unsupported block nodes become explicit readable fallback paragraphs. `test/docx.test.js` unzips generated DOCX files and covers these XML/media contracts.
+- Remaining: broaden supported-node/reader fixtures, verify internal image loading and unsupported fallbacks in a browser, and run representative files through Word and LibreOffice. Complex quote styling and some list semantics still need reader-level acceptance.
 - Done when the supported syntax fixtures preserve content and semantics in DOCX XML, unsupported input never disappears silently, and representative files open correctly in Word and LibreOffice.
 
 ### T09 — Math/diagram preview lifecycle
@@ -148,7 +149,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T17 — Harness and CI
 
-- Evidence: `package.json` now has a `test` script using Node's built-in `node:test`; `test/` covers pure DB helpers, Markdown AST parsing, share URL round trips, preview escaping, snapshot policy, save timing and image ownership. GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes before deployment.
+- Evidence: `package.json` now has a `test` script using Node's built-in `node:test`; `test/` covers DB helpers, Markdown AST parsing, share URL/local-image warnings, preview escaping, snapshot policy, save timing, image ownership, backup manifest/reference validation and DOCX XML/media contracts. GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes before deployment.
 - Remaining: add component/persistence fixtures, DOCX XML assertions, failure-first regression fixtures for T01–T16, lint/type checks and browser E2E. Vitest/React Testing Library/fake-indexeddb/Playwright remain candidates, not current dependencies.
 - Keep real-browser/Word validation distinct from unit results.
 - Done when documented commands run in a clean checkout, failing critical regressions block deployment, and test artifacts/limitations are recorded. Large refactors must follow, not precede, this foundation.

@@ -1,5 +1,5 @@
 import {
-  Document, Packer, Paragraph,
+  Document, Packer, Paragraph, TextRun,
   AlignmentType, LevelFormat, convertInchesToTwip,
 } from 'docx'
 import { parseMarkdown } from '../parser/parseMarkdown.js'
@@ -16,43 +16,67 @@ import { isTocPlaceholder, buildTableOfContents } from './convertToc.js'
 import { buildPageHeader, buildPageFooter, buildPageProps } from './pageLayout.js'
 import { buildCoverPage } from './coverPage.js'
 
-const NUMBERING = {
-  config: [
-    {
-      reference: 'bullet-list',
-      levels: [0, 1, 2, 3, 4, 5].map((lvl) => ({
-        level: lvl,
-        format: LevelFormat.BULLET,
-        text: ['•', '◦', '▪', '·', '∘', '▫'][lvl] || '•',
-        alignment: AlignmentType.LEFT,
-        style: {
-          paragraph: {
-            indent: {
-              left: convertInchesToTwip(0.5 + lvl * 0.4),
-              hanging: convertInchesToTwip(0.25),
-            },
-          },
+const MAX_LIST_LEVEL = 5
+const BULLET_MARKS = ['•', '◦', '▪', '·', '◌', '▫']
+
+function buildListLevels(ordered, start) {
+  return Array.from({ length: MAX_LIST_LEVEL + 1 }, (_, level) => ({
+    level,
+    format: ordered ? LevelFormat.DECIMAL : LevelFormat.BULLET,
+    text: ordered ? `%${level + 1}.` : BULLET_MARKS[level],
+    alignment: AlignmentType.LEFT,
+    start: ordered && level === 0 ? start : undefined,
+    style: {
+      paragraph: {
+        indent: {
+          left: convertInchesToTwip(0.5 + level * 0.4),
+          hanging: convertInchesToTwip(0.25),
         },
-      })),
+      },
     },
-    {
-      reference: 'ordered-list',
-      levels: [0, 1, 2, 3, 4, 5].map((lvl) => ({
-        level: lvl,
-        format: LevelFormat.DECIMAL,
-        text: `%${lvl + 1}.`,
-        alignment: AlignmentType.LEFT,
-        style: {
-          paragraph: {
-            indent: {
-              left: convertInchesToTwip(0.5 + lvl * 0.4),
-              hanging: convertInchesToTwip(0.25),
-            },
-          },
-        },
-      })),
-    },
-  ],
+  }))
+}
+
+function collectListNodes(node, context) {
+  if (!node || typeof node !== 'object') return
+  if (node.type === 'list') {
+    const reference = `${node.ordered ? 'ordered' : 'bullet'}-list-${context.nextReference++}`
+    const start = Number.isInteger(node.start) && node.start > 0 ? node.start : 1
+    context.listReferences.set(node, reference)
+    context.config.push({
+      reference,
+      levels: buildListLevels(!!node.ordered, start),
+    })
+  }
+  for (const child of node.children || []) collectListNodes(child, context)
+}
+
+function buildListContext(ast) {
+  const context = { listReferences: new WeakMap(), config: [], nextReference: 1 }
+  collectListNodes(ast, context)
+  return context
+}
+
+function readableNodeValue(node) {
+  if (typeof node.value === 'string' && node.value) return node.value
+  if (node.children) {
+    return node.children.map(readableNodeValue).filter(Boolean).join(' ').trim()
+  }
+  return node.identifier || ''
+}
+
+function unsupportedBlock(node) {
+  const readableValue = readableNodeValue(node)
+  const value = readableValue
+    ? ` ${readableValue}`
+    : ''
+  return new Paragraph({
+    children: [new TextRun({
+      text: `[Unsupported Markdown node: ${node.type}]${value}`,
+      italics: true,
+      color: '888888',
+    })],
+  })
 }
 
 function paragraphIsImageOnly(node) {
@@ -63,7 +87,7 @@ function paragraphIsImageOnly(node) {
   return meaningful.length === 1 && meaningful[0].type === 'image'
 }
 
-async function convertNode(node, cfg) {
+async function convertNode(node, cfg, context) {
   // TOC placeholder takes priority over default paragraph handling
   if (isTocPlaceholder(node)) {
     return buildTableOfContents()
@@ -71,24 +95,29 @@ async function convertNode(node, cfg) {
 
   switch (node.type) {
     case 'heading':
-      return [convertHeading(node, cfg)]
+      return [await convertHeading(node, cfg)]
 
     case 'paragraph': {
       if (paragraphIsImageOnly(node)) {
         const imageNode = node.children.find((c) => c.type === 'image')
         return [await convertImage(imageNode)]
       }
-      return [convertParagraph(node, cfg)]
+      return [await convertParagraph(node, cfg)]
     }
 
     case 'image':
       return [await convertImage(node)]
 
     case 'list':
-      return convertList(node, cfg)
+      return await convertList(
+        node,
+        cfg,
+        (child) => convertNode(child, cfg, context),
+        context
+      )
 
     case 'table':
-      return [convertTable(node, cfg)]
+      return [await convertTable(node, cfg)]
 
     case 'code':
       if (isMermaidCodeBlock(node)) {
@@ -97,7 +126,7 @@ async function convertNode(node, cfg) {
       return convertCodeBlock(node, cfg)
 
     case 'blockquote':
-      return convertBlockquote(node, cfg)
+      return await convertBlockquote(node, cfg, (child) => convertNode(child, cfg, context))
 
     case 'thematicBreak':
       return [new Paragraph({
@@ -106,7 +135,7 @@ async function convertNode(node, cfg) {
       })]
 
     default:
-      return []
+      return [unsupportedBlock(node)]
   }
 }
 
@@ -119,9 +148,10 @@ export async function markdownToDocx(markdownText, options = {}) {
 
   const cfg = getTemplate(templateId)
   const ast = parseMarkdown(markdownText)
+  const listContext = buildListContext(ast)
 
   const childrenArrays = await Promise.all(
-    ast.children.map((node) => convertNode(node, cfg))
+    ast.children.map((node) => convertNode(node, cfg, listContext))
   )
   const bodyChildren = childrenArrays.flat()
 
@@ -152,7 +182,7 @@ export async function markdownToDocx(markdownText, options = {}) {
   if (footer) section.footers = { default: footer }
 
   const doc = new Document({
-    numbering: NUMBERING,
+    numbering: { config: listContext.config },
     styles: {
       default: {
         document: {

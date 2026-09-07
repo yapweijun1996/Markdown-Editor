@@ -11,10 +11,10 @@ const HEADING_MAP = {
   6: HeadingLevel.HEADING_6,
 }
 
-export function convertHeading(node, cfg = defaultTemplate) {
+export async function convertHeading(node, cfg = defaultTemplate) {
   const depth = node.depth
   const headingCfg = cfg[`heading${depth}`] || cfg.heading1
-  const runs = convertInlineNodes(node.children, {
+  const runs = await convertInlineNodes(node.children, {
     bold: headingCfg.bold,
     color: headingCfg.color,
     size: headingCfg.fontSize,

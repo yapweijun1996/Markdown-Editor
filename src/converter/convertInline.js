@@ -1,21 +1,29 @@
 import { TextRun, ExternalHyperlink } from 'docx'
 import { defaultTemplate } from '../styles/templates/default.js'
+import { convertInlineImage } from './convertImage.js'
 
-export function convertInlineNodes(nodes, inherited = {}, cfg = defaultTemplate) {
+export async function convertInlineNodes(nodes, inherited = {}, cfg = defaultTemplate) {
   if (!nodes) return []
-  return nodes.flatMap((node) => convertInlineNode(node, inherited, cfg))
+  const runs = []
+  for (const node of nodes) {
+    runs.push(...await convertInlineNode(node, inherited, cfg))
+  }
+  return runs
 }
 
-function convertInlineNode(node, inherited, cfg) {
+async function convertInlineNode(node, inherited, cfg) {
   switch (node.type) {
     case 'text':
       return [new TextRun({ text: node.value, ...inherited })]
 
     case 'strong':
-      return convertInlineNodes(node.children, { ...inherited, bold: true }, cfg)
+      return await convertInlineNodes(node.children, { ...inherited, bold: true }, cfg)
 
     case 'emphasis':
-      return convertInlineNodes(node.children, { ...inherited, italics: true }, cfg)
+      return await convertInlineNodes(node.children, { ...inherited, italics: true }, cfg)
+
+    case 'delete':
+      return await convertInlineNodes(node.children, { ...inherited, strike: true }, cfg)
 
     case 'inlineCode': {
       const c = cfg.inlineCode
@@ -24,7 +32,7 @@ function convertInlineNode(node, inherited, cfg) {
 
     case 'link': {
       const c = cfg.link
-      const runs = convertInlineNodes(node.children, {
+      const runs = await convertInlineNodes(node.children, {
         ...inherited,
         color: c.color,
         underline: {},
@@ -32,11 +40,14 @@ function convertInlineNode(node, inherited, cfg) {
       return [new ExternalHyperlink({ link: node.url, children: runs })]
     }
 
+    case 'image':
+      return [await convertInlineImage(node, inherited)]
+
     case 'break':
       return [new TextRun({ text: '', break: 1 })]
 
     default:
-      if (node.children) return convertInlineNodes(node.children, inherited, cfg)
+      if (node.children) return await convertInlineNodes(node.children, inherited, cfg)
       if (node.value) return [new TextRun({ text: node.value, ...inherited })]
       return []
   }

@@ -1,8 +1,8 @@
-import { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, BorderStyle, ShadingType } from 'docx'
+import { Table, TableRow, TableCell, Paragraph, WidthType, BorderStyle, ShadingType } from 'docx'
 import { defaultTemplate } from '../styles/templates/default.js'
 import { convertInlineNodes } from './convertInline.js'
 
-export function convertTable(node, cfg = defaultTemplate) {
+export async function convertTable(node, cfg = defaultTemplate) {
   const c = cfg.table
   const border = {
     top:    { style: BorderStyle.SINGLE, size: 1, color: c.borderColor },
@@ -11,15 +11,17 @@ export function convertTable(node, cfg = defaultTemplate) {
     right:  { style: BorderStyle.SINGLE, size: 1, color: c.borderColor },
   }
 
-  const rows = node.children.map((rowNode, rowIndex) => {
+  const rows = []
+  for (const [rowIndex, rowNode] of node.children.entries()) {
     const isHeader = rowIndex === 0
 
-    const cells = rowNode.children.map((cellNode) => {
-      const headerExtra = isHeader && c.headerColor ? { color: c.headerColor } : {}
-      const runs = convertInlineNodes(cellNode.children, headerExtra, cfg)
-      if (isHeader && c.headerBold) {
-        runs.forEach((run) => { if (run.options) run.options.bold = true })
+    const cells = []
+    for (const cellNode of rowNode.children) {
+      const headerExtra = {
+        ...(isHeader && c.headerColor ? { color: c.headerColor } : {}),
+        ...(isHeader && c.headerBold ? { bold: true } : {}),
       }
+      const runs = await convertInlineNodes(cellNode.children, headerExtra, cfg)
 
       const cellOpts = {
         children: [new Paragraph({ children: runs })],
@@ -29,11 +31,11 @@ export function convertTable(node, cfg = defaultTemplate) {
       if (isHeader && c.headerShading) {
         cellOpts.shading = { type: ShadingType.SOLID, color: c.headerShading, fill: c.headerShading }
       }
-      return new TableCell(cellOpts)
-    })
+      cells.push(new TableCell(cellOpts))
+    }
 
-    return new TableRow({ children: cells })
-  })
+    rows.push(new TableRow({ children: cells }))
+  }
 
   return new Table({
     rows,

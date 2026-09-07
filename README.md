@@ -11,7 +11,7 @@ Documentation baseline: source commit `445cc05`, reviewed 2026-09-07 (UTC). Pack
 ## What is implemented
 
 - Markdown textarea, `.md` upload (up to 2 MiB), sample content and live preview.
-- Basic editable Word export: headings, text formatting, direct links, lists, tables, code and paragraph blockquotes. Some nested/inline content is currently omitted; see [syntax coverage](SPEC.md#4-markdownoutput-contract-at-this-baseline).
+- Basic editable Word export: headings, text formatting, direct links, recursive lists/blocks, tables, code, images and blockquotes. Tested unsupported nodes now remain visible as fallbacks; broader syntax and reader compatibility remain incomplete. See [syntax coverage](SPEC.md#4-markdownoutput-contract-at-this-baseline).
 - Four built-in Word templates, per-document page settings, cover and TOC generation code. Landscape/cover behavior has known defects; Office field compatibility needs testing.
 - Image paste/drop/picker with local Blob storage and standalone-image DOCX embedding. Image reload, ownership and format limitations remain.
 - KaTeX preview and Mermaid SVG preview/PNG Word export attempt. Word math is not rendered as equations or images.

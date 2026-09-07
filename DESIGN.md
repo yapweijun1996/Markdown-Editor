@@ -125,7 +125,7 @@ Remote images may be fetched by the browser. No final common sanitizer or CSP me
 
 ## 7. DOCX and PDF pipelines
 
-`downloadDocx` imports the converter and file-saver on demand. The converter parses Markdown, converts top-level nodes concurrently with `Promise.all`, flattens output, prepends cover paragraphs, applies page properties/header/footer, and packs one section to Blob.
+`downloadDocx` imports the converter and file-saver on demand. The converter parses Markdown, registers list numbering, recursively converts block/inline nodes (including async image runs) concurrently at the top level with `Promise.all`, flattens output, prepends cover paragraphs, applies page properties/header/footer, and packs one section to Blob. Unsupported block nodes become readable fallback paragraphs instead of disappearing silently.
 
 - Most converter modules receive the selected template `cfg`; the default is `defaultTemplate`.
 - List conversion is recursive only for nested list/paragraph children, not generic blocks; blockquote conversion accepts only paragraphs. Inline handling lacks image/delete/reference-link semantics.
