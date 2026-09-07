@@ -7,7 +7,7 @@ Baseline: `445cc05` · reviewed 2026-09-07 (UTC).
 ## 1. Current verification infrastructure
 
 - `npm run build` exists and passed in this review.
-- A small committed `node:test` suite covers pure DB helpers, Markdown AST parsing and share URL round trips. It is not a browser, component, IndexedDB or Office suite.
+- A small committed `node:test` suite covers pure DB helpers, Markdown AST parsing, share URL round trips, preview escaping and snapshot policy. It is not a browser, component, IndexedDB or Office suite.
 - GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes; lint/type-check and richer fixtures remain T17 work. The UI sample's percentage coverage table is illustrative content, not measured coverage.
 - No live-site, browser installation/offline update, Lighthouse, real-device, screen-reader or Word/LibreOffice/Google Docs acceptance was performed during the review.
 
@@ -49,7 +49,7 @@ For every result record commit, environment, command/steps, expected/actual, art
 | Restore B while viewing A | Open B's timeline from History without selecting B, restore a version | Only B changes; B's previous content is backed up | T03 |
 | Shared session | Select local A, open a shared URL, click Edit and save | A stays unchanged; received content has new local identity | T04 |
 | Share transitions | Exercise first-load hash/query, later hashchange and editable share mode | Isolation and saving policy remain consistent, no permanent paused state | T04 |
-| Equal-length snapshot | Replace content with different same-length text; also make small edits | Defined snapshot protection is applied; forced backups always persist | T05 |
+| Equal-length snapshot | Replace content with different same-length text; also make small edits | Unit policy covers both changes; persistence must prove the defined snapshot protection and forced backups | T05 |
 | Failed restore backup | Force the recovery-snapshot write to fail | Restore aborts or preserves a documented recovery path; no silent overwrite | T03, T05 |
 | Multi-tab | Concurrent edits/metadata changes and DB version upgrade across two tabs | Defined conflict/blocked-upgrade recovery; no silent metadata reversal | T02, T12 |
 
@@ -57,7 +57,7 @@ Known baseline defects are described in TASK and REVIEW. These cases have not be
 
 ## 4. Automated suite expansion (T17; partially installed)
 
-- **Current:** Node built-in `node:test` runs pure DB helper, Markdown AST and share URL tests through `npm test`.
+- **Current:** Node built-in `node:test` runs pure DB helper, Markdown AST, share URL, preview escaping and snapshot-policy tests through `npm test`.
 - **Unit/component:** candidate Vitest + React Testing Library; preference/schema/URL limits and renderer fixtures.
 - **Persistence:** candidate fake-indexeddb with explicit IDs, delayed/failing transactions, concurrent operations, snapshot retention and image references.
 - **DOCX integration:** generate Blob, unzip with JSZip, assert XML text/styles/relationships/page dimensions/media content and unsupported-node warnings. Check semantics, not unstable byte-for-byte ZIP equality.
@@ -134,7 +134,7 @@ Each fix must carry a focused regression fixture. Complete browser/Office checks
 ## 11. History, preferences and batch
 
 - [ ] Save/open/search/pin/rename/delete documents; verify manual rename survives later edits after T12.
-- [ ] Confirm 50-snapshot FIFO and no snapshot pin feature unless explicitly implemented; test same timestamps/concurrent inserts.
+- [ ] Confirm 50-snapshot FIFO and no snapshot pin feature unless explicitly implemented; test same timestamps/concurrent inserts and failing writes. Pure policy coverage exists for equal-length/small changes.
 - [ ] Theme controls stay synchronized; system theme changes, reload and Settings reset match the chosen scope.
 - [ ] Editor size/family/line-height/wrap affect textarea; read zoom and Word templates remain separate controls.
 - [ ] Invalid/stale stored preferences recover safely; unsupported-version behavior is documented.

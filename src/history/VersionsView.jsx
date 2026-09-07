@@ -76,10 +76,14 @@ export default function VersionsView({ doc, onRestore, onClose }) {
                     <div className="versions-actions">
                       <button
                         className="versions-restore"
-                        onClick={() => {
+                        onClick={async () => {
                           if (confirm('Restore this version? The current content will be saved as a new snapshot first.')) {
-                            onRestore(snap.content)
-                            onClose()
+                            try {
+                              await onRestore(snap.content)
+                              onClose()
+                            } catch (err) {
+                              alert(err.message || 'Restore failed; current content was kept.')
+                            }
                           }
                         }}
                       >

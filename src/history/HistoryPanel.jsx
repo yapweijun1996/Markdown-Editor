@@ -281,12 +281,9 @@ export default function HistoryPanel({
         {versionsDoc && (
           <VersionsView
             doc={versionsDoc}
-            onRestore={(content) => {
-              if (versionsDoc.id === currentDocId) {
-                onRestoreSnapshot(content)
-              } else {
-                onOpen(versionsDoc.id).then(() => onRestoreSnapshot(content))
-              }
+            onRestore={async (content) => {
+              const restored = await onRestoreSnapshot(versionsDoc.id, content)
+              if (!restored) throw new Error('Restore failed; current content was kept.')
             }}
             onClose={() => setVersionsDoc(null)}
           />

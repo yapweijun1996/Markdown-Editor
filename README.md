@@ -26,7 +26,7 @@ Documentation baseline: source commit `445cc05`, reviewed 2026-09-07 (UTC). Pack
 ## Important limitations
 
 - **Save is not guaranteed:** draft/history/snapshots use inactivity debounces, not fixed periodic checkpoints. Switching documents or auto-reloading for a PWA update does not first flush pending changes. Read mode pauses saving.
-- **Share/restore identity is unsafe:** editing a received share may overwrite the previously selected local document; restoring another document's version can target the previous document. Fixes are pending (T03/T04).
+- **Share/save identity is unsafe:** editing a received share may overwrite the previously selected local document, and pending saves still do not flush across transitions. Version restore now passes an explicit target ID and creates a forced recovery snapshot before replacement, but persistence/failure acceptance remains pending (T02–T04).
 - **No complete backup:** history ZIP and share URLs contain text, not local `mdimg://` image bytes or document layout. There is no archive import. Clearing/evicting browser site data may delete all stored work.
 - **Desktop action gap:** Layout, Batch Convert and Insert Image picker are wired only into the mobile More menu. Image paste/drop still has editor handlers. These features need desktop entry points (T11).
 - **Preview is not authorization:** recipients can edit/export shared content. Compression is not encryption, URLs/QR have practical capacity limits, and TinyURL receives the entire content-bearing URL.

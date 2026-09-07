@@ -72,7 +72,7 @@ Startup checks a shared hash (or legacy query), otherwise opens the remembered d
 
 Document and snapshot timers are trailing debounces, restarted by editing. Read mode and the shared-link flag pause them. The draft timer has its own delay/enablement. Open/new do not flush pending writes; no max-wait, dirty-state UI or multi-tab coordination exists. The hook skips empty text saves. See SPEC for exact timing.
 
-Shared content does not clear the remembered local document identity. Editing a share can therefore resume saving into an unrelated document; hash-change and first-load handling differ. Cross-document version restore can reuse a callback closing over the old identity.
+Shared content does not clear the remembered local document identity. Editing a share can therefore resume saving into an unrelated document; hash-change and first-load handling differ. Version restore now passes an explicit target identity and persists a forced recovery snapshot before replacement, while transition/save coordination remains open.
 
 **Proposed (T02–T05):** a document-session service/hook with explicit local/shared identity, revisions, dirty/saving/saved/error state, serialized writes and recovery policy. Transitions must await saving (or explicit discard), and restore operations must take target IDs directly. This service is not implemented in the baseline.
 
@@ -91,7 +91,7 @@ Source: `src/history/db.js` and repositories. DB: `markdown-editor-db`, version 
 - Titles derive from the first Markdown heading of any level or first nonblank line, strip selected formatting characters and cap at 80 characters. Word count splits on whitespace, not language-aware segmentation.
 - Metadata/content updates use separate get/put transactions and can race. Each content save re-derives title, overriding manual rename.
 - Deleting a document uses a multi-store transaction to cascade snapshots and images indexed to that ID. Unowned images are not included. Shared-reference safety is not modeled.
-- Snapshots contain content only: no layout, title, pin or image copy. Automatic retention caps them at 50, with no pinned-snapshot exception. Its length-difference filter is not a content diff.
+- Snapshots contain content only: no layout, title, pin or image copy. Automatic retention caps them at 50, with no pinned-snapshot exception. Changed content is eligible regardless of length; forced recovery snapshots use the same FIFO store and may preserve empty content.
 - DB open failure resets the cached open promise. Blocked upgrade only logs a warning; no user-assisted multi-tab upgrade recovery is implemented.
 
 ### localStorage keys
@@ -165,7 +165,7 @@ Read mode uses an 820 px base maximum width, persisted zoom/width-lock and scrol
 - Runtime document requests: NetworkFirst, 3-second timeout; script/style/worker: StaleWhileRevalidate; image/font: CacheFirst with 60-entry / 30-day expiration. These runtime bounds do not cap the whole precache.
 - Cleanup of outdated precaches is enabled. New hashes may affect multiple chunks; vendor cache reuse is not guaranteed on every application change.
 - UpdatePrompt polls `registration.update()` hourly and counts down 30 seconds **after** a waiting update is detected. No 30-second deployment-detection guarantee exists. Reload is not save-aware.
-- `.github/workflows/deploy.yml`: main push -> Node 20 -> npm ci -> build -> Pages artifact -> deploy. No PR test/lint job or acceptance gate exists.
+- `.github/workflows/deploy.yml`: pull requests and main pushes -> Node 20 -> npm ci -> test -> build; main pushes then upload the Pages artifact and deploy. Browser/storage/Office acceptance, lint and type checks are not enforced.
 
 See [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) for exact packages and [docs/REVIEW.md](docs/REVIEW.md) for build evidence. Browser install/offline/update behavior remains unverified in this review.
 

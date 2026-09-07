@@ -21,9 +21,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 |---|---|---|---|---|---|
 | T01 | P0 | Safe preview HTML boundary | In progress | T17 | R02, R16 |
 | T02 | P0 | Durable document-session lifecycle and save feedback | Open | T17 | R06, R16 |
-| T03 | P0 | Target-safe, atomic version restoration | Open | T02, T05 | R07 |
+| T03 | P0 | Target-safe, atomic version restoration | In progress | T02, T05 | R07 |
 | T04 | P0 | Isolated shared-document sessions | Open | T02 | R03, R06 |
-| T05 | P0 | Content-aware snapshots and mandatory recovery snapshots | Open | T17 | R07 |
+| T05 | P0 | Content-aware snapshots and mandatory recovery snapshots | In progress | T17 | R07 |
 | T06 | P1 | Reactive images, ownership and cache lifecycle | Open | T02, T17 | R08 |
 | T07 | P1 | Portable, importable document/history backups | Open | T06 | R03, R09 |
 | T08 | P1 | Recursive, loss-aware DOCX conversion | Open | T17 | R04 |
@@ -58,8 +58,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T03 — Target-safe restoration
 
-- Evidence: `src/history/HistoryPanel.jsx` chains `onOpen(id).then(() => onRestoreSnapshot(content))`; the callback closes over the previous document ID and content in `useHistory.js`.
-- Restore by explicit document/snapshot identity; atomically preserve the target's current content before replacing it. Update editor state only after successful persistence, or provide an explicit recoverable optimistic state.
+- Baseline evidence: `src/history/HistoryPanel.jsx` chained `onOpen(id).then(() => onRestoreSnapshot(content))`; the callback closed over the previous document ID and content in `useHistory.js`.
+- Current evidence: the restore callback passes the selected document ID explicitly; `useHistory` reads that target, creates a forced recovery snapshot before update, persists the target, and only then changes editor selection/content. Restore failures remain visible through the versions dialog and do not apply the replacement.
+- Remaining: add persistence/failure fixtures that prove the backup and target update boundary under real IndexedDB behavior; T02 still owns pending-edit flush/transition coordination.
 - Done when restoring B while A is selected never changes A, the correct pre-restore version is retained, and transaction failures leave recoverable content.
 
 ### T04 — Shared-document isolation
@@ -70,8 +71,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T05 — Snapshot integrity
 
-- Evidence: `src/history/snapshotRepo.js` compares JavaScript string-length difference against 32, not actual changed content or bytes. `restoreSnapshot` uses the same filter and ignores backup errors.
-- Compare content meaningfully; separate optional automatic snapshots from mandatory recovery snapshots. Keep insertion/retention consistent under concurrent writes.
+- Baseline evidence: `src/history/snapshotRepo.js` compared JavaScript string-length difference against 32, not actual changed content or bytes. `restoreSnapshot` used the same filter and ignored backup errors.
+- Current evidence: changed content is now eligible for automatic snapshots regardless of length; forced recovery snapshots bypass the normal empty-content guard, preserve exact duplicates from being added, and perform insertion/FIFO eviction in one read/write transaction. Pure policy tests cover equal-length rewrites, small edits and forced empty recovery content.
+- Remaining: add fake-IndexedDB persistence tests for the 50-item FIFO boundary and concurrent/failing writes.
 - Done when equal-length rewrites and small important edits receive the defined protection, forced backups cannot be skipped, and FIFO retention is tested. Snapshot pinning is not currently implemented and must not be implied.
 
 ### T06 — Image lifecycle
@@ -143,7 +145,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T17 — Harness and CI
 
-- Evidence: `package.json` now has a `test` script using Node's built-in `node:test`; `test/` covers pure DB helpers, Markdown AST parsing and share URL round trips. GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes before deployment.
+- Evidence: `package.json` now has a `test` script using Node's built-in `node:test`; `test/` covers pure DB helpers, Markdown AST parsing, share URL round trips, preview escaping and snapshot policy. GitHub Actions now runs `npm test` and `npm run build` on pull requests and main pushes before deployment.
 - Remaining: add component/persistence fixtures, DOCX XML assertions, failure-first regression fixtures for T01–T16, lint/type checks and browser E2E. Vitest/React Testing Library/fake-indexeddb/Playwright remain candidates, not current dependencies.
 - Keep real-browser/Word validation distinct from unit results.
 - Done when documented commands run in a clean checkout, failing critical regressions block deployment, and test artifacts/limitations are recorded. Large refactors must follow, not precede, this foundation.

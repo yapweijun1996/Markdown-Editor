@@ -22,7 +22,7 @@ No backend, authentication, authorization, collaboration, cloud synchronization 
 | R04 | Export supported Markdown structure as editable DOCX without silent content loss | Partial: basic conversion exists; nested/inline omissions and formatting gaps reproduced | T08 |
 | R05 | Display technical math and diagrams with useful failure handling | Partial: KaTeX HTML and Mermaid SVG preview; Mermaid PNG DOCX attempt; no Word math conversion | T09, T14 |
 | R06 | Save/recover documents and metadata reliably, with visible failure states | Partial: trailing debounced draft/document saves; no coordinated flush or robust recovery/identity contract | T02, T04, T12 |
-| R07 | Restore the correct version with a guaranteed pre-restore recovery point | Partial: timeline and restore exist, but target closure and snapshot filtering violate this requirement | T03, T05 |
+| R07 | Restore the correct version with a guaranteed pre-restore recovery point | Partial: changed-content snapshots and forced recovery backup logic now exist; browser/persistence failure and target-transaction acceptance remain incomplete | T03, T05 |
 | R08 | Persist, display, embed and safely manage images | Partial: Blob storage/insertion/export exist; reactivity, ownership, format normalization and cleanup incomplete | T06, T14 |
 | R09 | Export/import portable history including assets and settings | Partial: text ZIP export only; no import | T07 |
 | R10 | Apply per-document templates, page layout, cover and TOC correctly | Partial: four templates/layout UI/converters exist; landscape XML is wrong and cover does not suppress header/footer; reader validation pending | T08, T10, T11 |
@@ -83,7 +83,7 @@ These are existing constants, not recommended permanent limits. Their code locat
 | Font/line choices | 13/15/17/19 px; line height 1.4/1.7/2.0; mono/system/serif | Same |
 | Draft | Enabled; 3,000 ms trailing debounce; UI offers 3/5/10/30 seconds | defaults and `src/App.jsx` |
 | History save/snapshot | 8,000/30,000 ms trailing debounce; empty text skipped | `src/history/useHistory.js` |
-| Snapshot cap/filter | 50 per document, FIFO; unchanged text or length difference <32 skipped | `src/history/snapshotRepo.js` |
+| Snapshot cap/filter | 50 per document, FIFO; unchanged text skipped; changed content is eligible regardless of length; forced recovery may preserve empty content | `src/history/snapshotRepo.js` |
 | Read zoom | 0.7–3.0 in 0.1 steps; reset 1.0 | `src/preview/usePreviewControls.js` |
 | Read width | 820 px base maximum; locked by default; unlock multiplies width by zoom | `src/App.jsx`, preview controls |
 | Read toolbar | Scroll down beyond 80 px hides it; up reveals it; delta threshold 6 px | Preview controls |

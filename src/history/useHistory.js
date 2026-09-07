@@ -146,17 +146,23 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     return updated
   }, [currentDocId, refresh])
 
-  const restoreSnapshot = useCallback(async (snapshotContent) => {
-    if (!currentDocId) return
-    // Save current content as a snapshot before overwriting
-    if (markdown && markdown !== snapshotContent) {
-      await maybeCreateSnapshot(currentDocId, markdown).catch(() => {})
+  const restoreSnapshot = useCallback(async (documentId, snapshotContent) => {
+    if (!documentId || snapshotContent == null) return false
+    const target = await getDocument(documentId)
+    if (!target) return false
+
+    // The current target content must be recoverable before replacement.
+    if (target.content !== snapshotContent) {
+      await maybeCreateSnapshot(documentId, target.content, { force: true })
     }
+    const updated = await updateDocument(documentId, snapshotContent)
+    if (!updated) return false
+    setCurrentDocId(documentId)
     setMarkdown(snapshotContent)
     lastSavedRef.current = snapshotContent
-    await updateDocument(currentDocId, snapshotContent)
     refresh()
-  }, [currentDocId, markdown, refresh, setMarkdown])
+    return true
+  }, [refresh, setMarkdown])
 
   return {
     supported,

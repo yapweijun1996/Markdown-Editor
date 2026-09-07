@@ -10,7 +10,7 @@ Follow-up verification on **2026-09-07 (UTC)** re-ran the production build and d
 
 Inspected root documentation, source modules, package/lockfile, Vite/PWA config and Pages workflow. Followed document/save/share/restore/image dependencies and examined generated DOCX XML. Latest source includes Read/presentation and laser saturation changes.
 
-Local environment: Windows, Node **25.2.1**, npm **11.6.2**. Existing CI config uses Node 20; parity was not tested. No application source, package/lockfile, CI or contributor-instruction changes were made by the documentation reconciliation. Dependency installation and build created local ignored artifacts.
+Local environment: Windows, Node **25.2.1**, npm **11.6.2**. Existing CI config uses Node 20; parity was not tested. The documentation-only reconciliation itself did not change application source, package/lockfile or CI; later follow-up commits are recorded below. Dependency installation and build created local ignored artifacts.
 
 No browser automation/subagent/MCP KB tool was available in this session. No external KB sync was performed. There was no live-site or actual browser/Office execution, so static findings and isolated probes must not be described as browser-reproduced bugs.
 
@@ -21,7 +21,7 @@ No browser automation/subagent/MCP KB tool was available in this session. No ext
 | `git status --short` before documentation edits | Clean | No pre-existing tracked changes at review baseline |
 | `npm ci --ignore-scripts --no-audit --no-fund` | Completed; 635 packages installed | Local inspection install; does not change CI's npm ci behavior |
 | `npm ls --depth=0` | Resolved direct packages listed successfully | Versions captured in DEPENDENCIES.md |
-| `npm test` | Passed; 6 Node built-in contract tests | Pure helpers/parser/share only; not browser, storage or Office validation |
+| `npm test` | Passed; 9 Node built-in contract tests | Pure contracts only; not browser, storage or Office validation |
 | `npm run build` | Passed; Vite 6.4.2 and PWA 1.2.0 generated dist | Build only, not user-flow validation |
 | `npm audit --json` | 19 affected-package vulnerability entries: 12 high, 6 moderate, 1 low, 0 critical | Includes transitive/build chains; exposure still requires triage |
 | Follow-up `npm.cmd run build` | Passed again; the same production chunks and PWA output were generated | Confirms source/build reproducibility in the current Windows workspace |
@@ -125,9 +125,9 @@ The following were traced in source but not executed as complete browser workflo
 |---|---|---|
 | T01 | Baseline custom preview interpolation could execute HTML; current image-placeholder and Mermaid-error text paths use `escapeHtml`, but browser hostile-input acceptance remains pending | `src/preview/MarkdownPreview.jsx`, `src/preview/mermaidRenderer.js`, `src/preview/htmlEscape.js`, `test/htmlEscape.test.js` |
 | T02 | Trailing saves can be postponed indefinitely; open/new/Read/update do not flush; empty text skipped; newer draft bypassed | `src/history/useHistory.js`, App startup/draft effects, UpdatePrompt |
-| T03 | Restore callback after opening another doc closes over previous document identity/content | `src/history/HistoryPanel.jsx`, `useHistory.js` |
+| T03 | Baseline restore callback closed over the previous document identity; current callback passes the selected target ID and forces a recovery snapshot before persistence, but IndexedDB failure/atomicity evidence remains | `src/history/HistoryPanel.jsx`, `src/history/useHistory.js`, `src/history/VersionsView.jsx` |
 | T04 | Share Edit resumes autosave with old local ID; initial/hashchange/editable-share states differ | `src/App.jsx` |
-| T05 | Snapshot filter compares length difference, and forced recovery uses the same filter | `src/history/snapshotRepo.js`, `useHistory.js` |
+| T05 | Baseline snapshot filter compared length difference and forced recovery used the same filter; current code records changed content, supports forced recovery and keeps insertion/eviction in one transaction, but persistence/failure tests remain | `src/history/snapshotRepo.js`, `useHistory.js`, `test/snapshot.test.js` |
 | T06 | Markdown-only memo excludes cache revision; attach callback unused; no cache deletion/eviction | Preview, useImages, imageCache |
 | T07 | Archives/shares omit assets and metadata; no importer; snapshot title/timestamp collisions | `src/history/exportHistory.js`, `src/share/shareLink.js` |
 | T08 | List/block/inline conversion lacks full recursion and supported-node diagnostics | `src/converter/` |
@@ -152,7 +152,7 @@ Missing original-plan features (custom templates, Word math, gallery, directory 
 - Updated README/TESTING and added this docs index, decision log and dependency inventory.
 - Corrected schema v2, mdimg references, trailing save timing, snapshot pin/filter behavior, batch files-only scope, TinyURL cutoff direction, preview permissions, math/PDF/template scope and Read/presentation behavior.
 - Removed unverified coverage/Lighthouse/performance/deployment claims and an unsupported project-license badge; recorded the license decision as pending.
-- Added a seven-test Node contract layer and made test/build verification run for pull requests and main pushes; richer application coverage remains T17.
+- Added a nine-test Node contract layer and made test/build verification run for pull requests and main pushes; richer application coverage remains T17.
 - The documentation-only baseline did not fix an application defect; subsequent implementation work is tracked separately below.
 
 Final local documentation validation passed:
@@ -168,13 +168,13 @@ These are local consistency checks, not an installed CI documentation gate. The 
 
 ## 5a. Follow-up implementation evidence (T17/T01)
 
-- T17 added `npm test`, seven Node built-in contract tests and a pull-request/main-push test/build gate.
+- T17 added `npm test`, now covering nine Node built-in contract tests, and a pull-request/main-push test/build gate.
 - T01 now escapes image-loading alt text and Mermaid error text through `src/preview/htmlEscape.js`; the focused escaping regression test passes.
 - `npm test`, `npm run build` and `git diff --check` pass locally. The build still reports the existing large Mermaid chunk warning; this is tracked under T18.
-- Browser DOM/security fixtures, storage/persistence tests, Office validation, lint/type checks and dependency triage remain incomplete.
+- Browser DOM/security fixtures, storage/persistence tests, Office validation, lint/type checks and dependency triage remain incomplete; T05 still needs fake-IndexedDB FIFO/failure evidence.
 
 ## 6. Remaining evidence gaps and next step
 
 No end-to-end browser reproduction, real storage-failure injection, actual PWA install/update, Office/print visual validation, accessibility certification, first-paint/profile or live deployment check was performed. These are pending acceptance under TESTING, not assumed passes.
 
-Recommended next implementation: complete T01 browser/security acceptance and continue T16 dependency triage; then fix T02/T05 and T03/T04 using disposable fixtures. Preserve user data before exercising destructive paths, and record new commit-specific evidence before changing task status.
+Recommended next implementation: complete T01 browser/security and T05 persistence acceptance, continue T16 dependency triage, then fix T02 and T03/T04 using disposable fixtures. Preserve user data before exercising destructive paths, and record new commit-specific evidence before changing task status.
