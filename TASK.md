@@ -20,7 +20,7 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 | ID | Priority | Task | Status | Dependencies | Requirements |
 |---|---|---|---|---|---|
 | T01 | P0 | Safe preview HTML boundary | In progress | T17 | R02, R16 |
-| T02 | P0 | Durable document-session lifecycle and save feedback | Open | T17 | R06, R16 |
+| T02 | P0 | Durable document-session lifecycle and save feedback | In progress | T17 | R06, R16 |
 | T03 | P0 | Target-safe, atomic version restoration | In progress | T02, T05 | R07 |
 | T04 | P0 | Isolated shared-document sessions | In progress | T02 | R03, R06 |
 | T05 | P0 | Content-aware snapshots and mandatory recovery snapshots | In progress | T17 | R07 |
@@ -51,9 +51,9 @@ All open application tasks are unassigned. No delivery dates or effort estimates
 
 ### T02 — Durable document-session lifecycle
 
-- Evidence: `src/history/useHistory.js` uses trailing-only 8-second saves, skips empty text, and does not flush before open/new; `src/App.jsx` prefers the stored document over a potentially newer draft. Draft storage is global and errors are swallowed. PWA reload is not coordinated with saving.
-- Establish explicit session identity, dirty/saving/saved/error state, bounded save delay, recoverable errors and serialized writes. Flush before in-app transitions and service-worker activation. Use best-effort lifecycle saving plus recovery; do not promise that asynchronous writes survive every browser crash.
-- Handle new/open/upload/sample/clear, read mode, missing current IDs, startup recovery, failed storage and concurrent tabs. Define clearing separately from deleting a document.
+- Baseline evidence: `src/history/useHistory.js` used trailing-only 8-second saves, skipped empty text, and did not flush before open/new; `src/App.jsx` preferred the stored document over a potentially newer draft. Draft storage is global and errors are swallowed. PWA reload was not coordinated with saving.
+- Current evidence: `useHistory` now serializes document writes, saves after an 8-second inactivity delay with a 30-second maximum wait, persists intentional empty edits for existing documents, exposes pending/saving/error state, and provides an explicit `flush`. App transitions for open/new/upload/sample/clear/Read and PWA reload use the barrier; failed writes remain visible and block the transition. Startup clears missing current IDs and offers a newer draft over the loaded document.
+- Remaining: add real IndexedDB quota/transaction and multi-tab fixtures, define stronger conflict policy, and verify lifecycle behavior in browsers. Best-effort lifecycle saving still cannot guarantee survival of every browser crash.
 - Done when continuous typing is persisted within the selected bound, empty edits persist intentionally, transitions cannot write to the wrong document, newer recovery content is offered, and failed saves prevent destructive transitions without informed consent.
 
 ### T03 — Target-safe restoration
@@ -181,6 +181,6 @@ Custom Word template upload, native Word math, image library UI, true directory 
 
 ## Immediate next steps
 
-1. Complete T01's browser/security fixture and implementation acceptance, then implement T02/T05 against disposable data.
-2. Implement T03/T04 after T02/T05, with safety tests before changing real stored data.
+1. Complete T01's browser/security, T04 transition and T05 persistence acceptance; add T02 failure/multi-tab fixtures.
+2. Keep transition and recovery checks against disposable data before expanding fidelity/asset work.
 3. Complete fidelity, portability and UI work, then measure/refactor. Keep this ledger and linked acceptance evidence updated in the same change.

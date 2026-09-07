@@ -22,7 +22,7 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 ## Milestone 1 — Protect content and local data
 
 - Complete the custom-renderer HTML-injection fix and browser/security acceptance (T01).
-- Introduce durable, explicit document sessions and save-aware PWA transitions (T02).
+- Complete durable, explicit document sessions and save-aware PWA transitions (T02).
 - Complete content comparison/mandatory-backup persistence acceptance (T05), then restore targeting (T03).
 - Complete shared-document isolation and validate initial/query/hash transitions consistently (T04).
 - Resolve or explicitly disposition actionable high-impact dependency risks (T16).
@@ -89,4 +89,4 @@ See [EPIC.md](EPIC.md) for implemented groups, [EPIC-V3.md](EPIC-V3.md) for rich
 
 ## Recommended next action
 
-Complete T01 browser/security, T05 persistence and T04 transition acceptance, continue T16 dependency triage, then implement T02's durable save lifecycle. Use the cycle **observe code -> orient with a failing fixture -> decide the smallest coherent design -> act -> evaluate tests and user-visible behavior**. Every implementation change must update the linked requirements, task evidence and affected docs; do not mark an epic accepted because it compiles.
+Complete T01 browser/security, T04 transition and T05 persistence acceptance, continue T16 dependency triage, then add T02's IndexedDB failure/multi-tab fixtures. Use the cycle **observe code -> orient with a failing fixture -> decide the smallest coherent design -> act -> evaluate tests and user-visible behavior**. Every implementation change must update the linked requirements, task evidence and affected docs; do not mark an epic accepted because it compiles.

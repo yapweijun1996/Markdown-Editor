@@ -11,9 +11,9 @@ import {
   DEFAULT_LAYOUT,
 } from './documentRepo.js'
 import { maybeCreateSnapshot } from './snapshotRepo.js'
+import { getSaveDelay } from './savePolicy.js'
 
 const CURRENT_DOC_KEY = 'history.currentDocId'
-const DOC_AUTOSAVE_MS = 8000
 const SNAPSHOT_AUTOSAVE_MS = 30000
 
 function readCurrentId() {
@@ -35,7 +35,23 @@ export function useHistory({ markdown, setMarkdown, paused }) {
   const [currentDocId, setCurrentDocId] = useState(readCurrentId)
   const [docs, setDocs] = useState([])
   const [supported, setSupported] = useState(true)
+  const [saveStatus, setSaveStatus] = useState('saved')
+  const [saveError, setSaveError] = useState('')
   const lastSavedRef = useRef('')
+  const saveTimerRef = useRef(null)
+  const firstPendingAtRef = useRef(0)
+  const saveQueueRef = useRef(Promise.resolve())
+  const currentDocIdRef = useRef(currentDocId)
+  const markdownRef = useRef(markdown)
+  const saveStatusRef = useRef('saved')
+
+  currentDocIdRef.current = currentDocId
+  markdownRef.current = markdown
+
+  const setSaveState = useCallback((next) => {
+    saveStatusRef.current = next
+    setSaveStatus(next)
+  }, [])
 
   // Currently selected document (with layout/template defaults applied)
   const currentDoc =
@@ -56,37 +72,95 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     }
   }, [])
 
+  const saveContent = useCallback((documentId, content) => {
+    const operation = async () => {
+      if (!documentId && !content.trim()) {
+        return { documentId: null, content, skipped: true }
+      }
+
+      let saved = documentId ? await updateDocument(documentId, content) : null
+      if (!saved && !content.trim()) {
+        return { documentId: null, content, skipped: true }
+      }
+      if (!saved) saved = await createDocument(content)
+
+      if (
+        currentDocIdRef.current === documentId ||
+        (!documentId && currentDocIdRef.current === null)
+      ) {
+        setCurrentDocId(saved.id)
+      }
+      await refresh()
+      return { documentId: saved.id, content, skipped: false }
+    }
+
+    const queued = saveQueueRef.current.then(operation, operation)
+    saveQueueRef.current = queued.catch(() => {})
+    return queued
+  }, [refresh])
+
+  const flush = useCallback(async () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+
+    const content = markdownRef.current
+    const documentId = currentDocIdRef.current
+    const needsSave = content !== lastSavedRef.current &&
+      (Boolean(documentId) || Boolean(content.trim()))
+
+    if (!needsSave) {
+      firstPendingAtRef.current = 0
+      if (saveStatusRef.current !== 'error') setSaveState('saved')
+      return true
+    }
+
+    setSaveState('saving')
+    setSaveError('')
+    try {
+      await saveContent(documentId, content)
+      lastSavedRef.current = content
+      firstPendingAtRef.current = 0
+      setSaveState('saved')
+      return true
+    } catch (err) {
+      setSaveState('error')
+      setSaveError('Could not save the current document. The pending change was kept.')
+      console.warn('History save failed', err)
+      throw err
+    }
+  }, [saveContent, setSaveState])
+
   // Initial load
   useEffect(() => { refresh() }, [refresh])
 
-  // Auto-save current document (debounced)
+  // Auto-save current document with an inactivity delay and a maximum wait.
   useEffect(() => {
     if (paused) return
-    if (!markdown.trim()) return
-    if (markdown === lastSavedRef.current) return
+    const needsSave = markdown !== lastSavedRef.current &&
+      (Boolean(currentDocId) || Boolean(markdown.trim()))
+    if (!needsSave) {
+      firstPendingAtRef.current = 0
+      return
+    }
 
-    const t = setTimeout(async () => {
-      try {
-        if (currentDocId) {
-          const updated = await updateDocument(currentDocId, markdown)
-          if (!updated) {
-            // Stale id (deleted in another tab) — create a new doc
-            const created = await createDocument(markdown)
-            setCurrentDocId(created.id)
-          }
-        } else {
-          const created = await createDocument(markdown)
-          setCurrentDocId(created.id)
-        }
-        lastSavedRef.current = markdown
-        refresh()
-      } catch (err) {
-        console.warn('History save failed', err)
-        setSupported(false)
+    if (!firstPendingAtRef.current) firstPendingAtRef.current = Date.now()
+    setSaveState('pending')
+    setSaveError('')
+    const delay = getSaveDelay(Date.now(), firstPendingAtRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null
+      flush().catch(() => {})
+    }, delay)
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = null
       }
-    }, DOC_AUTOSAVE_MS)
-    return () => clearTimeout(t)
-  }, [markdown, currentDocId, paused, refresh])
+    }
+  }, [markdown, currentDocId, paused, flush, setSaveState])
 
   // Snapshot creation (longer debounce)
   useEffect(() => {
@@ -101,61 +175,99 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     return () => clearTimeout(t)
   }, [markdown, currentDocId, paused])
 
-  const openDoc = useCallback(async (id) => {
+  // Best-effort final checkpoint when the app is being torn down.
+  useEffect(() => () => {
+    if (!paused) void flush().catch(() => {})
+  }, [flush, paused])
+
+  const openDoc = useCallback(async (id, { flushPending = true } = {}) => {
     try {
+      if (flushPending) await flush()
       const doc = await getDocument(id)
-      if (!doc) return
+      if (!doc) {
+        if (currentDocIdRef.current === id) {
+          setCurrentDocId(null)
+          lastSavedRef.current = ''
+          setMarkdown('')
+        }
+        return null
+      }
       setCurrentDocId(doc.id)
       lastSavedRef.current = doc.content
+      setSaveError('')
+      setSaveState('saved')
       setMarkdown(doc.content)
+      return doc
     } catch (err) {
       console.warn('Open doc failed', err)
+      return null
     }
-  }, [setMarkdown])
+  }, [flush, setMarkdown, setSaveState])
 
-  const newDoc = useCallback(() => {
+  const detachSession = useCallback(() => {
     setCurrentDocId(null)
     lastSavedRef.current = ''
+    setSaveError('')
+    setSaveState('saved')
+  }, [setSaveState])
+
+  const newDoc = useCallback(async ({ flushPending = true } = {}) => {
+    if (flushPending) await flush()
+    setCurrentDocId(null)
+    lastSavedRef.current = ''
+    setSaveError('')
+    setSaveState('saved')
     setMarkdown('')
-  }, [setMarkdown])
+    return true
+  }, [flush, setMarkdown, setSaveState])
 
   const forkDocument = useCallback(async (content) => {
     const created = await createDocument(content)
     setCurrentDocId(created.id)
     lastSavedRef.current = created.content
+    setSaveError('')
+    setSaveState('saved')
     await refresh()
     return created
-  }, [refresh])
+  }, [refresh, setSaveState])
 
   const deleteDoc = useCallback(async (id) => {
+    if (id === currentDocIdRef.current) await flush()
     await repoDelete(id)
-    if (id === currentDocId) {
+    if (id === currentDocIdRef.current) {
       setCurrentDocId(null)
       lastSavedRef.current = ''
       setMarkdown('')
+      setSaveState('saved')
     }
-    refresh()
-  }, [currentDocId, refresh, setMarkdown])
+    await refresh()
+  }, [flush, refresh, setMarkdown, setSaveState])
 
   const togglePin = useCallback(async (id) => {
     await repoTogglePin(id)
-    refresh()
+    await refresh()
   }, [refresh])
 
   const rename = useCallback(async (id, title) => {
     await repoRename(id, title)
-    refresh()
+    await refresh()
   }, [refresh])
 
   const updateLayout = useCallback(async (patch) => {
-    if (!currentDocId) return null
-    const updated = await updateDocumentLayout(currentDocId, patch)
-    refresh()
+    if (!currentDocIdRef.current) return null
+    await flush()
+    const updated = await updateDocumentLayout(currentDocIdRef.current, patch)
+    await refresh()
     return updated
-  }, [currentDocId, refresh])
+  }, [flush, refresh])
 
-  const restoreSnapshot = useCallback(async (documentId, snapshotContent) => {
+  const restoreSnapshot = useCallback(async (
+    documentId,
+    snapshotContent,
+    { flushPending = true } = {}
+  ) => {
     if (!documentId || snapshotContent == null) return false
+    if (flushPending && documentId === currentDocIdRef.current) await flush()
     const target = await getDocument(documentId)
     if (!target) return false
 
@@ -168,17 +280,23 @@ export function useHistory({ markdown, setMarkdown, paused }) {
     setCurrentDocId(documentId)
     setMarkdown(snapshotContent)
     lastSavedRef.current = snapshotContent
-    refresh()
+    setSaveError('')
+    setSaveState('saved')
+    await refresh()
     return true
-  }, [refresh, setMarkdown])
+  }, [flush, refresh, setMarkdown, setSaveState])
 
   return {
     supported,
+    saveStatus,
+    saveError,
     currentDocId,
     currentDoc,
     docs,
     refresh,
+    flush,
     openDoc,
+    detachSession,
     newDoc,
     forkDocument,
     deleteDoc,

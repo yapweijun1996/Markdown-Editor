@@ -21,7 +21,7 @@ No backend, authentication, authorization, collaboration, cloud synchronization 
 | R03 | Share text transparently without damaging local work | Partial: compressed hash/query decoding, copy, QR and opt-in TinyURL exist; shared sessions now fork on Edit, but pending-transition, assets and limits remain incomplete | T04, T07, T14 |
 | R04 | Export supported Markdown structure as editable DOCX without silent content loss | Partial: basic conversion exists; nested/inline omissions and formatting gaps reproduced | T08 |
 | R05 | Display technical math and diagrams with useful failure handling | Partial: KaTeX HTML and Mermaid SVG preview; Mermaid PNG DOCX attempt; no Word math conversion | T09, T14 |
-| R06 | Save/recover documents and metadata reliably, with visible failure states | Partial: trailing debounced draft/document saves and explicit shared-session fork exist; no coordinated flush or complete recovery/failure contract | T02, T04, T12 |
+| R06 | Save/recover documents and metadata reliably, with visible failure states | Partial: bounded/serialized document saves, explicit transition flushes, empty-edit persistence, save feedback and newer-draft recovery now exist; IndexedDB failure, crash and multi-tab policy remain incomplete | T02, T04, T12 |
 | R07 | Restore the correct version with a guaranteed pre-restore recovery point | Partial: changed-content snapshots and forced recovery backup logic now exist; browser/persistence failure and target-transaction acceptance remain incomplete | T03, T05 |
 | R08 | Persist, display, embed and safely manage images | Partial: Blob storage/insertion/export exist; reactivity, ownership, format normalization and cleanup incomplete | T06, T14 |
 | R09 | Export/import portable history including assets and settings | Partial: text ZIP export only; no import | T07 |
@@ -82,7 +82,7 @@ These are existing constants, not recommended permanent limits. Their code locat
 | Editor font | `md` = 15 px, monospace, normal line height 1.7, wrap on | `src/preferences/defaults.js`, `src/styles/app.css` |
 | Font/line choices | 13/15/17/19 px; line height 1.4/1.7/2.0; mono/system/serif | Same |
 | Draft | Enabled; 3,000 ms trailing debounce; UI offers 3/5/10/30 seconds | defaults and `src/App.jsx` |
-| History save/snapshot | 8,000/30,000 ms trailing debounce; empty text skipped | `src/history/useHistory.js` |
+| History save/snapshot | Document: 8,000 ms inactivity with 30,000 ms maximum wait; snapshot: 30,000 ms trailing; existing empty documents can be saved empty | `src/history/useHistory.js`, `src/history/savePolicy.js` |
 | Snapshot cap/filter | 50 per document, FIFO; unchanged text skipped; changed content is eligible regardless of length; forced recovery may preserve empty content | `src/history/snapshotRepo.js` |
 | Read zoom | 0.7–3.0 in 0.1 steps; reset 1.0 | `src/preview/usePreviewControls.js` |
 | Read width | 820 px base maximum; locked by default; unlock multiplies width by zoom | `src/App.jsx`, preview controls |
@@ -108,7 +108,7 @@ The configured save delays are **inactivity delays**, not periodic maximum-loss 
 - Reset All Settings currently resets only the `prefs.v1` object. It does not reset theme/share/read/history keys or delete history/images.
 - IndexedDB version 2 holds documents, snapshots and images. Document layout defaults are merged on read for older records.
 - Only documents have a pin field (numeric 0/1). No snapshot pinning, automatic document eviction, complete backup import, cloud copy or Clear History settings action exists.
-- Startup priority is shared URL, then saved current document, then draft prompt. It does not compare a newer draft to an existing saved document or fall through if a remembered ID is missing.
+- Startup priority is shared URL, then saved current document; a newer different draft is offered after load. A missing remembered ID is cleared and draft fallback is attempted.
 
 ## 7. Security/privacy requirements
 

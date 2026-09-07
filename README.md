@@ -25,7 +25,7 @@ Documentation baseline: source commit `445cc05`, reviewed 2026-09-07 (UTC). Pack
 
 ## Important limitations
 
-- **Save is not guaranteed:** draft/history/snapshots use inactivity debounces, not fixed periodic checkpoints. Switching documents or auto-reloading for a PWA update does not first flush pending changes. Read mode pauses saving.
+- **Save has explicit bounds but is not crash-proof:** document saves use an 8-second inactivity delay with a 30-second maximum wait; open/new/upload/sample/clear/Read and PWA reload attempt a flush, with visible errors. Browser crashes, eviction and untested multi-tab conflicts can still lose work.
 - **Share/save identity is partially hardened:** a shared session now pauses local persistence and Edit creates a new local document before autosave resumes. Pending saves still do not flush across transitions, and browser/failure acceptance remains pending (T02–T04).
 - **No complete backup:** history ZIP and share URLs contain text, not local `mdimg://` image bytes or document layout. There is no archive import. Clearing/evicting browser site data may delete all stored work.
 - **Desktop action gap:** Layout, Batch Convert and Insert Image picker are wired only into the mobile More menu. Image paste/drop still has editor handlers. These features need desktop entry points (T11).
@@ -65,7 +65,7 @@ Read mode is not browser fullscreen. Presentation optionally requests the Fullsc
 
 - IndexedDB `markdown-editor-db` version 2 stores documents, snapshots and image Blobs.
 - localStorage holds editor/draft/presentation preferences, theme, read controls, share preference, current document ID and one draft.
-- Default draft delay is 3 seconds, document delay 8 seconds, snapshot delay 30 seconds, all trailing debounces. Snapshot retention is 50 per document; snapshot pinning does not exist.
+- Default draft delay is 3 seconds; document saves use an 8-second inactivity delay with a 30-second maximum wait; snapshots use a 30-second trailing delay. Snapshot retention is 50 per document; snapshot pinning does not exist.
 - No backend, authentication, cloud sync, encryption or telemetry integration is implemented.
 - A URL fragment is not sent as part of the ordinary page HTTP request, but page JavaScript and anyone receiving the URL can read it. Opting into TinyURL sends the full encoded link to a third party. Remote preview images and clicked links can make network requests.
 

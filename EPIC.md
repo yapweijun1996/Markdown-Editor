@@ -14,7 +14,7 @@ Canonical references: [SPEC.md](SPEC.md) (requirements), [TASK.md](TASK.md) (tas
 | E02 — Local/PWA experience (V2 group) | Generated SW/manifest/icons, responsive UI, themes, preferences, draft/history/snapshot/text ZIP, lazy heavy dependencies | Save/restore/share safety, theme consistency, accessibility and browser/PWA validation incomplete |
 | E03 — Rich output (V3 group) | Images, four built-in templates, page/cover/TOC modules, print PDF, KaTeX/Mermaid, file batch ZIP, QR/TinyURL | Partial against original ambitions; see EPIC-V3 for omissions and defects |
 | E04 — Read and presentation | Read width/zoom/toolbar controls, laser color/size/trail/fullscreen and Exit/ESC behavior | Code present in recent commits; device/fullscreen/a11y acceptance not performed |
-| E05 — Safety and fidelity hardening | Review and source-aligned docs completed (T20); minimal Node test/CI gate started (T17) | Application remediation remains open; T01–T16/T18–T19/T21 Open and T17 In progress |
+| E05 — Safety and fidelity hardening | Review and source-aligned docs completed (T20); minimal Node test/CI gate started (T17); T01–T05 remediation in progress | T01–T05 remain incomplete; T06–T16/T18–T19/T21 are Open and T17 is In progress |
 
 ## E01 — Core authoring and compiler
 
@@ -31,7 +31,7 @@ Canonical references: [SPEC.md](SPEC.md) (requirements), [TASK.md](TASK.md) (tas
 | V2.0 PWA | VitePWA-generated manifest/SW, icons/safe areas, prompt registration, update countdown | No custom source SW/register module, BUILD_VERSION comparison, URL unregister kill-switch or guaranteed update detection within 30 seconds |
 | V2.1 Responsive/design | theme.css tokens, light/dark/system, translucent toolbar, mobile tabs/sheets, table overflow | No verified Lighthouse/HIG/contrast certification; no swipe tabs, Web Share or haptics; not every value is tokenized |
 | V2.2 Preferences/draft | prefs.v1 editor/draft/presentation defaults, settings and global draft prompt | No PreferencesProvider, accent selector, preferences import/export or complete reset; editor preferences do not globally restyle preview/Word |
-| V2.3 History | IndexedDB v2 documents/snapshots/images, save hook, title/content search, pin/rename/delete/open | 8-second trailing document save; not every edit saved; no full-text index, automatic document eviction or Clear History settings action |
+| V2.3 History | IndexedDB v2 documents/snapshots/images, serialized save hook, save feedback, title/content search, pin/rename/delete/open | 8-second inactivity save with 30-second maximum wait and transition flushes; browser crash/multi-tab policy and full-text index/eviction/Clear History remain |
 | V2.4 Versions/ZIP | Timeline, delete/restore, recovery backup attempt, text archive and storage estimate | 30-second trailing snapshot; changed-content filter and forced recovery path are corrected, but FIFO persistence/failure and target-transaction acceptance remain; no pinned snapshots or archive import/assets |
 | V2.5 Chunking | Manual vendor chunks, lazy DOCX/ZIP/math/diagram/QR imports | Modals are statically imported; SW precaches lazy assets too; historical bundle/performance claims are not current browser measurements |
 

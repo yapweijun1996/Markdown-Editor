@@ -40,11 +40,11 @@ For every result record commit, environment, command/steps, expected/actual, art
 |---|---|---|---|
 | Preview injection | Render an internal-image reference with HTML-like alt text before its asset loads | Unit escaping contract passes; browser DOM still must prove text remains inert with no executable injected node/attribute | T01 |
 | Continuous typing | Type longer than all configured debounce intervals without pausing | Content checkpoint occurs within the defined maximum wait | T02 |
-| Transition flush | Edit A; immediately open B, create New, upload, load Sample or enter Read | Explicit policy preserves A or obtains discard consent before replacement/pausing | T02 |
-| Empty content | Save A, select all/delete, wait, reload | Intentional empty state persists, not the old text | T02 |
-| Draft freshness | Make recovery draft newer than the stored current doc; reload | Newer recovery content is offered, not silently ignored/overwritten | T02 |
+| Transition flush | Edit A; immediately open B, create New, upload, load Sample or enter Read | Current handlers await the save barrier; browser/persistence failure fixtures still required | T02 |
+| Empty content | Save A, select all/delete, wait, reload | Existing document intentionally persists empty content, not the old text | T02 |
+| Draft freshness | Make recovery draft newer than the stored current doc; reload | Newer recovery content is offered after load, not silently ignored/overwritten | T02 |
 | Stale current ID | Remember a deleted document with a recoverable draft; reload | Missing ID is cleared/recovered and draft fallback works | T02 |
-| PWA update | Make unsaved edits; trigger waiting SW and countdown/Reload Now | Save completion or explicit safe deferral precedes activation/reload | T02 |
+| PWA update | Make unsaved edits; trigger waiting SW and countdown/Reload Now | Flush completes before activation, or failure leaves reload paused | T02 |
 | Storage failure | Inject quota/open/put failure | Visible recoverable error; destructive transition is not silently allowed | T02 |
 | Restore B while viewing A | Open B's timeline from History without selecting B, restore a version | Only B changes; B's previous content is backed up | T03 |
 | Shared session | Select local A, open a shared URL, click Edit and save | A stays unchanged; received content has new local identity; current code forks before autosave resumes | T04 |
@@ -73,7 +73,7 @@ Each fix must carry a focused regression fixture. Complete browser/Office checks
 - [ ] Test H1–H6, paragraphs, strong/emphasis combinations, inline code, hard breaks, direct/reference links, lists, tables, rules and quotes.
 - [ ] Confirm HTTP(S) preview links have target `_blank` and `noopener noreferrer`.
 - [ ] Tables/code/long identifiers remain readable at narrow widths; no whole-page overflow.
-- [ ] Test Sample/upload/new/clear under the transition policy (T02); these actions currently lack a save barrier.
+- [ ] Test Sample/upload/new/clear under the transition policy (T02); current handlers have a save barrier, but browser failure evidence is pending.
 - [ ] Deliberately unsupported Markdown produces explicit export warnings/fallbacks after T08, not disappearance.
 
 ## 6. DOCX fidelity and layout

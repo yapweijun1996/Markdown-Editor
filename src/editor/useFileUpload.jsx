@@ -22,9 +22,13 @@ export function useFileUpload({ onLoad, onError, accept = '.md' }) {
     }
 
     const reader = new FileReader()
-    reader.onload = (ev) => {
-      onLoad && onLoad(ev.target.result)
-      onError && onError('')
+    reader.onload = async (ev) => {
+      try {
+        const loaded = await onLoad?.(ev.target.result)
+        if (loaded !== false) onError && onError('')
+      } catch {
+        onError && onError('Failed to open the file.')
+      }
     }
     reader.onerror = () => onError && onError('Failed to read file.')
     reader.readAsText(file)

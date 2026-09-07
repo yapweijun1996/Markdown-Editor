@@ -152,7 +152,10 @@ export default function HistoryPanel({
           />
           <button
             className="history-new-btn"
-            onClick={() => { onNew(); onClose() }}
+            onClick={async () => {
+              const created = await onNew()
+              if (created !== false) onClose()
+            }}
             title="New document"
           >
             <PlusIcon /> New
@@ -188,7 +191,10 @@ export default function HistoryPanel({
               >
                 <button
                   className="history-item-main"
-                  onClick={() => { onOpen(doc.id); onClose() }}
+                  onClick={async () => {
+                    const opened = await onOpen(doc.id)
+                    if (opened) onClose()
+                  }}
                 >
                   <div className="history-item-row1">
                     {doc.pinned ? <span className="history-pin"><PinIcon filled /></span> : null}

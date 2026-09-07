@@ -60,9 +60,9 @@ These records document choices visible in the source; they do not invent histori
 
 **Status: Implemented with unsafe update coordination.** VitePWA generates SW/manifest; Workbox precaches matching assets including lazy chunks; UpdatePrompt uses a 30-second countdown after detection and hourly explicit checks.
 
-**Consequences:** offline-ready depends on successful installation/cache/storage; lazy execution does not imply zero initial background download. Forced activation/reload is not synchronized with pending edits. No guaranteed update-adoption rate or deploy-to-detection delay exists.
+**Consequences:** offline-ready depends on successful installation/cache/storage; lazy execution does not imply zero initial background download. Update activation now attempts the history flush and keeps the prompt open when saving fails, but no guaranteed update-adoption rate or deploy-to-detection delay exists.
 
-**Proposed refinement:** dirty-state-aware activation/flush, useful deferral/recovery, and real multi-tab/offline upgrade tests (T02/T17). Select any change to countdown policy explicitly; docs alone do not change runtime behavior.
+**Remaining refinement:** real multi-tab/offline upgrade tests and stronger dirty-state recovery (T02/T17). Select any change to countdown policy explicitly; docs alone do not change runtime behavior.
 
 ## D08 — Read controls and mouse-based presentation
 
@@ -80,7 +80,7 @@ These records document choices visible in the source; they do not invent histori
 
 **Motivation:** T02–T05 identify lost edits, wrong-target restoration, share overwrite and skipped safety snapshots.
 
-**Required properties:** explicit document/source identity and revision; bounded autosave with save/error feedback; serialized content/metadata writes; deliberate transitions; target-ID restoration with mandatory pre-restore backup; startup draft reconciliation; conflict and storage-failure policy. A state-machine hook/service is a candidate implementation, not a requirement to install a particular library.
+**Required properties:** explicit document/source identity and revision; bounded autosave with save/error feedback; serialized content/metadata writes; deliberate transitions; target-ID restoration with mandatory pre-restore backup; startup draft reconciliation; conflict and storage-failure policy. The current hook implements the first six properties in part; multi-tab conflict and failure-injection evidence remain open. A state-machine hook/service is a candidate implementation, not a requirement to install a particular library.
 
 **Trade-offs to resolve:** draft storage/write strategy for sudden process loss, multi-tab last-writer/conflict policy, empty-content behavior and backpressure. Avoid claiming asynchronous browser writes can guarantee zero loss on every crash.
 

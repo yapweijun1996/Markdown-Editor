@@ -388,11 +388,6 @@ export default function App() {
     }
   }, [previewOnly])
 
-  const { input: fileInput, trigger: pickFile } = useFileUpload({
-    onLoad: setMarkdown,
-    onError: setError,
-  })
-
   const history = useHistory({
     markdown,
     setMarkdown,
@@ -404,16 +399,50 @@ export default function App() {
     documentId: sharedSession ? null : history.currentDocId,
   })
 
+  async function prepareLocalMutation() {
+    if (sharedSession) {
+      try {
+        await history.forkDocument(markdown)
+        setSharedSession(false)
+        return true
+      } catch (err) {
+        setError('Could not create a local copy of the shared document.')
+        return false
+      }
+    }
+    await history.flush()
+    return true
+  }
+
+  const handleFileLoad = useCallback(async (content) => {
+    try {
+      if (!await prepareLocalMutation()) return false
+      setMarkdown(content)
+      setStatus('')
+      setError('')
+      return true
+    } catch (err) {
+      setError('Could not save the current document before opening the file.')
+      return false
+    }
+  }, [history.flush, history.forkDocument, markdown, sharedSession])
+
+  const { input: fileInput, trigger: pickFile } = useFileUpload({
+    onLoad: handleFileLoad,
+    onError: setError,
+  })
+
   const editorRef = useRef(null)
 
   const handleInsertImageBlob = useCallback(async (blob, filename) => {
     try {
+      if (sharedSession && !await prepareLocalMutation()) return null
       return await images.insertBlob(blob, filename)
     } catch (err) {
       setError('Failed to insert image. Please try again.')
       return null
     }
-  }, [images])
+  }, [images, markdown, sharedSession, history.forkDocument])
 
   // Image file picker (used by toolbar/More menu)
   const imagePickerRef = useRef(null)
@@ -435,6 +464,7 @@ export default function App() {
   useEffect(() => {
     const shared = decodeShareUrl()
     if (shared) {
+      history.detachSession()
       setSharedSession(true)
       setMarkdown(shared.markdown || '')
       setPreviewOnly(shared.previewOnly)
@@ -444,7 +474,21 @@ export default function App() {
 
     // Try to restore current document from IndexedDB
     if (history.currentDocId) {
-      history.openDoc(history.currentDocId)
+      history.openDoc(history.currentDocId).then((doc) => {
+        if (!doc) {
+          const missingIdDraft = readDraft()
+          if (missingIdDraft) setDraft(missingIdDraft)
+          return
+        }
+        const existing = readDraft()
+        if (
+          existing &&
+          existing.savedAt > doc.updatedAt &&
+          existing.content !== doc.content
+        ) {
+          setDraft(existing)
+        }
+      })
       return
     }
 
@@ -458,6 +502,15 @@ export default function App() {
     async function onHashChange() {
       const shared = decodeShareUrl()
       if (shared) {
+        if (!sharedSession) {
+          try {
+            await history.flush()
+          } catch (err) {
+            setError('Could not save the current document before opening the shared link.')
+            return
+          }
+        }
+        history.detachSession()
         setSharedSession(true)
         setMarkdown(shared.markdown)
         setPreviewOnly(shared.previewOnly)
@@ -477,7 +530,7 @@ export default function App() {
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
-  }, [history.forkDocument, markdown, sharedSession])
+  }, [history.detachSession, history.flush, history.forkDocument, markdown, sharedSession])
 
   // Auto-save draft (debounced)
   useEffect(() => {
@@ -515,46 +568,83 @@ export default function App() {
     }
   }
 
-  function handleClear() {
-    setMarkdown('')
-    setStatus('')
-    setError('')
-    clearDraft()
-    history.newDoc()
+  async function handleClear() {
+    try {
+      await history.newDoc({ flushPending: !sharedSession })
+      setStatus('')
+      setError('')
+      clearDraft()
+      return true
+    } catch (err) {
+      setError('Could not save the current document before clearing it.')
+      return false
+    }
   }
 
-  function handleNewDocument() {
-    setStatus('')
-    setError('')
-    clearDraft()
-    history.newDoc()
+  async function handleNewDocument() {
+    try {
+      await history.newDoc({ flushPending: !sharedSession })
+      setStatus('')
+      setError('')
+      clearDraft()
+      return true
+    } catch (err) {
+      setError('Could not save the current document before opening a new one.')
+      return false
+    }
   }
 
-  function handleLoadSample() {
-    setMarkdown(SAMPLE_MARKDOWN)
-    setStatus('')
-    setError('')
+  async function handleLoadSample() {
+    try {
+      if (!await prepareLocalMutation()) return
+      setMarkdown(SAMPLE_MARKDOWN)
+      setStatus('')
+      setError('')
+    } catch (err) {
+      setError('Could not save the current document before loading the sample.')
+    }
+  }
+
+  async function enterReadMode() {
+    try {
+      if (sharedSession) {
+        setPreviewOnly(true)
+        return
+      }
+      await history.flush()
+      setPreviewOnly(true)
+      setError('')
+    } catch (err) {
+      setError('Could not save the current document before entering Read mode.')
+    }
   }
 
   async function handleEditMode() {
-    if (sharedSession) {
-      try {
-        await history.forkDocument(markdown)
-      } catch (err) {
-        setError('Could not create a local copy of the shared document.')
-        return
-      }
-      setSharedSession(false)
+    const wasShared = sharedSession
+    if (!await prepareLocalMutation()) return
+    if (wasShared) {
       const baseUrl = `${window.location.origin}${window.location.pathname}`
       window.history.replaceState({}, '', baseUrl)
     }
     setPreviewOnly(false)
   }
 
-  function handleRestoreDraft() {
+  async function handleOpenDocument(id) {
+    const doc = await history.openDoc(id, { flushPending: !sharedSession })
+    if (doc && sharedSession) setSharedSession(false)
+    return doc
+  }
+
+  async function handleRestoreDraft() {
     if (draft) {
-      setMarkdown(draft.content)
-      setDraft(null)
+      try {
+        await history.flush()
+        setMarkdown(draft.content)
+        clearDraft()
+        setDraft(null)
+      } catch (err) {
+        setError('Could not save the current document before restoring the draft.')
+      }
     }
   }
 
@@ -592,7 +682,7 @@ export default function App() {
     {
       label: 'Read Mode',
       icon: Icon.read,
-      onClick: () => setPreviewOnly(true),
+      onClick: enterReadMode,
       disabled: !hasContent,
     },
     {
@@ -739,7 +829,7 @@ export default function App() {
               </button>
               <button
                 className="hide-on-mobile"
-                onClick={() => setPreviewOnly(true)}
+                onClick={enterReadMode}
                 disabled={!hasContent}
               >
                 Read
@@ -786,7 +876,13 @@ export default function App() {
       )}
 
       {error && <div className="error-bar">{error}</div>}
+      {!error && history.saveError && <div className="error-bar">{history.saveError}</div>}
       {status && <div className="status-bar">{status}</div>}
+      {!error && !history.saveError && !status && history.saveStatus !== 'saved' && (
+        <div className="status-bar" role="status">
+          {history.saveStatus === 'saving' ? 'Saving changes…' : 'Changes pending save…'}
+        </div>
+      )}
 
       {!previewOnly && (
         <div className="mobile-tabs" role="tablist">
@@ -858,17 +954,19 @@ export default function App() {
           docs={history.docs}
           currentDocId={history.currentDocId}
           supported={history.supported}
-          onOpen={history.openDoc}
+          onOpen={handleOpenDocument}
           onNew={handleNewDocument}
           onDelete={history.deleteDoc}
           onPin={history.togglePin}
           onRename={history.rename}
-          onRestoreSnapshot={history.restoreSnapshot}
+          onRestoreSnapshot={(id, content) => (
+            history.restoreSnapshot(id, content, { flushPending: !sharedSession })
+          )}
           onClose={() => setShowHistory(false)}
         />
       )}
 
-      <UpdatePrompt />
+      <UpdatePrompt onBeforeReload={sharedSession ? undefined : history.flush} />
 
       <LaserPointer
         active={presentationMode}
